@@ -80,11 +80,14 @@ The Oplog is a persistent write buffer for Stargate and serves to decrease write
 latency by absorbing bursts of random writes. All writes that are absorbed by
 the Oplog are written directly to SSD and synchronously replicated to other CVMs
 in the cluster to satisfy the replication factor requirements as configured by
-the NDFS user before the write is acknowledged. The data that resides in oplog
-is "drained" to the Extent store in the background to make room for more random
-writes. For sequential workloads, the Oplog is bypassed and the writes go
-straight into the Extent Store. All reads that need data that resides in the
-Oplog will have that data serviced directly by the Oplog until it drains.
+the NDFS user before the write is acknowledged. These writes are also coalesced
+if possible, further increasing performance by reducing CPU utilization of
+handling multiple nearby writes.
+
+Data in Oplog is "drained" to the Extent store in the background to make room
+for more random writes. For sequential workloads, the Oplog is bypassed and the
+writes go straight into the Extent Store. All reads that need data residing
+in the Oplog will have that data serviced directly by the Oplog until it drains.
 
 ### Remote Direct Memory Access (RDMA)
 
@@ -144,6 +147,8 @@ Glossary
 
 * **ESXi** - The hypervisor created by VMware.
 
+* **Extent Store** - Persistent storage for the NDFS.
+
 * **Guest VM** - A virtual machine hosted on a hypervisor that is serviced by
   the CVM.
 
@@ -157,7 +162,7 @@ Glossary
 
 * **NFS**
 
-* **Oplog**
+* **Oplog** - Persistent write buffer that is part of Stargate.
 
 * **RF** - Replication factor. If the cluster is configured as RF(N), there are
   N copies of all pieces of data distributed across N nodes.
