@@ -91,7 +91,12 @@ in the Oplog will have that data serviced directly by the Oplog until it drains.
 
 ### Remote Direct Memory Access (RDMA)
 
-TODO
+As mentioned previously, RDMA is a standard in networked systems which
+allows the memory of one computer (or node) to be accessed directly by another
+node in the network. This direct access to memory that bypasses the OS allows
+us to avoid the high overhead
+
+I'm falling asleep. TODO continue
 
 Project Description
 -------------------
