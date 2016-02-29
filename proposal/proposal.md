@@ -67,9 +67,24 @@ process.
 #### Stargate
 
 Stargate is responsible for all data management and I/O operations and is the
-only process on the CVM that direclty manipulates data on disk.
+only process on the CVM that directly manipulates data on disk. The Stargate
+process is comprised of several components, but the ones relevant for this
+proposal are the Oplog and the Extent Store. The Oplog acts as a write buffer
+to absorb random I/O and the Extent Store can be thought of as the persistent
+data storage. This document proposes a project that directly deals with the
+Oplog, so in the next section we'll dive deeper into that component.
 
-TODO: life of a write, replications
+##### The Oplog
+
+The Oplog is a persistent write buffer for Stargate and serves to decrease write
+latency by absorbing bursts of random writes. All writes that are absorbed by
+the Oplog are written directly to SSD and synchronously replicated to other CVMs
+in the cluster to satisfy the replication factor requirements as configured by
+the NDFS user before the write is acknowledged. The data that resides in oplog
+is "drained" to the Extent store in the background to make room for more random
+writes. For sequential workloads, the Oplog is bypassed and the writes go
+straight into the Extent Store. All reads that need data that resides in the
+Oplog will have that data serviced directly by the Oplog until it drains.
 
 ### Remote Direct Memory Access (RDMA)
 
