@@ -91,12 +91,28 @@ in the Oplog will have that data serviced directly by the Oplog until it drains.
 
 ### Remote Direct Memory Access (RDMA)
 
-As mentioned previously, RDMA is a standard in networked systems which
-allows the memory of one computer (or node) to be accessed directly by another
-node in the network. This direct access to memory that bypasses the OS allows
-us to avoid the high overhead
+As mentioned previously, RDMA is a set of mechanisms in networked systems which
+allow the NIC to move data directly into and out of application buffers. This
+allows the system to avoid copying memory from a user space application into
+the kernel and from the kernel into NIC buffers. This direct access to memory
+that bypasses the OS allows us to avoid the high overhead associated with the
+movement of data.
 
-I'm falling asleep. TODO continue
+#### The Cost of Data Movement
+
+TODO
+
+#### Direct Data Placement (DDP) and RDMA
+
+The DDP protocol is a means by which memory is exposed to a remote peer and
+a means by which a peer may access the buffers designated by an upper layer
+protocol, such as RDMA. While DDP provides a method of placing payloads into
+specific buffers on a target, the RDMA protocol provides a method for
+identification of these buffers to the application.
+
+### RDMA Semantics
+
+TODO
 
 Project Description
 -------------------
@@ -147,6 +163,8 @@ Retrieved February 15, 2016, from http://nutanixbible.com/
 
 2.  Lakshman, A., & Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/ 
 
+3. TODO: Romanow paper
+
 Glossary
 --------
 
@@ -166,6 +184,8 @@ Glossary
 * **KVM**
 
 * **NFS**
+
+* **NIC** - Network interface card.
 
 * **Oplog** - Persistent write buffer that is part of Stargate.
 
