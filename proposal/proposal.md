@@ -38,14 +38,12 @@ possible improvements it can bring to network latencies.
 
 ### Nutanix
 
-#### The Nutanix Solution
-
 Nutanix is a software company headquartered in San Jose, CA. The bundled
-hardware/software solution sold by Nutanix consists at least 3 servers that run
-an industry standard hypervisor (VMware ESXi, Microsoft Hyper-V, or Linux KVM).
-Storage I/O for the guests hosted on the hypervisor is sent to the Nutanix
-Controller VM (CVM) to be serviced [1]. The figure below shows what a single
-node in a Nutanix cluster typically looks like:
+hardware/software solution sold by Nutanix consists of at least 3 servers that
+run an industry standard hypervisor (VMware ESXi, Microsoft Hyper-V, or Linux
+KVM).  Storage I/O for the guests hosted on the hypervisor is sent to the
+Nutanix Controller VM (CVM) to be serviced [1]. The figure below shows what a
+single node in a Nutanix cluster logically looks like:
 
 ![nutanix_solution](images/1/converged_platform.png "The Nutanix Solution")
 
@@ -100,7 +98,15 @@ movement of data.
 
 #### The Cost of Data Movement
 
-TODO
+The desire to avoid data movement when communicating with distributed nodes is
+born from work done by Clark et al. [4]. They found that even though TCP
+overhead is comprised of a number of factors, it is mostly dominated by moving
+data in memory is the largest contributor to transfer latency. Memory bandwidth
+is the limiting factor when it comes to TCP processing.  In addition, Kay and
+Pasquale found that the percentage of TCP overhead caused by data-touching
+operations increases with packet size, since the time spent on per-byte
+operations scales linearly with message size [5]. This shows that the highest
+impact area of focus for communication latency reduction is copy avoidance.
 
 #### Direct Data Placement (DDP) and RDMA
 
@@ -118,6 +124,28 @@ Project Description
 -------------------
 
 TODO
+
+### Preliminary Analysis
+
+Chu's 1996 paper on zero copy TCP in Solaris reported non-trivial per-byte
+latency costs as a percentage of the total network software's costs:
+
+| Packet Size | Percentage |
+| 1500 byte Ethernet | 18-25% |
+| 4352 byte FDDI | 35-50% |
+| 9180 byte ATM | 55-65% |
+
+During the writing of this proposal, I measured the size of Stargate Oplog RPCs
+for both random and sequential write patterns to the NDFS. Below are graphs showing write size vs. RPC size for the different write patterns:
+
+![random_write_rpc](images/original/random_write_rpc_size.png "RPC Sizes for Random Writes")
+
+![sequential_write_rpc](images/original/sequential_write_rpc_size.png "RPC Sizes for Sequential Writes")
+
+At the Stargate network layer, these RPCs would be broken up into multiple TCP
+packets; however, with multiple 8kB RDDP buffers at the Stargate's disposal the
+total RPC latency times would be reduced by at least 18% for 1500 byte MTU
+packets.
 
 Stargate RDMA Design and Architecture
 -------------------------------------
@@ -157,20 +185,31 @@ Preliminary Schedule
 
 Bibliography
 ------------
+ TODO: format the ciations correctly
 
 1. Poitras, S. (2015, November 11). The Nutanix Bible - NutanixBible.com.
 Retrieved February 15, 2016, from http://nutanixbible.com/
 
-2.  Lakshman, A., & Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/ 
+2.  Lakshman, A., & Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/
 
 3. TODO: Romanow paper
+
+4. D. D. Clark, V. Jacobson, J. Romkey, H. Salwen, "An analysis if TCP processing protocols", Proceedings of the ACM SIGCOMM Conference 1990
+
+5. J. Kay, J. Pasquale, "Profiling and reducing processing overheads in TCP/IP", IEEE/ACM Transactions on Networking, Vol. 4, No. 6, pp.817-828, December 1996
+
+6. H. K. Chu, "Zero-copy TCP in Solaris", Proc. of the USENIX 1996 Annual Technical Conference, San Diego, CA, January 1996
 
 Glossary
 --------
 
+* **ATM**
+
 * **ESXi** - The hypervisor created by VMware.
 
 * **Extent Store** - Persistent storage for the NDFS.
+
+* **FDDI
 
 * **Guest VM** - A virtual machine hosted on a hypervisor that is serviced by
   the CVM.
@@ -182,6 +221,8 @@ Glossary
 * **iSCSI**
 
 * **KVM**
+
+* **MTU**
 
 * **NFS**
 
