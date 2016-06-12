@@ -172,12 +172,30 @@ TODO
 Hardware Requirements
 ---------------------
 
-TODO
+The replica selection algorithms proposed in this paper can be tested and
+verified using an exhaustive battery of software tests. However, we still
+require real hardware for the performance testing of synthetic workloads in
+heterogeneous clusters. If we are to verify that the proposed algorithm will
+not introduce a performance regression in existing configurations that are
+deemed satisfactory and also improve performance in current troublesome
+scenarios, we will need to recreate the hardware configurations.
+
+The hardware required for each problem is shown the table below:
+
+| Problem to Test | Hardware Configuration |
+| ------------- |:-------------:|
+| Rack awareness' influence on replica selection | A rack-aware configuration. Not just a single node per RU, but also scenarios with 2 loaded chassis and a single node in the third chassis. |
+| Avoidance of over-burdened nodes | Two high disk/CPU capacity nodes and a single low disk/CPU capacity node. |
+| Testing Scalability | 16+ heterogeneous node cluster |
 
 Software Requirements
 ---------------------
 
-TODO
+All software requirements are taken care of in my Nutanix development
+environment. This includes:
+
+* The unit test infrastructure for replica selection simulations.
+* fio and Nutanix X-ray (workload generation tool) for benchmarking and usage of real disk stats.
 
 Benchmarks and Performance Analysis Methodology
 -----------------------------------------------
