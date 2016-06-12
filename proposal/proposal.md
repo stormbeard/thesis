@@ -82,29 +82,36 @@ TODO
 
 TODO: Explain rack awareness
 
+### Nutanix Cluster Hardware Configurations
+
+TODO: Describe RUs, nodes, networking, and anything else infrastructure-wise
+
 ### The Current issues with Heterogeneous Clusters
 
 TODO: 
 -- Inconsistent space utilization on nodes.
 -- Overburdening small nodes via replica traffic
 
-### Nutanix Cluster Hardware Configurations
-
-TODO: Describe RUs, nodes, networking, and anything else infrastructure-wise
-
 Project: Adaptive Replica Selection
 -------------------
 
-TODO: Describe the overall plan of assigning a fitness function to each disk
-and ranking them for selection. Possible Rackable unit and node-level fitness
-to be used as well.
-
-Also mention there will be benchmarks and tests.
+To remedy the problems that arise from hetereogeneous cluster configurations
+discussed in the previous section, I plan to implement an adaptive replica
+selection algorithm. This algorithm uses a "fitness value" that is calculated
+from various statistics available for each disk such as disk fullness, latency,
+business, etc. These fitness values are to be used as a ranking mechanism when
+selecting where the Stargate will place data. This should result the prevention
+of many of the issues discussed in the introduction.
 
 ### Fitness Score Calculation
 
-TODO: Mention the stats available to us and how they'll be used in the
-calculations for each level.
+Currently, each Stargate keeps track of a large number of statistics for its
+local disks:
+
+
+
+This data will be used to calculate a single value for each disk
+in the cluster via 
 
 #### Fitness Score Hierarchies
 
