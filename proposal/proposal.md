@@ -21,20 +21,7 @@ TODO
 Introduction
 ------------
 
-Remote Direct Memory Access (RDMA) is a standard in networked systems which
-allows the memory of one computer (or node) to be accessed directly by another
-node in the network, bypassing both of the operating systems. This is especially
-useful for clustered, latency-sensitive applications where there are many
-nodes in constant communication over the network, such as a distributed
-file system.
-
-In this paper, I put forth a proposal to use RDMA for the RPCs sent between
-the persistent write buffers of the Nutanix Distributed File System (NDFS).
-The first part of this introduction will be a closer look at the NDFS core data
-path, paying close attention to the write path and the role of the persistent
-write buffers, also known as the Oplog. The second half of this introduction
-will give an overview of the current state of RDMA over Ethernet and the
-possible improvements it can bring to network latencies.
+TODO
 
 ### Nutanix
 
@@ -87,73 +74,95 @@ for more random writes. For sequential workloads, the Oplog is bypassed and the
 writes go straight into the Extent Store. All reads that need data residing
 in the Oplog will have that data serviced directly by the Oplog until it drains.
 
-### Remote Direct Memory Access (RDMA)
-
-As mentioned previously, RDMA is a set of mechanisms in networked systems which
-allow the NIC to move data directly into and out of application buffers. This
-allows the system to avoid copying memory from a user space application into
-the kernel and from the kernel into NIC buffers. This direct access to memory
-that bypasses the OS allows us to avoid the high overhead associated with the
-movement of data.
-
-#### The Cost of Data Movement
-
-The desire to avoid data movement when communicating with distributed nodes is
-born from work done by Clark et al. [4]. They found that even though TCP
-overhead is comprised of a number of factors, it is mostly dominated by moving
-data in memory is the largest contributor to transfer latency. Memory bandwidth
-is the limiting factor when it comes to TCP processing.  In addition, Kay and
-Pasquale found that the percentage of TCP overhead caused by data-touching
-operations increases with packet size, since the time spent on per-byte
-operations scales linearly with message size [5]. This shows that the highest
-impact area of focus for communication latency reduction is copy avoidance.
-
-#### Direct Data Placement (DDP) and RDMA
-
-The DDP protocol is a means by which memory is exposed to a remote peer and
-a means by which a peer may access the buffers designated by an upper layer
-protocol, such as RDMA. While DDP provides a method of placing payloads into
-specific buffers on a target, the RDMA protocol provides a method for
-identification of these buffers to the application.
-
-### RDMA Semantics
+##### The Extent Store
 
 TODO
 
-Project Description
+#### The Current State of Replica Selection
+
+TODO: Explain rack awareness
+
+### The Current issues with Heterogeneous Clusters
+
+TODO: 
+-- Inconsistent space utilization on nodes.
+-- Overburdening small nodes via replica traffic
+
+### Nutanix Cluster Hardware Configurations
+
+TODO: Describe RUs, nodes, networking, and anything else infrastructure-wise
+
+Project: Adaptive Replica Selection
 -------------------
 
-TODO
+TODO: Describe the overall plan of assigning a fitness function to each disk
+and ranking them for selection. Possible Rackable unit and node-level fitness
+to be used as well.
 
-### Preliminary Analysis
+Also mention there will be benchmarks and tests.
 
-Chu's 1996 paper on zero copy TCP in Solaris reported non-trivial per-byte
-latency costs as a percentage of the total network software's costs:
+### Fitness Score Calculation
 
-| Packet Size | Percentage |
-| 1500 byte Ethernet | 18-25% |
-| 4352 byte FDDI | 35-50% |
-| 9180 byte ATM | 55-65% |
+TODO: Mention the stats available to us and how they'll be used in the
+calculations for each level.
 
-During the writing of this proposal, I measured the size of Stargate Oplog RPCs
-for both random and sequential write patterns to the NDFS. Below are graphs showing write size vs. RPC size for the different write patterns:
+#### Fitness Score Hierarchies
 
-![random_write_rpc](images/original/random_write_rpc_size.png "RPC Sizes for Random Writes")
+TODO: Explain the model
 
-![sequential_write_rpc](images/original/sequential_write_rpc_size.png "RPC Sizes for Sequential Writes")
+##### Disk-level Fitness
 
-At the Stargate network layer, these RPCs would be broken up into multiple TCP
-packets; however, with multiple 8kB RDDP buffers at the Stargate's disposal the
-total RPC latency times would be reduced by at least 18% for 1500 byte MTU
-packets.
+TODO: The function that'll be used.
 
-Stargate RDMA Design and Architecture
--------------------------------------
+##### Node-level Fitness
 
-Algorithms Used and Their Tradeoffs
------------------------------------
+TODO: The method of calculation given the disk-level stats. How will we handle
+the disk-level variance? Is median disk fitness a good metric?
 
-TODO
+##### RU-level Fitness
+
+TODO: The method of calculation given the disk and node-level stats. Same
+issues as above but disk AND node.
+
+### Ranking Algorithm
+
+TODO: Mention priority queue.
+
+#### The ReplicaQueue Class
+
+TODO: Its interface and the WeightedSample() function's magic. Also mention
+it's rebuilt on ZeusConfigChangeNotification().
+
+#### Weighted Shuffling
+
+TODO: "Prettiest girl at the bar" problem and approaches to fixing it.
+
+-- AlarmHandler and ZeusConfigChangeNotification reshuffling.
+-- Providing access to the weight vector from ReplicaQueue to do individual
+   sampling in O(N).
+
+### Polling for Remote Disk Stats
+
+TODO: The problem, where the data is stored, and how we're getting it.
+
+### ReplicaSelector Changes
+
+TODO: ReplicaSelector is modified so that both the Extent Store an Oplog will
+benefit from the adaptive selection.
+
+Also mention the "big cluster-wide" vector approach and the RU -> node -> disk
+approach.
+
+Testing and Benchmarks
+----------------------
+
+### Unit Testing Replica Selection via Simulation
+
+TODO: Explain the current unit tests and various scenarios.
+
+### Testing Replica Selection via Synthetic Workload Generation
+
+TODO: Explain that we have X-ray and we want to compare the results.
 
 Related Work
 ------------
