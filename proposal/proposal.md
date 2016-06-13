@@ -116,7 +116,8 @@ following stats exposed:
 This data will be used to calculate a single value for each disk in the cluster
 via a formula similar to:
 
-```fitness_value = k1 * (1 - disk_fullness_pct) +
+```
+fitness_value = k1 * (1 - disk_fullness_pct) +
                 k2 * (100 - disk_busy_pct) +
                 k3 * (5000 - min(avg_latency_usec, 5000))
 ```
@@ -130,7 +131,8 @@ One potential area of investigation will be a fitness score hierarchy based on
 rackable units, which encompass nodes, which encompass disks. There are obvious
 benefits to this approach since it allows for a searching pattern such as:
 
-```for rack in rackable_unit_list:
+```
+for rack in rackable_unit_list:
   for node in rack.nodes():
     for disk in node.disks():
       # do things
