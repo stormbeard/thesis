@@ -106,30 +106,64 @@ of many of the issues discussed in the introduction.
 ### Fitness Score Calculation
 
 Currently, each Stargate keeps track of a large number of statistics for its
-local disks:
+local disks. For the explanation in this proposal, suppose there are only the
+following stats exposed:
 
+* Disk utilization in bytes (used to calculate fullness percentage)
+* Disk busy percentage
+* Average latency
 
+This data will be used to calculate a single value for each disk in the cluster
+via a formula similar to:
 
-This data will be used to calculate a single value for each disk
-in the cluster via 
+`fitness_value = k1 * (1 - disk_fullness_pct) +
+                k2 * (100 - disk_busy_pct) +
+                k3 * (5000 - min(avg_latency_usec, 5000))`
+
+The `kn` values above are weights assigned to each stat that will be mutable at
+runtime (via Google Gflags).
 
 #### Fitness Score Hierarchies
 
-TODO: Explain the model
+One potential area of investigation will be a fitness score hierarchy based on
+rackable units, which encompass nodes, which encompass disks. There are obvious
+benefits to this approach since it allows for a searching pattern such as:
 
-##### Disk-level Fitness
+`for rack in rackable_unit_list:
+  for node in rack.nodes():
+    for disk in node.disks():
+      # do things`
 
-TODO: The function that'll be used.
+The above seems much more efficient when compared to iteration through every
+disk in the cluster, since we would be able to eliminate entire racks worth of
+disks at a time in a rack-aware cluster configuration and entire nodes worth of
+disks at a time in any cluster configuration.
 
-##### Node-level Fitness
+Both approaches will need to be implemented, benchmarked, and have their
+resulting replica placements analyzed.
 
-TODO: The method of calculation given the disk-level stats. How will we handle
-the disk-level variance? Is median disk fitness a good metric?
+##### Node Fitness
 
-##### RU-level Fitness
+For nodes, we can calculate a fitness value using the stats we find for each
+disk. Relevant values to calculate would be:
 
-TODO: The method of calculation given the disk and node-level stats. Same
-issues as above but disk AND node.
+* Total fullness percentage
+* SSD tier fullness percentage
+* HDD tier fullness percentage
+* Median disk fitness value
+* Degraded state
+
+These stats can be calculated in the first pass through all disks.
+
+##### Rackable Unit Fitness
+
+For RUs, we can calculate a fitness value using the stats we find for each
+node. Relvant values to calculate would be:
+
+* Average node fullness percentage
+* Median node fitness value
+
+These stats must be calculated in a pass through the set of nodes in the cluster.
 
 ### Ranking Algorithm
 
