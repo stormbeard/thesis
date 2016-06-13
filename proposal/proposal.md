@@ -207,29 +207,55 @@ Returns true if queue is empty, false otherwise.
 Clear the RQ and all internal state.
 
 ##### shared_ptr<std::vector<T>> WeightedSample(int num_items)
-This will return a shared pointer to an STL vector of `num_items` objects inside the RQ. The ordering of the objects is such that the high fitness objects have a high probability of being towards the beginning of the vector.
+This will return a shared pointer to an STL vector of `num_items` objects
+inside the RQ. The ordering of the objects is such that the high fitness
+objects have a high probability of being towards the beginning of the vector.
 
 The motivation for this probabilistic approach is describedin the next section.
 
 #### Weighted Shuffling
 
-TODO: "Prettiest girl at the bar" problem and approaches to fixing it.
+One problem that arises when ranking disks based on their fitness value is that
+we must evaluate candidates in order from highest rank to lowest. In doing so,
+we put the disk with the highest fitness value and the node that hosts it at
+risk of being encumbered by replica traffic. To mitigate this, we must select
+disks probabilistically via WeightedSample(). Sampling in this manner allows us
+to periodically reshuffle the disk candidate vectors used in replica selection
+and lower the chances of over-burdening the high fitness disks.
 
--- AlarmHandler and ZeusConfigChangeNotification reshuffling.
--- Providing access to the weight vector from ReplicaQueue to do individual
-   sampling in O(N).
+Shuffling of the candidate disk vectors will occur when there is a
+configuration change in the cluster caused by any one of:
+
+* Node addition/removal
+* Disk failures
+* A configurable timer-tick
+
+This will allow us to keep the candidate disk vectors in sync with each other
+and periodically update the disk stats as I/O is sent to disks.
+
+TODO: Providing access to the weight vector from ReplicaQueue to do individual sampling in O(N).
 
 ### Polling for Remote Disk Stats
 
-TODO: The problem, where the data is stored, and how we're getting it.
+Local Stargates will have up-to-date statistics on the disks they are
+responsible for, but they do not know the states of the disks belonging to
+remote nodes. To get this information, communication must occur with the
+Cassandra database that holds the NDFS metadata/stats.
+
+This proposed replica selection technique will need to update the disk
+statistics every time cluster state changes (node/disk insertion and/or
+removal) and within regular time intervals so that the stats do not become
+stale.
 
 ### ReplicaSelector Changes
 
-TODO: ReplicaSelector is modified so that both the Extent Store an Oplog will
-benefit from the adaptive selection.
-
-Also mention the "big cluster-wide" vector approach and the RU -> node -> disk
-approach.
+Currently, the ReplicaSelector class maintains a vector of candidate disks for
+each storage tier. When selecting a candidate, a disk is chosen randomly from
+this vector and a determination is made as to whether this is a desirable disk.
+For the proposed changes to take effect, we will need to modify this behavior
+to either sequentially search through a vector sampled from a ReplicaQueue for
+each tier or to perform a weighted lottery selection from a disk vector sorted
+by fitness value.
 
 Testing and Benchmarks
 ----------------------
@@ -297,24 +323,12 @@ Retrieved February 15, 2016, from http://nutanixbible.com/
 
 2.  Lakshman, A., & Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/
 
-3. TODO: Romanow paper
-
-4. D. D. Clark, V. Jacobson, J. Romkey, H. Salwen, "An analysis if TCP processing protocols", Proceedings of the ACM SIGCOMM Conference 1990
-
-5. J. Kay, J. Pasquale, "Profiling and reducing processing overheads in TCP/IP", IEEE/ACM Transactions on Networking, Vol. 4, No. 6, pp.817-828, December 1996
-
-6. H. K. Chu, "Zero-copy TCP in Solaris", Proc. of the USENIX 1996 Annual Technical Conference, San Diego, CA, January 1996
-
 Glossary
 --------
-
-* **ATM**
 
 * **ESXi** - The hypervisor created by VMware.
 
 * **Extent Store** - Persistent storage for the NDFS.
-
-* **FDDI
 
 * **Guest VM** - A virtual machine hosted on a hypervisor that is serviced by
   the CVM.
@@ -327,11 +341,7 @@ Glossary
 
 * **KVM**
 
-* **MTU**
-
 * **NFS**
-
-* **NIC** - Network interface card.
 
 * **Oplog** - Persistent write buffer that is part of Stargate.
 
