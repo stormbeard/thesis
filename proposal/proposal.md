@@ -171,12 +171,45 @@ These stats must be calculated in a pass through the set of nodes in the cluster
 
 ### Ranking Algorithm
 
-TODO: Mention priority queue.
+The fitness values assigned to each disk, node, and RU are used to rank the
+desirability of the disks contained within. The most straight-forward way to do
+this is via a priority queue data structure. To do this, I will implement a
+custom data structure to automatically store and rank arbitrary objects.
 
 #### The ReplicaQueue Class
 
-TODO: Its interface and the WeightedSample() function's magic. Also mention
-it's rebuilt on ZeusConfigChangeNotification().
+The ReplicaQueue (RQ) class will be used to store, rank, and gather samples of
+arbitrary-typed objects. Upon instantiation of a RQ storing objects of some
+type T, one must provide a ranking function that takes a single argument of
+type T and returns a fitness value in the form of a double.
+
+Upon insertion into the RQ, the fitness function will be applied to the object
+inserted and they will be placed in an internal data structure. At the heart of
+this RQ will be a standard c++11 STL priority queue that will hold an ordered
+pair of type `std::pair<double fitness_value, T obj>`. This forces the STL
+priority queue to rank the items inserted by the calculated fitness value and
+in the case of a tie, use the `<` operator for type T.
+
+The ReplicaQueue will have the following interface:
+
+##### void Emplace(T element)
+Construct and insert an element into the queue. Upon insertion, the fitness
+function will be applied to the element and the value will be the first item in
+a pair stored in a standard STL priority queue.
+
+##### T Top()
+Access the highest ranked element in the queue.
+
+##### bool Empty()
+Returns true if queue is empty, false otherwise.
+
+##### void Clear()
+Clear the RQ and all internal state.
+
+##### shared_ptr<std::vector<T>> WeightedSample(int num_items)
+This will return a shared pointer to an STL vector of `num_items` objects inside the RQ. The ordering of the objects is such that the high fitness objects have a high probability of being towards the beginning of the vector.
+
+The motivation for this probabilistic approach is describedin the next section.
 
 #### Weighted Shuffling
 
