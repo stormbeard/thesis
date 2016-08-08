@@ -97,7 +97,8 @@ should mitigate many problems seen with heterogeneous Nutanix clusters.
 
 ### Disk Stats Aggregation
 
-TODO: This is already in place and not part of the proposed thesis project.
+TODO:
+This is already in place and not part of the proposed thesis project. Worth mentioning.
 
 ### Selection Algorithms
 
@@ -106,7 +107,11 @@ algorithms and an analysis of their behavior and performance under various
 workloads and conditions. After a weight is calculated for a disk in the
 cluster that will store a replica, we must perform a weighted random selection
 on the set of potential candidate disks. The schemes we will explore in this
-work are summarized below.
+work are summarized in the next section.
+
+Upon implementation of various selection algorithms, it will be necessary to
+perform simulations of pathological cases in weighted random selection and
+evaluate the chances of encountering these in day-to-day file system operations.
 
 #### Trucation Selection
 
@@ -250,18 +255,35 @@ This includes:
 * fio
 * Tools for development of a workload generation tool for benchmarking and usage of real disk stats.
 
-Benchmarks and Performance Analysis Methodology
------------------------------------------------
-
-
-
 Preliminary Schedule
 --------------------
 | Task          | Time in Weeks |
 | ------------- |:-------------:|
-| TODO 1        | 1 week        |
-| TODO 2        | 2 weeks       |
-| TODO 3        | 3 weeks       |
+| CODE: Fio workload scripts | 1 week |
+| CODE: Workload VM deployment tool | 2 weeks |
+| CODE: Workload data analysis scripts | 1 weeks |
+| WRITE: Synthetic workload section of thesis | 2 weeks |
+| MILESTONE: Workload generation complete | |
+| CODE: Fitness function framework for use with replica placement | 2 weeks |
+| WRITE: NDFS fitness function implementation section of thesis | 2 week |
+| CODE: Implement weighted random selection algorithms | 1 week |
+| TEST/BENCHMARK: Weighted random pathological case unit test and evaluation | 1 week |
+| WRITE: Weighted random and pathological case section of thesis | 1 week |
+| CODE: Use disk usage and performance stats for placement decisions | 1 week |
+| TEST: Basic unit test simulations to sanity check fitness function | 1 week |
+| MILESTONE: Adaptive data placement implementation complete | |
+| TEST: Add instrumentation to code base to troubleshoot odd behavior | < 1 week |
+| WRITE: Unit test simulation and instrumentation section of thesis | 1 week |
+| BENCHMARK: Generate workloads on multiple clusters and analyze the improvements | 2 weeks |
+| MILESTONE: Testing and benchmarking on multiple clusters complete | |
+| WRITE: Benchmark results section of thesis (include analysis of algorithms) | 2 weeks |
+| WRITE: Conclusions and future work | 1 week |
+| WRITE: Introduction, Prior work | 2 weeks |
+| WRITE: Nutanix file system overview | 1 week |
+| WRITE: Finish thesis write-up | 2 weeks |
+| THESIS APPROVAL | 4 weeks |
+
+Approximate time to completion: 30 weeks
 
 Bibliography
 ------------
