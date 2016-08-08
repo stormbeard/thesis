@@ -100,7 +100,11 @@ should mitigate many problems seen with heterogeneous Nutanix clusters.
 TODO:
 This is already in place and not part of the proposed thesis project. Worth mentioning.
 
-### Selection Algorithms
+### Fitness Value Calculation
+
+TODO: Available stats, find what really matters, potential problems (hot spots).
+
+### Weighted Random Selection Algorithms
 
 Part of this work will be an exploration of various weighted random selection
 algorithms and an analysis of their behavior and performance under various
