@@ -73,14 +73,16 @@ availability-aware data placement algorithm to avoid those nodes. This proves
 useful for performance by avoiding faulty nodes that could fail mid-task and
 cause data transfers and re-calculation of data.
 
-
 Thesis Project Description
 --------------------------
 
 Motivation
 ==========
 
-TODO: Customer use-cases
+TODO: Heterogeneous cluster use-cases and problems that arise.
+* Aging clusters and expansion over time. Different generations of nodes.
+* Mixing all-flash with hybrid HDD/SSD nodes.
+* Mixing in storage-only nodes with heavy HDD
 
 Adaptive Data Placement
 =======================
@@ -95,75 +97,95 @@ should mitigate many problems seen with heterogeneous Nutanix clusters.
 
 ### Disk Stats Aggregation
 
-TODO
+TODO: This is already in place and not part of the proposed thesis project.
 
 ### Selection Algorithms
 
-TODO: Clean up and cite
+Part of this work will be an exploration of various weighted random selection
+algorithms and an analysis of their behavior and performance under various
+workloads and conditions. After a weight is calculated for a disk in the
+cluster that will store a replica, we must perform a weighted random selection
+on the set of potential candidate disks. The schemes we will explore in this
+work are summarized below.
 
 #### Trucation Selection
 
-This boils down to eliminating some proportion of the least fit elements in the
-set and "breeding" the high fitness elements in a genetic algorithm context.
-For our use case, we would just perform a random selection from the high
-fitness disks. I believe this was discussed in a call a few weeks back and we
-decided against it because the lowest fitness disks are never utilized. 
+Trucation selection was first introduced by Muhlenbein and Schlierkamp-Voosen
+in 1993 as part of their work on Breeder Genetic Algorithms [9]. The basic idea
+is that there is a threshold percentage (T) that will indicate the top T% most
+fit elements in a set. From this top T%, individuals are selected and mated
+randomly until the number of offspring can replace the parent population.
+
+For the purposes of the work in this proposal, I have no need for the breeding
+aspect of Muhlenbein and Schlierkamp-Voosen's work. I will simply stop at the
+uniform random selection of individuals from the top T% elements in the set of
+disks. To avoid selecting the same disk from the set multiple times, it will be
+required that an exclusion scheme be employed. The way I will handle this is to
+simply remove the object from the sampling set if it is determined unsuitable
+for the purposes we're performing selection for. A more concrete example would
+be as follows, suppose we have N objects (x~1~, x~2~, ..., x~n~) in an array
+(A) that represents the top T% of the total set. If we were to perform a
+uniform random selection from this subset and yield x~2~, I would simply swap
+x~2~ with the first element in the array x~1~ and only consider the elements in
+A[1:]. This scheme is worst-case O(N) and guarantees that some fixed percentage
+of the weaker candidates will not be selected.
 
 #### Stochastic Universal Sampling (SUS)
 
-For this, let's just think of an example where some element has a 5%
-probability of being chosen. On some roulete wheel with 100 bins, 5 of those
-bins are for our example object. The algorithm steps through the wheel with a
-randomly chosen interval and reports back with the set of objects landed on.
-This isn't a good idea for us because some disks may not have stats yet and
-would have a fitness value of 1. Other disks may have fitness values as high as
-2000 and if they are not able to be chosen for some reason, we could subdivide
-our roulette wheel so much that it would slow us down by a lot. We also have no
-way to enforce exclusions outside of exclusion sets. I'm personally not a fan
-of this one.
+SUS is another sampling technique first introduced by Baker in 1987 [10]. The
+algorithm can be understood as follows:
 
-#### Tournament Selection
+On a standard roulette wheel there's a single pointer that indicates the
+winner. The roulette wheel's "bins" can all be the same size which would
+indicate a uniform probability of selecting any bin and could also be unevenly
+sized which would indicate a weighted probability. SUS uses this same concept
+except allows for N evenly spaced pointers corresponding to the selection of N
+items. Key things to note are that the set, or "bins" in my roulette
+analogy, must be shuffled prior to selection and there is a minimum spacing
+allowed for the pointers to prevent selection of the same bin by two pointers.
 
-This looks something like:
+#### Reservoir Sampling
 
-* Randomly choose some subset of the total elements in our set.
-* Find the most fit elements in the randomly chosen subset and return those with some probability (usually 1.0). We still run into the problem of exclusions mentioned above and if we can't find a useable candidate in the randomly chosen subset, we would have to perform this whole tournament again. Also, this method is highly specialized for selecting a set of objects. 
+Reservoir sampling describes an entire family of stochastic algorithms for
+randomly sampling items from a very large set. Typically, the number of
+elements in the set is so large that it cannot fit into main memory. This
+summary will only focus on non-distributed reservoir sampling; therefore, the
+work of M.T. Chao [13] is ommitted.
 
-#### Fitness Proportionate Selection (FPS)
+##### Algorithm R
 
-This is exactly what we're doing in DrawLottery() inside of our
-/util/misc/random.h. It's worth noting that DrawLottery() is O(N) because of
-the sequential search that looks something like:
+Algorithm R was introduced by Vitter in 1985 [11] and runs in linear time
+proportional to the number of elements in the set/stream. The algorithm can
+sample k items as follows:
 
-* Calculate uniform random number in [0, weight_sum].
-* Sequentially march through the weight vector provided and add numbers together until the current sum is >= the uniform random number. 
+1. Select the first k items from the stream and insert into an array of size k.
+2. For each item remaining in the stream j, such that j > k, choose a random integer M in [1, j].
+3. If M <= k, replace item M of the array with item j.
 
-There is a variation on this mentioned in the wiki that can drop us down to
-O(log(n)) by preprocessing a cumulative density function in some vector and
-performing a binary search. Since the WeightedVector class doesn't allow for
-removal of elements, we could simply append to the CDF vector each time a new
-object is added. My concern here is that to manage exclusions, we would still
-need to either constantly recalculate the CDF after each sample or keep
-sampling while maintaining an exclusion set. The former will burn through CPU
-cycles and the latter can take a very long time in the pathological case of a
-fitness_value=1 disk being the only valid candidate. Also, Jaya's initial
-concern that sparked this whole thing (do we need multiple vectors?) is still
-there, we'd need a CDF vector as well as a weight vector (unless we want to
-keep recalculating the fitness of each object).
+Vitter showed that the probability of selecting an item after i iterations of
+the algorithm is k/i. This is not directly useful for my investigation into
+weighted random sampling; however, Efraimidis and Spirakis [12] use a variation of
+this that utilizes random sort and weights to accomplish a weighted-random
+variation of reservoir sampling. This is explained in the next section.
 
-There is also an O(1) optimization using the alias method, but this:
+##### Weighted Random Sampling via Reservoir
 
-* Doesn't address Jaya's concern of multiple vectors since we would need both a probability table AND an alias table.
-* Is expensive. The two tables need to be rebuilt for each addition to the WeightedVector and each recalculation of fitness values (5 secs right now). 
+This algorithm performs a weighted random selection via the use of a priority
+queue data structure. To sample k elements from a set/stream, the algorithm
+is summarized using the following pseudocode:
+```
+While the stream has data:
+  r = InclusiveRandom(0,1) ** (1 / element_weight)
+  if p_queue.Size() < k:
+    p_queue.Insert(r, element)
+  else:
+    p_queue.PopMin()
+    p_queue.Insert(r, element)
+```
 
-##### Stochastic Acceptance
-
-A much simpler variation on the standard FPS algorithm is a "stochastic
-acceptance" method where we just loop through all objects in the set and choose
-one with a probability of (fitness_value / fitness_value_sum). This is great
-for constantly changing fitness values, but would still require an exclusion
-set and could take a long time in the pathological fitness=1 case mentioned a
-few times. 
+Efraimidis and Spirakis proved that the resulting priority queue will contain a
+set of k elements whose probability of being included with the set is
+proportional to their weights.
 
 Testing and Benchmarks
 ======================
@@ -245,8 +267,7 @@ Bibliography
 ------------
  TODO: format the ciations correctly
 
-1. Poitras, S. (2015, November 11). The Nutanix Bible - NutanixBible.com.
-Retrieved February 15, 2016, from http://nutanixbible.com/
+1. Poitras, S. (2015, November 11). The Nutanix Bible - NutanixBible.com. Retrieved February 15, 2016, from http://nutanixbible.com/
 
 2.  Lakshman, A., & Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/
 
@@ -261,6 +282,16 @@ Retrieved February 15, 2016, from http://nutanixbible.com/
 7. Jin, H., Yang, X., Sun, X. H., & Raicu, I. (2012, June). Adapt: Availability-aware mapreduce data placement for non-dedicated distributed computing. In Distributed Computing Systems (ICDCS), 2012 IEEE 32nd International Conference on (pp. 516-525). IEEE.
 
 8. Perez, J. M., Garcia, F., Carretero, J., Calderon, A., & Sanchez, L. M. (2003, May). Data allocation and load balancing for heterogeneous cluster storage systems. In Cluster Computing and the Grid, 2003. Proceedings. CCGrid 2003. 3rd IEEE/ACM International Symposium on (pp. 718-723). IEEE.
+
+9. Schlierkamp-Voosen, D., & Mühlenbein, H. (1993). Predictive models for the breeder genetic algorithm. Evolutionary Computation, 1(1), 25-49.
+
+10. Baker, J. E. (1987, July). Reducing bias and inefficiency in the selection algorithm. In Proceedings of the second international conference on genetic algorithms (pp. 14-21).
+
+11. Vitter, J. S. (1985). Random sampling with a reservoir. ACM Transactions on Mathematical Software (TOMS), 11(1), 37-57.
+
+12. Efraimidis, P. S., & Spirakis, P. G. (2006). Weighted random sampling with a reservoir. Information Processing Letters, 97(5), 181-185.
+
+13. Chao, M. T. (1982). A general purpose unequal probability sampling plan.  Biometrika, 69(3), 653-656.
 
 Glossary
 --------
