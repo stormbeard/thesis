@@ -73,6 +73,17 @@ availability-aware data placement algorithm to avoid those nodes. This proves
 useful for performance by avoiding faulty nodes that could fail mid-task and
 cause data transfers and re-calculation of data.
 
+TODO: Paper Amod sent over.
+
+Nutanix Distributed Filesystem
+==============================
+
+TODO
+
+### Disk Stats Aggregation
+
+TODO
+
 Thesis Project Description
 --------------------------
 
@@ -95,23 +106,45 @@ disk such as disk fullness and queue depth. These fitness values are to be used
 to rank each disk when selecting where the Stargate will place data. This
 should mitigate many problems seen with heterogeneous Nutanix clusters.
 
-### Disk Stats Aggregation
+### Fitness Values
 
-TODO:
-This is already in place and not part of the proposed thesis project. Worth mentioning.
+A fitness value is a number calculated from the disk stats found in the NDFS
+metadata store. During every Stargate stats update, new usage and performance
+stats for each disk are pulled from the Cassandra database and stored in
+Stargate memory at some periodic interval. For the work described in this
+proposal, the stats used will be disk fullness percentage (fp) and disk queue
+length (ql) in a function that defines fitness value as:
 
-### Fitness Value Calculation
+TODO: latex
+```
+  f = w1 * (fp / 100) ^ (1/2) + w2 * max(200 - ql, 0) / 200
+```
 
-TODO: Available stats, find what really matters, potential problems (hot spots).
+The w1 and w2 variables are the weights for the disk fullness and queue length
+terms respectively. These can be thought of as the maximum value allowed to be
+contributed to the fitness value for each stat.
+
+Disk queue length is the average number of Stargate operations in flight for
+the duration of the last round of gathered statistics. A value of 200
+operations was chosen as the ceiling, so if there anything higher than this
+will not contribute to the fitness value.
+
+Since fitness values are used as weights during disk selection, an exponential
+decay function was chosen for the disk fullness term because it provides a
+property such that if two disks have some usage percentage differential, there
+is a consistent relationship between the selection probabilities. For example,
+the difference in selection probability for two disks that have a usage
+percentage of 10% and 20% will be the same for two disks that have a usage
+percentage of 50% and 60%.
 
 ### Weighted Random Selection Algorithms
 
 Part of this work will be an exploration of various weighted random selection
-algorithms and an analysis of their behavior and performance under various
-workloads and conditions. After a weight is calculated for a disk in the
-cluster that will store a replica, we must perform a weighted random selection
-on the set of potential candidate disks. The schemes we will explore in this
-work are summarized in the next section.
+algorithms that allow for a weighted "N choose 2" and an analysis of their
+behavior and performance under various workloads and conditions. After a weight
+is calculated for a disk in the cluster that will store a replica, we must
+perform a weighted random selection on the set of potential candidate disks.
+The schemes we will explore in this work are summarized in the next section.
 
 Upon implementation of various selection algorithms, it will be necessary to
 perform simulations of pathological cases in weighted random selection and
@@ -195,6 +228,14 @@ While the stream has data:
 Efraimidis and Spirakis proved that the resulting priority queue will contain a
 set of k elements whose probability of being included with the set is
 proportional to their weights.
+
+### Weighted Random Selection Alternatives
+
+I will also explore various ways to use the fitness values for very large sets
+of disks. For example, when it's not feasible to perform a linear or
+logarithmic selection from the set of disks, we can select 2 or 3 disks and
+choose the disk with the largest fitness value. This can be compared with the
+performance of the weighted sampling algorithms.
 
 Testing and Benchmarks
 ======================
@@ -350,4 +391,3 @@ Appendix
 TODO
 
 [//]: # (Markdown cheatsheet: https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
-
