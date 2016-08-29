@@ -404,23 +404,23 @@ Preliminary Schedule
 --------------------
 | Task          | Time in Weeks |
 | ------------- |:-------------:|
-| CODE: Fio workload scripts | 1 week |
+| CODE: Fio workload scripts | < 1 week |
 | CODE: Workload VM deployment tool | 2 weeks |
 | CODE: Workload data analysis scripts | 1 weeks |
 | WRITE: Synthetic workload section of thesis | 2 weeks |
-| MILESTONE: Workload generation complete | |
+| MILESTONE: Workload generation complete | ----- |
 | CODE: Fitness function framework for use with replica placement | 2 weeks |
 | WRITE: NDFS fitness function implementation section of thesis | 2 week |
 | CODE: Implement weighted random selection algorithms | 1 week |
 | TEST/BENCHMARK: Weighted random pathological case unit test and evaluation | 1 week |
 | WRITE: Weighted random and pathological case section of thesis | 1 week |
-| CODE: Use disk usage and performance stats for placement decisions | 1 week |
+| CODE: Use disk usage and performance stats for placement decisions | < 1 week |
 | TEST: Basic unit test simulations to sanity check fitness function | 1 week |
-| MILESTONE: Adaptive data placement implementation complete | |
+| MILESTONE: Adaptive data placement implementation complete | ----- |
 | TEST: Add instrumentation to code base to troubleshoot odd behavior | < 1 week |
 | WRITE: Unit test simulation and instrumentation section of thesis | 1 week |
 | BENCHMARK: Generate workloads on multiple clusters and analyze the improvements | 2 weeks |
-| MILESTONE: Testing and benchmarking on multiple clusters complete | |
+| MILESTONE: Testing and benchmarking on multiple clusters complete | ----- |
 | WRITE: Benchmark results section of thesis (include analysis of algorithms) | 2 weeks |
 | WRITE: Conclusions and future work | 1 week |
 | WRITE: Introduction, Prior work | 2 weeks |
@@ -428,7 +428,7 @@ Preliminary Schedule
 | WRITE: Finish thesis write-up | 2 weeks |
 | THESIS APPROVAL | 4 weeks |
 
-Approximate time to completion: 30 weeks
+Approximate time to completion: 28 weeks
 
 Bibliography
 ------------
@@ -464,8 +464,6 @@ Bibliography
 
 Glossary
 --------
-
-* **Extent Store** - Persistent storage for the NDFS.
 
 * **Guest VM** - A virtual machine hosted on a hypervisor that is serviced by
   the CVM.
