@@ -176,10 +176,10 @@ Adaptive Data Placement
 
 To remedy the problems that arise from hetereogeneous cluster configurations
 discussed in the previous section, I plan to implement an adaptive replica
-placement algorithm for the Nutanix distributed filesystem. This algorithm uses
-a "fitness value" that is calculated from various statistics available for each
-disk such as disk fullness and queue depth. These fitness values are to be used
-to rank each disk when selecting where the Stargate will place data. This
+placement algorithm for the Nutanix distributed file system. This algorithm
+uses a "fitness value" that is calculated from various statistics available for
+each disk such as disk fullness and queue depth. These fitness values are to be
+used to rank each disk when selecting where the Stargate will place data. This
 should mitigate many problems seen with heterogeneous Nutanix clusters.
 
 ### Fitness Values
@@ -268,7 +268,7 @@ Reservoir sampling describes an entire family of stochastic algorithms for
 randomly sampling items from a very large set. Typically, the number of
 elements in the set is so large that it cannot fit into main memory. This
 summary will only focus on non-distributed reservoir sampling; therefore, the
-work of M.T. Chao [13] is ommitted.
+work of M.T. Chao [13] is omitted.
 
 ##### Algorithm R
 
@@ -335,7 +335,7 @@ and has multiple community samples, but the choice in programming language will
 be strictly limited to Python.
 
 Once a virtual machine is deployed, it must generate I/O in a configurable
-manner. For this, I will use fio, a tool that wil spawn a number of threads or
+manner. For this, I will use fio, a tool that will spawn a number of threads or
 processes to generate I/O. This will allow for repeatability of various
 workloads with specific read/write ratios, queue depths, run times, and working
 sets. My tool will connect to each virtual machine simultaneously via SSH and
@@ -367,8 +367,7 @@ availability-aware data placement algorithm to avoid those nodes. This proves
 useful for performance by avoiding faulty nodes that could fail mid-task and
 cause data transfers and re-calculation of data.
 
-TODO: Paper Amod sent over.
-
+TODO: C3 paper
 
 Hardware Requirements
 ---------------------
@@ -432,7 +431,7 @@ Approximate time to completion: 28 weeks
 
 Bibliography
 ------------
- TODO: format the ciations correctly
+ TODO: format the citations correctly
 
 1. Poitras, S. (2015, November 11). The Nutanix Bible - NutanixBible.com. Retrieved February 15, 2016, from http://nutanixbible.com/
 
