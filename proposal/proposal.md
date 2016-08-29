@@ -148,28 +148,30 @@ Considering that a write is not complete until both copies (in an RF2 cluster)
 are written, the write's performance is at the mercy of the slowest disk/node
 combination. There are several scenarios, both pathological and daily
 occurences, where a more robust replica placement heuristic is required.
+To show the problems faced, I will focus on two orthogonal cases which many
+other scenarios are a combination of.
 
 ### Interfering Workloads
 
-TODO
+Suppose we have a 3-node homogeneous cluster with only 2 nodes hosting active
+workloads. In the current random selection scheme in use by the NDFS, writes
+are equally likely to place their replica on the other node with an active
+workload as they would be to place it on the idle node. This can impact
+performance on both the local and remote workload. An adaptive replica
+placement scheme would avoid the busy node and place its remote replica on the
+idle node.
 
 ### Nodes with Severe Tier Disparities
 
-TODO
-
-#### All-flash Mixed with Hybrid Nodes
-
-TODO
-
-#### Storage-only Nodes Mixed with Workloads
-
-TODO
-
-
-TODO: Heterogeneous cluster use-cases and problems that arise.
-* Aging clusters and expansion over time. Different generations of nodes.
-* Mixing all-flash with hybrid HDD/SSD nodes.
-* Mixing in storage-only nodes with heavy HDD
+Let's imagine we have a 3-node heterogeneous cluster with 2 high-end nodes and
+a single weak node. Suppose these high-end nodes have 500GB of SSD tier and 6TB
+of HDD tier and the single weak node has only 128GB of SSD tier and 1TB of HDD
+tier. If 3 simultaneous workloads were to generate data such that the working
+sets of the workloads are 50% of the local SSD tier, the weaker node is at a
+great disadvantage. Given the current NDFS replica selection algorithm, we can
+expect 500GB of replica traffic to flood the weak node and fill up its SSD tier
+well before the workload is finished. An adaptive replica placement heuristic
+would mitigate this issue by taking disk usages into consideration.
 
 Adaptive Data Placement
 =======================
@@ -241,10 +243,10 @@ disks. To avoid selecting the same disk from the set multiple times, it will be
 required that an exclusion scheme be employed. The way I will handle this is to
 simply remove the object from the sampling set if it is determined unsuitable
 for the purposes we're performing selection for. A more concrete example would
-be as follows, suppose we have N objects (x~1~, x~2~, ..., x~n~) in an array
+be as follows, suppose we have N objects (x_1, x_2, ..., x_n) in an array
 (A) that represents the top T% of the total set. If we were to perform a
-uniform random selection from this subset and yield x~2~, I would simply swap
-x~2~ with the first element in the array x~1~ and only consider the elements in
+uniform random selection from this subset and yield x_2, I would simply swap
+x_2 with the first element in the array x_1 and only consider the elements in
 A[1:]. This scheme is worst-case O(N) and guarantees that some fixed percentage
 of the weaker candidates will not be selected.
 
@@ -318,7 +320,7 @@ Testing and Benchmarks
 
 ### Testing Replica Selection via Synthetic Workload Generation
 
-Do determine the viability of various fitness function parameters in different
+To determine the viability of various fitness function parameters in different
 heterogeneous cluster topologies, I will need repeatedly simulate specific
 workloads on varying hardware configurations. A tool must be written to deploy
 virtual machines on each node in the cluster and run a workload similar to
@@ -367,7 +369,7 @@ availability-aware data placement algorithm to avoid those nodes. This proves
 useful for performance by avoiding faulty nodes that could fail mid-task and
 cause data transfers and re-calculation of data.
 
-TODO: C3 paper
+TODO: C3 paper from FAST. This one is eerily similar to this proposal.
 
 Hardware Requirements
 ---------------------
