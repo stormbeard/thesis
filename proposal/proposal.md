@@ -47,48 +47,124 @@ improve performance [5][6][7][8]. In this paper, I propose an adaptive data
 placement implementation for the Nutanix file system, aiming to improve
 performance in heterogeneous clusters using the NDFS.
 
-The Nutanix Distributed Filesystem
-==================================
+The Nutanix Distributed File System
+===================================
 
-TODO
+The Nutanix Distributed File System (NDFS) is a distributed file system created
+by Nutanix Inc., a San Jose based company [1]. The NDFS is facilitated by a
+clustering of controller virtual machines (CVMs) which reside, one per node, on
+each server in the cluster. The CVM presents via NFS, SMB, or iSCSI an
+interface to each hypervisor that they reside on. For example, the interface
+provided by the CVMs to VMware's ESXi hypervisor [14] will be interfaced with
+as a datastore. The virtual machines' VMDK files will reside on the Nutanix
+datastore and be accessed via NFS through the CVM sharing a host with the user
+VM.
 
-Related Work
-============
+### Nutanix Cluster Components
 
-Xie et. al. showed that data placement schemes based on the computing
-capacities of nodes in the Hadoop Distributed File System (HDFS) [5]. These
-computing capacities are determined for each node in the cluster by profiling a
-target application leveraging the HDFS. Their MapReduced wordcount and grep
-results showed up to a 33.1% reduction in response time. Similarly, Perez et.
-al. applied adaptive data placement features to the Expand parallel file system
-based on available free space [8]. Though effective in their given contexts,
-the main drawback to this work is that it assumes the specific application is
-working without interference and does not account for other workloads on the
-system.
+Within the CVM lies an ecosystem of processes that work together to provide
+NDFS services. Before I can explain the work proposed for this thesis, there
+are two CVM processes that must be explained in more detail.
 
-One adaptive data placement approach that can account for other workloads on
-the system was introduced by Jin et. al. in their work on ADAPT [7]. The work
-predicts how failure-prone a node in a MapReduce cluster is and advises their
-availability-aware data placement algorithm to avoid those nodes. This proves
-useful for performance by avoiding faulty nodes that could fail mid-task and
-cause data transfers and re-calculation of data.
+#### Cassandra (Distributed Metadata Store)
 
-TODO: Paper Amod sent over.
+Cassandra stores and manager all cluster metadata in a distributed manner. The
+version of Cassandra running in the NDFS is a heavily modified Apache
+Cassandra. One of the main differences between Nutanix Cassandra and Apache
+Cassandra is that Nutanix has implemented the Paxos algorithm to enforce strict
+consistency.
 
-Nutanix Distributed Filesystem
-==============================
+#### Stargate (Data I/O Manager)
 
-TODO
+The Stargate process is responsible for all data management and I/O operations.
+The NFS/SMB/iSCSI interface presented to the hypervisor is also presented by
+Stargate. All file allocations and data replica placement decisions are also
+made by this process.
 
-### Disk Stats Aggregation
+As the Stargate process facilitates writes to disks, it gathers statistics for
+each disk such as:
 
-TODO
+* The number of operations currently in flight on the disk (queue length)
+* How much data in bytes currently resides on the disk
+* Average time to complete an operation on the disk
+
+Note that these statistics are only gathered on the local disks; however, they
+are then stored in Cassandra along with the statistics gathered by every other
+Stargate in the cluster. These disk statistics stored in Cassandra are pulled
+periodically (currently every 30 seconds) and are then used to make decisions
+on data placement when performing writes.
+
+### Storage Tiering
+
+Nutanix clusters are composed of servers that contain both SSDs and HDDs. These
+disks obviously have a very large performance differential, so the NDFS has a
+notion of storage tiers. Each storage tier contains similar groupings of disks
+so that the NDFS can migrate "cold" or unused data from a tier containing fast
+disks (such as SSDs or NVMe drives) down to a tier containing slower disks
+(such as HDDs). This allows for optimizations in the file system such as
+a persistent write buffer that only writes to SSDs and coalesces data to
+before down-migrating to the HDDs via a single large, sequential write.
+Stargate's data placement decisions are performed on a per-tier basis.
+
+### Replica Disk Selection
+
+When a write is made in the NDFS, data is written to multiple disks. The number
+of data replicas is determined by a configurable setting called the Replication
+Factor (RF). In an RF2 cluster, Stargate will attempt to place data on a local
+disk and another copy of the data on a disk that resides on a remote node. This
+will prevent data loss scenarios if a single node were to fail.
+
+Currently, Stargate will attempt to select a number of disks corresponding to
+the cluster RF that satisfy the following criteria:
+
+* No two disks may reside on the same node.
+* If there is a set of disks on the local node that can house a replica, choose one of those disks.
+
+The disk selection logic is implemented via a random selection of all disks in
+the storage tier. When a disk is selected, a node exclusion is asserted for
+subsequent candidate disks so that we do not select two disks on the same node.
+
+This selection methodology can be problematic for heterogeneous clusters since
+it inherently assumes all disks in a specific tier are under similar load and
+that each node can drive the same amount of writes to its disks.
 
 Thesis Project Description
 --------------------------
 
 Motivation
 ==========
+
+A number of scenarios arise in heterogeneous Nutanix clusters that can degrade
+performance for an entire cluster. The currently replica disk selection logic
+Stargate uses does not take into account a number of variables. For example,
+there can be disparities in the following:
+
+* Tier size
+* CPU strength
+* Running workload
+* Disk health
+
+Considering that a write is not complete until both copies (in an RF2 cluster)
+are written, the write's performance is at the mercy of the slowest disk/node
+combination. There are several scenarios, both pathological and daily
+occurences, where a more robust replica placement heuristic is required.
+
+### Interfering Workloads
+
+TODO
+
+### Nodes with Severe Tier Disparities
+
+TODO
+
+#### All-flash Mixed with Hybrid Nodes
+
+TODO
+
+#### Storage-only Nodes Mixed with Workloads
+
+TODO
+
 
 TODO: Heterogeneous cluster use-cases and problems that arise.
 * Aging clusters and expansion over time. Different generations of nodes.
@@ -109,7 +185,7 @@ should mitigate many problems seen with heterogeneous Nutanix clusters.
 ### Fitness Values
 
 A fitness value is a number calculated from the disk stats found in the NDFS
-metadata store. During every Stargate stats update, new usage and performance
+metadata store. During every NDFS disk stats update, new usage and performance
 stats for each disk are pulled from the Cassandra database and stored in
 Stargate memory at some periodic interval. For the work described in this
 proposal, the stats used will be disk fullness percentage (fp) and disk queue
@@ -233,9 +309,9 @@ proportional to their weights.
 
 I will also explore various ways to use the fitness values for very large sets
 of disks. For example, when it's not feasible to perform a linear or
-logarithmic selection from the set of disks, we can select 2 or 3 disks and
-choose the disk with the largest fitness value. This can be compared with the
-performance of the weighted sampling algorithms.
+logarithmic selection from the set of disks, we can select some number of disks
+that match our criteria and choose the disk with the largest fitness value.
+This can be compared with the performance of the weighted sampling algorithms.
 
 Testing and Benchmarks
 ======================
@@ -269,6 +345,30 @@ After the fio scripts have finished running, the workload generation tool must
 aggregate various performance statistics gathered by the fio processes running
 on each virtual machine. This can then be analyzed at a later time after the
 clusters are torn down.
+
+Related Work
+------------
+
+Xie et. al. showed that data placement schemes based on the computing
+capacities of nodes in the Hadoop Distributed File System (HDFS) [5]. These
+computing capacities are determined for each node in the cluster by profiling a
+target application leveraging the HDFS. Their MapReduced wordcount and grep
+results showed up to a 33.1% reduction in response time. Similarly, Perez et.
+al. applied adaptive data placement features to the Expand parallel file system
+based on available free space [8]. Though effective in their given contexts,
+the main drawback to this work is that it assumes the specific application is
+working without interference and does not account for other workloads on the
+system.
+
+One adaptive data placement approach that can account for other workloads on
+the system was introduced by Jin et. al. in their work on ADAPT [7]. The work
+predicts how failure-prone a node in a MapReduce cluster is and advises their
+availability-aware data placement algorithm to avoid those nodes. This proves
+useful for performance by avoiding faulty nodes that could fail mid-task and
+cause data transfers and re-calculation of data.
+
+TODO: Paper Amod sent over.
+
 
 Hardware Requirements
 ---------------------
@@ -359,6 +459,8 @@ Bibliography
 12. Efraimidis, P. S., & Spirakis, P. G. (2006). Weighted random sampling with a reservoir. Information Processing Letters, 97(5), 181-185.
 
 13. Chao, M. T. (1982). A general purpose unequal probability sampling plan.  Biometrika, 69(3), 653-656.
+
+14. http://www.vmware.com/products/esxi-and-esx.html # TODO: fix this
 
 Glossary
 --------
