@@ -42,10 +42,21 @@ homogeneous constituents due to their random data placement strategies. Not all
 machines are equal, so one cannot expect for MapReduce tasks to be completed at
 the same time, or high performance Nutanix file system writes to be as fast as
 they would be in a homogeneous cluster. It has been shown that having a
-platform which proactively balances the workload based on node capabilities can
-improve performance [5][6][7][8]. In this paper, I propose an adaptive data
-placement implementation for the Nutanix file system, aiming to improve
-performance in heterogeneous clusters using the NDFS.
+platform which proactively balances the file system workload based on node
+capabilities can improve performance [5][6][7][8]. In this document, I propose
+an adaptive data placement implementation for the Nutanix file system, aiming
+to improve performance in heterogeneous clusters using the NDFS.
+
+Distributed File Systems and Data Placement Overview
+====================================================
+
+### Hadoop Distributed File System (HDFS)
+
+TODO [15]
+
+### Ceph
+
+TODO [16]
 
 The Nutanix Distributed File System
 ===================================
@@ -202,10 +213,26 @@ The w1 and w2 variables are the weights for the disk fullness and queue length
 terms respectively. These can be thought of as the maximum value allowed to be
 contributed to the fitness value for each stat.
 
+#### Metrics: Disk Queue Length
+
 Disk queue length is the average number of Stargate operations in flight for
 the duration of the last round of gathered statistics. A value of 200
 operations was chosen as the ceiling, so if there anything higher than this
-will not contribute to the fitness value.
+will not contribute to the fitness value. I've chosen to use this metric in the
+fitness function due to the fact that it may be used across different types of
+drive technologies without needing to change the default "worst-case" values
+used when there is a failure gathering disk stats. If I were to use average
+times for op completion, there would be a need to consider the type of drive
+whose fitness is being measured. This metric combats the interfering workload
+problem seen in both heterogeneous and homogeneous clusters.
+
+#### Metrics: Disk Fullness
+
+Disk fullness percentages are used in the fitness calculation so that disk
+utilization remains mostly uniform as workloads generate data. Some
+heterogeneous clusters include storage-heavy nodes with many large capacity
+disks alongside nodes with low storage capcity. This metric combats the tier
+disparity problem seen in heterogeneous clusters.
 
 Since fitness values are used as weights during disk selection, an exponential
 decay function was chosen for the disk fullness term because it provides a
@@ -226,7 +253,8 @@ The schemes we will explore in this work are summarized in the next section.
 
 Upon implementation of various selection algorithms, it will be necessary to
 perform simulations of pathological cases in weighted random selection and
-evaluate the chances of encountering these in day-to-day file system operations.
+evaluate the chances of encountering these in day-to-day file system operations
+and realistic workloads.
 
 #### Trucation Selection
 
@@ -284,9 +312,10 @@ sample k items as follows:
 
 Vitter showed that the probability of selecting an item after i iterations of
 the algorithm is k/i. This is not directly useful for my investigation into
-weighted random sampling; however, Efraimidis and Spirakis [12] use a variation of
-this that utilizes random sort and weights to accomplish a weighted-random
-variation of reservoir sampling. This is explained in the next section.
+weighted random sampling; however, it is useful to give an overview of this
+algorithm since Efraimidis and Spirakis [12] use a variation of AlgorithmR that
+utilizes random sort and weights to accomplish a weighted-random variation of
+reservoir sampling. This is explained in the next section.
 
 ##### Weighted Random Sampling via Reservoir
 
@@ -462,6 +491,10 @@ Bibliography
 13. Chao, M. T. (1982). A general purpose unequal probability sampling plan.  Biometrika, 69(3), 653-656.
 
 14. http://www.vmware.com/products/esxi-and-esx.html # TODO: fix this
+
+15. Borthakur, D. (2008). HDFS architecture guide. HADOOP APACHE PROJECT http://hadoop. apache. org/common/docs/current/hdfs design. pdf, 39.
+
+16. Weil, S. A., Brandt, S. A., Miller, E. L., Long, D. D., & Maltzahn, C.  (2006, November). Ceph: A scalable, high-performance distributed file system. In Proceedings of the 7th symposium on Operating systems design and implementation (pp. 307-320). USENIX Association.
 
 Glossary
 --------
