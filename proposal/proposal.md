@@ -64,12 +64,13 @@ The Nutanix Distributed File System
 The Nutanix Distributed File System (NDFS) is a distributed file system created
 by Nutanix Inc., a San Jose based company [1]. The NDFS is facilitated by a
 clustering of controller virtual machines (CVMs) which reside, one per node, on
-each server in the cluster. The CVM presents via NFS, SMB, or iSCSI an
-interface to each hypervisor that they reside on. For example, the interface
-provided by the CVMs to VMware's ESXi hypervisor [14] will be interfaced with
-as a datastore. The virtual machines' VMDK files will reside on the Nutanix
-datastore and be accessed via NFS through the CVM sharing a host with the user
-VM.
+each server in the cluster. The CVM presents via NFS (for VMWare's ESXi
+[TODO]), SMB (for Microsoft's Hyper-V [TODO[), or iSCSI (for Nutanix's AHV
+[TODO]) an interface to each hypervisor that they reside on. For example, the
+interface provided by the CVMs to VMware's ESXi hypervisor [14] will be
+interfaced with as a datastore. The virtual machines' VMDK files will reside on
+the Nutanix datastore and be accessed via NFS through the CVM sharing a host
+with the user VM.
 
 ### Nutanix Cluster Components
 
@@ -81,7 +82,7 @@ are two CVM processes that must be explained in more detail.
 
 Cassandra stores and manager all cluster metadata in a distributed manner. The
 version of Cassandra running in the NDFS is a heavily modified Apache
-Cassandra. One of the main differences between Nutanix Cassandra and Apache
+Cassandra [2]. One of the main differences between Nutanix Cassandra and Apache
 Cassandra is that Nutanix has implemented the Paxos algorithm to enforce strict
 consistency.
 
@@ -113,9 +114,9 @@ notion of storage tiers. Each storage tier contains similar groupings of disks
 so that the NDFS can migrate "cold" or unused data from a tier containing fast
 disks (such as SSDs or NVMe drives) down to a tier containing slower disks
 (such as HDDs). This allows for optimizations in the file system such as
-a persistent write buffer that only writes to SSDs and coalesces data to
-before down-migrating to the HDDs via a single large, sequential write.
-Stargate's data placement decisions are performed on a per-tier basis.
+a persistent write buffer that only sends random writes to SSDs and coalesces
+data to before down-migrating to the HDDs via a single large and sequential
+write. Stargate's data placement decisions are performed on a per-tier basis.
 
 ### Replica Disk Selection
 
@@ -158,9 +159,9 @@ there can be disparities in the following:
 Considering that a write is not complete until both copies (in an RF2 cluster)
 are written, the write's performance is at the mercy of the slowest disk/node
 combination. There are several scenarios, both pathological and daily
-occurences, where a more robust replica placement heuristic is required.
-To show the problems faced, I will focus on two orthogonal cases which many
-other scenarios are a combination of.
+occurences, where a more robust replica placement heuristic is required.  For
+the work in this thesis proposal, I will focus on two orthogonal cases
+described below.
 
 ### Interfering Workloads
 
@@ -244,12 +245,12 @@ percentage of 50% and 60%.
 
 ### Weighted Random Selection Algorithms
 
-Part of this work will be an exploration of various weighted random selection
+Part of this work will require an exploration of various weighted random selection
 algorithms that allow for a weighted "N choose 2" and an analysis of their
 behavior and performance under various workloads and conditions. After a weight
 is calculated for a disk in the cluster that will store a replica, we must
 perform a weighted random selection on the set of potential candidate disks.
-The schemes we will explore in this work are summarized in the next section.
+The schemes I will explore in this work are summarized in the next section.
 
 Upon implementation of various selection algorithms, it will be necessary to
 perform simulations of pathological cases in weighted random selection and
@@ -398,7 +399,36 @@ availability-aware data placement algorithm to avoid those nodes. This proves
 useful for performance by avoiding faulty nodes that could fail mid-task and
 cause data transfers and re-calculation of data.
 
-TODO: C3 paper from FAST. This one is eerily similar to this proposal.
+Work by Suresh et. al. approaches adaptive replica selection in much the same
+way proposed in this paper, though their work was mainly focused on decreasing
+tail latencies for Cassandra reads [17]. Their load balancing algorithm, C3,
+incorporates the concept of a value calculated from request feedback from their
+servers that allows for decisions to be made on server selection. In addition
+to the ranking function in C3, they implemented a distributed rate control
+mechanism to prevent scenarios where many individual clients can bombard a
+single highly desirable server with requests. Many of the same problems the
+work in this proposal seeks to remedy are also addressed by the C3 algorithm;
+however, given the Nutanix file system's architecture, some C3 solutions are
+not feasible.
+
+The C3 algorithm takes into account the request queue length of certain servers
+in much the same way my work will use disk queue lengths, but in addition
+Suresh et. al. factor in the service latencies of each server so that they may
+consider a different ideal queue length for each server. With this approach,
+longer service times will warrant a lower queue length and vice versa. This
+is beneficial for scenarios where there are multiple different underlying
+storage technologies such as NVMe drives, SSDs, and HDDs under consideration at
+the same time, but the Nutanix file system's architecture does not allow for
+multiple replicas to span storage tiers. This forces the ideal queue lengths
+for each selection pool to be the same, so my work does not incorporate service
+latencies in the fitness value calculations.
+
+Herding of requests to a single highly suitable server is a problem that arises
+in any replica ranking algorithm. C3 mitigates this issue by rate limiting
+client requests to each server via a decentralized calculation using a
+configured time interval and local sending rate information. I've opted to use
+a simpler probabilistic spreading of client requests via selecting remote nodes
+using a weighted random selection tied to the calculated fitness values.
 
 Hardware Requirements
 ---------------------
@@ -419,6 +449,10 @@ The hardware required for each problem is shown the table below:
 | Storage-only node performance | Storage-only Nutanix nodes |
 | Heterogeneous hybrid cluster performance | 1x weak hybrid node, 2x strong hybrid node |
 | Heterogeneous hybrid and all flash cluster performance | 1x all-flash node, 2x any hybrid node |
+
+Storage tier size differentials can be simulated via modification of the
+Nutanix file system, but if the hardware is available, it makes the most sense
+to use real hardware to run the automated benchmarks.
 
 Software Requirements
 ---------------------
@@ -495,6 +529,8 @@ Bibliography
 15. Borthakur, D. (2008). HDFS architecture guide. HADOOP APACHE PROJECT http://hadoop. apache. org/common/docs/current/hdfs design. pdf, 39.
 
 16. Weil, S. A., Brandt, S. A., Miller, E. L., Long, D. D., & Maltzahn, C.  (2006, November). Ceph: A scalable, high-performance distributed file system. In Proceedings of the 7th symposium on Operating systems design and implementation (pp. 307-320). USENIX Association.
+
+17. TODO: C3 paper
 
 Glossary
 --------
