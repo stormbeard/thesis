@@ -5,22 +5,28 @@
 #### Submission Date
 
 #### Cyril Allen
-500 N. Duke St.
+1525 9th Ave., Apt 2601
 
-Apt. 55-305
-
-Durham, NC 27701
+Seattle, WA 98101
 
 [cyril0allen@gmail.com](mailto:cyril0allen@gmail.com)
 
 Tentative Thesis Title
 ----------------------
-TODO
+Improving Data Placement Decisions for Heterogeneous Clustered File Systems
 
 Abstract
 --------
 
-TODO
+Today, many applications such as MapReduce or the Nutanix file system, assume
+homogeneous constituents due to their random data placement strategies. Not all
+machines are equal, so one cannot expect for MapReduce tasks to be completed at
+the same time, or high performance Nutanix file system writes to be as fast as
+they would be in a homogeneous cluster. It has been shown that having a
+platform which proactively balances the file system workload based on node
+capabilities can improve performance [5][6][7][8]. In this document, I propose
+an adaptive data placement technique for the Nutanix file system, aiming
+to improve performance in heterogeneous clusters using the NDFS.
 
 Introduction
 ------------
@@ -34,51 +40,49 @@ implementation, Hadoop [4], or they can possess a virtualized datacenter
 allowing them to migrate virtual machines between various machines for
 high-availability reasons. As economics change for hardware, it is likely a
 scalable cloud will have the requirement to mix node types, which will lead to
-higher performance/capacity nodes being mixed with lower performance (e.g.:
-SATA SSD w/ NVMe SSD) and capacity HDD nodes.
-
-Today, many applications such as MapReduce or the Nutanix file system, assume
-homogeneous constituents due to their random data placement strategies. Not all
-machines are equal, so one cannot expect for MapReduce tasks to be completed at
-the same time, or high performance Nutanix file system writes to be as fast as
-they would be in a homogeneous cluster. It has been shown that having a
-platform which proactively balances the file system workload based on node
-capabilities can improve performance [5][6][7][8]. In this document, I propose
-an adaptive data placement implementation for the Nutanix file system, aiming
-to improve performance in heterogeneous clusters using the NDFS.
+higher performance/capacity nodes being mixed with lower performance/capacity
+HDD nodes. I seek to implement an adaptive data placement algorithm in the
+Nutanix distributed file system which attempts to remedy the common problems
+found in many heterogeneous clustered file systems. Before one can understand
+the performance problems that can be found in these mixed-node clusters, I must
+first given an overview of common clustered file systems found today.
 
 Distributed File Systems and Data Placement Overview
 ====================================================
 
 ### Hadoop Distributed File System (HDFS)
 
-TODO [15]
+HDFS is an open source distributed filesystem written in Java that is used by
+Hadoop clusters for storing large volumes of data [15]. An HDFS cluster is
+comprised of a single NameNode and DataNodes which respectively manage cluster
+metadata and store the data. The file system stores files as a sequence of
+same-size blocks that are replicated across DataNodes to provide fault
+tolerance in the event of node failures. Decisions regarding the replication
+and placement of blocks of data are made by the NameNode. Since large HDFS
+clusters will span multiple racks, replica placement within HDFS is made in a
+rack-aware manner to improve data reliability and network utilization. As of
+HDFS version 1.2.1, there is no additional data placement intelligence.
 
-### Ceph
-
-TODO [16]
-
-The Nutanix Distributed File System
-===================================
+### The Nutanix Distributed File System
 
 The Nutanix Distributed File System (NDFS) is a distributed file system created
 by Nutanix Inc., a San Jose based company [1]. The NDFS is facilitated by a
 clustering of controller virtual machines (CVMs) which reside, one per node, on
 each server in the cluster. The CVM presents via NFS (for VMWare's ESXi
-[TODO]), SMB (for Microsoft's Hyper-V [TODO[), or iSCSI (for Nutanix's AHV
-[TODO]) an interface to each hypervisor that they reside on. For example, the
+[14]), SMB (for Microsoft's Hyper-V [17]), or iSCSI (for Nutanix's AHV
+[1]) an interface to each hypervisor that they reside on. For example, the
 interface provided by the CVMs to VMware's ESXi hypervisor [14] will be
 interfaced with as a datastore. The virtual machines' VMDK files will reside on
 the Nutanix datastore and be accessed via NFS through the CVM sharing a host
 with the user VM.
 
-### Nutanix Cluster Components
+#### Nutanix Cluster Components
 
 Within the CVM lies an ecosystem of processes that work together to provide
 NDFS services. Before I can explain the work proposed for this thesis, there
 are two CVM processes that must be explained in more detail.
 
-#### Cassandra (Distributed Metadata Store)
+##### Cassandra (Distributed Metadata Store)
 
 Cassandra stores and manager all cluster metadata in a distributed manner. The
 version of Cassandra running in the NDFS is a heavily modified Apache
@@ -86,7 +90,7 @@ Cassandra [2]. One of the main differences between Nutanix Cassandra and Apache
 Cassandra is that Nutanix has implemented the Paxos algorithm to enforce strict
 consistency.
 
-#### Stargate (Data I/O Manager)
+##### Stargate (Data I/O Manager)
 
 The Stargate process is responsible for all data management and I/O operations.
 The NFS/SMB/iSCSI interface presented to the hypervisor is also presented by
@@ -106,7 +110,7 @@ Stargate in the cluster. These disk statistics stored in Cassandra are pulled
 periodically (currently every 30 seconds) and are then used to make decisions
 on data placement when performing writes.
 
-### Storage Tiering
+#### Storage Tiering
 
 Nutanix clusters are composed of servers that contain both SSDs and HDDs. These
 disks obviously have a very large performance differential, so the NDFS has a
@@ -118,13 +122,15 @@ a persistent write buffer that only sends random writes to SSDs and coalesces
 data to before down-migrating to the HDDs via a single large and sequential
 write. Stargate's data placement decisions are performed on a per-tier basis.
 
-### Replica Disk Selection
+#### Replica Disk Selection
 
 When a write is made in the NDFS, data is written to multiple disks. The number
 of data replicas is determined by a configurable setting called the Replication
 Factor (RF). In an RF2 cluster, Stargate will attempt to place data on a local
-disk and another copy of the data on a disk that resides on a remote node. This
-will prevent data loss scenarios if a single node were to fail.
+disk and another copy of the data on a disk that resides on a remote node.
+Similar to HDFS, the NDFS will also attempt to place data in a rack-aware
+manner. This will prevent data loss scenarios if a single node or rack of
+nodes were to irreperably fail.
 
 Currently, Stargate will attempt to select a number of disks corresponding to
 the cluster RF that satisfy the following criteria:
@@ -205,7 +211,6 @@ Stargate memory at some periodic interval. For the work described in this
 proposal, the stats used will be disk fullness percentage (fp) and disk queue
 length (ql) in a function that defines fitness value as:
 
-TODO: latex
 ```
   f = w1 * (fp / 100) ^ (1/2) + w2 * max(200 - ql, 0) / 200
 ```
@@ -401,7 +406,7 @@ cause data transfers and re-calculation of data.
 
 Work by Suresh et. al. approaches adaptive replica selection in much the same
 way proposed in this paper, though their work was mainly focused on decreasing
-tail latencies for Cassandra reads [17]. Their load balancing algorithm, C3,
+tail latencies for Cassandra reads [16]. Their load balancing algorithm, C3,
 incorporates the concept of a value calculated from request feedback from their
 servers that allows for decisions to be made on server selection. In addition
 to the ranking function in C3, they implemented a distributed rate control
@@ -496,7 +501,6 @@ Approximate time to completion: 28 weeks
 
 Bibliography
 ------------
- TODO: format the citations correctly
 
 1. Poitras, S. (2015, November 11). The Nutanix Bible - NutanixBible.com. Retrieved February 15, 2016, from http://nutanixbible.com/
 
@@ -504,7 +508,7 @@ Bibliography
 
 3. Dean, J., & Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. Communications of the ACM, 51(1), 107-113.
 
-4. hadoop.apache.org # TODO: fix this
+4. Hadoop, A. (2009). Hadoop. 2009-03-06]. http://hadoop. apache. org.
 
 5. Xie, J., Yin, S., Ruan, X., Ding, Z., Tian, Y., Majors, J., ... & Qin, X. (2010, April). Improving mapreduce performance through data placement in heterogeneous hadoop clusters. In Parallel & Distributed Processing, Workshops and Phd Forum (IPDPSW), 2010 IEEE International Symposium on (pp. 1-9). IEEE.
 
@@ -524,40 +528,25 @@ Bibliography
 
 13. Chao, M. T. (1982). A general purpose unequal probability sampling plan.  Biometrika, 69(3), 653-656.
 
-14. http://www.vmware.com/products/esxi-and-esx.html # TODO: fix this
+14. Chaubal, C. (2008). The architecture of vmware esxi. VMware White Paper, 1(7).
 
 15. Borthakur, D. (2008). HDFS architecture guide. HADOOP APACHE PROJECT http://hadoop. apache. org/common/docs/current/hdfs design. pdf, 39.
 
-16. Weil, S. A., Brandt, S. A., Miller, E. L., Long, D. D., & Maltzahn, C.  (2006, November). Ceph: A scalable, high-performance distributed file system. In Proceedings of the 7th symposium on Operating systems design and implementation (pp. 307-320). USENIX Association.
+16. Suresh, L., Canini, M., Schmid, S., & Feldmann, A. (2015). C3: Cutting tail latency in cloud data stores via adaptive replica selection. In 12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15) (pp. 513-527).
 
-17. TODO: C3 paper
+17. Velte, A., & Velte, T. (2009). Microsoft virtualization with Hyper-V. McGraw-Hill, Inc..
 
 Glossary
 --------
 
-* **Guest VM** - A virtual machine hosted on a hypervisor that is serviced by
-  the CVM.
+* **Guest VM** - A virtual machine hosted on a hypervisor that is serviced by the CVM.
 
-* **Hypervisor**
-
-* **iSCSI**
-
-* **KVM**
-
-* **NFS**
+* **Hypervisor** - Software that runs virtual machines.
 
 * **Oplog** - Persistent write buffer that is part of Stargate.
 
-* **RF** - Replication factor. If the cluster is configured as RF(N), there are
-  N copies of all pieces of data distributed across N nodes.
-
-* **RPC** - Remote Process Call
+* **RF** - Replication factor. If the cluster is configured as RF(N), there are N copies of all pieces of data distributed across N nodes.
 
 * **VM** - Virtual Machine
-
-Appendix
---------
-
-TODO
 
 [//]: # (Markdown cheatsheet: https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
