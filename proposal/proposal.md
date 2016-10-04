@@ -2,7 +2,7 @@
 #### For Partial Fulfillment of Requirements For a Master of Liberal Arts Degree
 
 #### Harvard University Extension School
-#### Submission Date
+#### Submission Date TODO
 
 #### Cyril Allen
 1525 9th Ave., Apt 2601
@@ -26,7 +26,7 @@ they would be in a homogeneous cluster. It has been shown that having a
 platform which proactively balances the file system workload based on node
 capabilities can improve performance [5][6][7][8]. In this document, I propose
 an adaptive data placement technique for the Nutanix file system, aiming
-to improve performance in heterogeneous clusters using the NDFS.
+to improve performance in heterogeneous clusters using NDFS.
 
 Introduction
 ------------
@@ -38,14 +38,15 @@ numbers of commodity servers [3]. Many other companies use large scale clusters
 to perform various computational tasks via the the open-source MapReduce
 implementation, Hadoop [4], or they can possess a virtualized datacenter
 allowing them to migrate virtual machines between various machines for
-high-availability reasons. As economics change for hardware, it is likely a
-scalable cloud will have the requirement to mix node types, which will lead to
-higher performance/capacity nodes being mixed with lower performance/capacity
-HDD nodes. I seek to implement an adaptive data placement algorithm in the
-Nutanix distributed file system which attempts to remedy the common problems
-found in many heterogeneous clustered file systems. Before one can understand
-the performance problems that can be found in these mixed-node clusters, I must
-first given an overview of common clustered file systems found today.
+high-availability reasons. As economics change for hardware, it is likely that
+a scalable cloud will have the requirement to mix node types, which will lead
+to higher performance/capacity nodes being mixed with lower
+performance/capacity HDD nodes. I seek to implement an adaptive data placement
+algorithm in the Nutanix distributed file system which will attempt to remedy
+the common problems found in many heterogeneous clustered file systems. Before
+one can understand the performance problems that can be found in these
+mixed-node clusters, they must first be given an overview of common clustered
+file systems.
 
 Distributed File Systems and Data Placement Overview
 ====================================================
@@ -55,7 +56,7 @@ Distributed File Systems and Data Placement Overview
 HDFS is an open source distributed filesystem written in Java that is used by
 Hadoop clusters for storing large volumes of data [15]. An HDFS cluster is
 comprised of a single NameNode and DataNodes which respectively manage cluster
-metadata and store the data. The file system stores files as a sequence of
+metadata and store the data. HDFS stores files as a sequence of
 same-size blocks that are replicated across DataNodes to provide fault
 tolerance in the event of node failures. Decisions regarding the replication
 and placement of blocks of data are made by the NameNode. Since large HDFS
@@ -63,42 +64,41 @@ clusters will span multiple racks, replica placement within HDFS is made in a
 rack-aware manner to improve data reliability and network utilization. As of
 HDFS version 1.2.1, there is no additional data placement intelligence.
 
-### The Nutanix Distributed File System
+### The Nutanix Distributed File System (NDFS)
 
-The Nutanix Distributed File System (NDFS) is a distributed file system created
-by Nutanix Inc., a San Jose based company [1]. The NDFS is facilitated by a
-clustering of controller virtual machines (CVMs) which reside, one per node, on
-each server in the cluster. The CVM presents via NFS (for VMWare's ESXi
-[14]), SMB (for Microsoft's Hyper-V [17]), or iSCSI (for Nutanix's AHV
-[1]) an interface to each hypervisor that they reside on. For example, the
-interface provided by the CVMs to VMware's ESXi hypervisor [14] will be
-interfaced with as a datastore. The virtual machines' VMDK files will reside on
-the Nutanix datastore and be accessed via NFS through the CVM sharing a host
-with the user VM.
+NDFS is a distributed file system created by Nutanix Inc., a San Jose based
+company [1]. NDFS is facilitated by a clustering of controller virtual machines
+(CVMs) which reside, one per node, on each server in the cluster. The CVM
+presents via NFS (for VMWare's ESXi [14]), SMB (for Microsoft's Hyper-V [17]),
+or iSCSI (for Nutanix's AHV [1]) an interface to each hypervisor that they
+reside on. For example, the interface provided by the CVMs to VMware's ESXi
+hypervisor [14] will be interfaced with as a datastore. The virtual machines'
+VMDK files will reside on the Nutanix datastore and be accessed via NFS through
+the CVM sharing a host with the user VM.
 
 #### Nutanix Cluster Components
 
-Within the CVM lies an ecosystem of processes that work together to provide
-NDFS services. Before I can explain the work proposed for this thesis, there
-are two CVM processes that must be explained in more detail.
+Within the CVM lies an ecosystem of processes that provide the services of the
+NDFS. Before I can explain the work proposed for this thesis, there are two
+CVM processes that must be explained in more detail.
 
 ##### Cassandra (Distributed Metadata Store)
 
-Cassandra stores and manager all cluster metadata in a distributed manner. The
-version of Cassandra running in the NDFS is a heavily modified Apache
+Cassandra stores and manages all cluster metadata in a distributed manner. The
+version of Cassandra running in NDFS is a heavily modified Apache
 Cassandra [2]. One of the main differences between Nutanix Cassandra and Apache
-Cassandra is that Nutanix has implemented the Paxos algorithm to enforce strict
+Cassandra is that Nutanix has implemented the Paxos [18] algorithm to enforce strict
 consistency.
 
 ##### Stargate (Data I/O Manager)
 
 The Stargate process is responsible for all data management and I/O operations.
 The NFS/SMB/iSCSI interface presented to the hypervisor is also presented by
-Stargate. All file allocations and data replica placement decisions are also
-made by this process.
+Stargate. All file allocations and data replica placement decisions are made by
+this process.
 
-As the Stargate process facilitates writes to disks, it gathers statistics for
-each disk such as:
+As the Stargate process facilitates writes to physical disks, it gathers
+statistics for each disk such as:
 
 * The number of operations currently in flight on the disk (queue length)
 * How much data in bytes currently resides on the disk
@@ -113,24 +113,25 @@ on data placement when performing writes.
 #### Storage Tiering
 
 Nutanix clusters are composed of servers that contain both SSDs and HDDs. These
-disks obviously have a very large performance differential, so the NDFS has a
+disks obviously have a very large performance differential, so NDFS has a
 notion of storage tiers. Each storage tier contains similar groupings of disks
-so that the NDFS can migrate "cold" or unused data from a tier containing fast
+so that NDFS can migrate "cold" or unused data from a tier containing fast
 disks (such as SSDs or NVMe drives) down to a tier containing slower disks
-(such as HDDs). This allows for optimizations in the file system such as
-a persistent write buffer that only sends random writes to SSDs and coalesces
-data to before down-migrating to the HDDs via a single large and sequential
-write. Stargate's data placement decisions are performed on a per-tier basis.
+(such as HDDs). This frees the hot tier to store frequently used data and
+allows for optimizations in the file system such as a persistent write buffer
+that only sends random writes to SSDs and coalesces the data to before
+down-migrating to the HDDs via a single large and sequential write. Stargate's
+data placement decisions are performed on a per-tier basis.
 
 #### Replica Disk Selection
 
-When a write is made in the NDFS, data is written to multiple disks. The number
+When a write is made in NDFS, data is written to multiple disks. The number
 of data replicas is determined by a configurable setting called the Replication
-Factor (RF). In an RF2 cluster, Stargate will attempt to place data on a local
-disk and another copy of the data on a disk that resides on a remote node.
-Similar to HDFS, the NDFS will also attempt to place data in a rack-aware
-manner. This will prevent data loss scenarios if a single node or rack of
-nodes were to irreperably fail.
+Factor (RF). In an RF3 cluster, Stargate will attempt to place data on a local
+disk and two other copies of the data that will each reside on different remote
+nodes. Similar to HDFS, NDFS will also attempt to place data in a
+rack-aware manner. This will prevent data loss scenarios if a single node or
+rack of nodes were to irreperably fail.
 
 Currently, Stargate will attempt to select a number of disks corresponding to
 the cluster RF that satisfy the following criteria:
@@ -172,10 +173,10 @@ described below.
 ### Interfering Workloads
 
 Suppose we have a 3-node homogeneous cluster with only 2 nodes hosting active
-workloads. In the current random selection scheme in use by the NDFS, writes
+workloads. In the current random selection scheme in use by NDFS, writes
 are equally likely to place their replica on the other node with an active
 workload as they would be to place it on the idle node. This can impact
-performance on both the local and remote workload. An adaptive replica
+performance on both the local and remote workloads. An adaptive replica
 placement scheme would avoid the busy node and place its remote replica on the
 idle node.
 
@@ -186,7 +187,7 @@ a single weak node. Suppose these high-end nodes have 500GB of SSD tier and 6TB
 of HDD tier and the single weak node has only 128GB of SSD tier and 1TB of HDD
 tier. If 3 simultaneous workloads were to generate data such that the working
 sets of the workloads are 50% of the local SSD tier, the weaker node is at a
-great disadvantage. Given the current NDFS replica selection algorithm, we can
+significant disadvantage. Given the current NDFS replica selection algorithm, we can
 expect 500GB of replica traffic to flood the weak node and fill up its SSD tier
 well before the workload is finished. An adaptive replica placement heuristic
 would mitigate this issue by taking disk usages into consideration.
@@ -194,17 +195,17 @@ would mitigate this issue by taking disk usages into consideration.
 Adaptive Data Placement
 =======================
 
-To remedy the problems that arise from hetereogeneous cluster configurations
-discussed in the previous section, I plan to implement an adaptive replica
-placement algorithm for the Nutanix distributed file system. This algorithm
-uses a "fitness value" that is calculated from various statistics available for
-each disk such as disk fullness and queue depth. These fitness values are to be
-used to rank each disk when selecting where the Stargate will place data. This
-should mitigate many problems seen with heterogeneous Nutanix clusters.
+To remedy the problems that arise from hetereogeneous cluster configurations,
+I plan to implement an adaptive replica placement algorithm for the Nutanix
+distributed file system. This algorithm uses a "fitness value" that is
+calculated from various statistics available for each disk such as disk
+fullness and queue depth. These fitness values are used to rank each disk
+when selecting where the Stargate will place data. This should mitigate many
+problems seen with heterogeneous Nutanix clusters.
 
 ### Fitness Values
 
-A fitness value is a number calculated from the disk stats found in the NDFS
+A fitness value is a number calculated from the disk stats found in NDFS
 metadata store. During every NDFS disk stats update, new usage and performance
 stats for each disk are pulled from the Cassandra database and stored in
 Stargate memory at some periodic interval. For the work described in this
@@ -223,14 +224,15 @@ contributed to the fitness value for each stat.
 
 Disk queue length is the average number of Stargate operations in flight for
 the duration of the last round of gathered statistics. A value of 200
-operations was chosen as the ceiling, so if there anything higher than this
-will not contribute to the fitness value. I've chosen to use this metric in the
-fitness function due to the fact that it may be used across different types of
-drive technologies without needing to change the default "worst-case" values
-used when there is a failure gathering disk stats. If I were to use average
-times for op completion, there would be a need to consider the type of drive
-whose fitness is being measured. This metric combats the interfering workload
-problem seen in both heterogeneous and homogeneous clusters.
+operations was chosen as the ceiling; therefore, anything higher than this
+ceiling will not contribute to the fitness value. I've chosen to use this
+metric in the fitness function due to the fact that it can be used across
+different types of drive technologies without needing to change the default
+"worst-case" values used when there is a failure gathering disk stats. If I
+were to use average times for op completion, there would be a need to consider
+the type of drive whose fitness is being measured. This metric combats the
+interfering workload problem seen in both heterogeneous and homogeneous
+clusters.
 
 #### Metrics: Disk Fullness
 
@@ -253,24 +255,23 @@ percentage of 50% and 60%.
 Part of this work will require an exploration of various weighted random selection
 algorithms that allow for a weighted "N choose 2" and an analysis of their
 behavior and performance under various workloads and conditions. After a weight
-is calculated for a disk in the cluster that will store a replica, we must
+is calculated for a disk in the cluster that will store a replica, we will
 perform a weighted random selection on the set of potential candidate disks.
 The schemes I will explore in this work are summarized in the next section.
 
 Upon implementation of various selection algorithms, it will be necessary to
-perform simulations of pathological cases in weighted random selection and
-evaluate the chances of encountering these in day-to-day file system operations
-and realistic workloads.
+evaluate the chances of encountering their failure scenarios in day-to-day file
+system operations and realistic workloads.
 
 #### Trucation Selection
 
 Trucation selection was first introduced by Muhlenbein and Schlierkamp-Voosen
 in 1993 as part of their work on Breeder Genetic Algorithms [9]. The basic idea
-is that there is a threshold percentage (T) that will indicate the top T% most
+is that there is a threshold percentage (T) that will indicate the top most T%
 fit elements in a set. From this top T%, individuals are selected and mated
 randomly until the number of offspring can replace the parent population.
 
-For the purposes of the work in this proposal, I have no need for the breeding
+For the purposes of the work in this proposal, there is no need for the breeding
 aspect of Muhlenbein and Schlierkamp-Voosen's work. I will simply stop at the
 uniform random selection of individuals from the top T% elements in the set of
 disks. To avoid selecting the same disk from the set multiple times, it will be
@@ -295,8 +296,8 @@ indicate a uniform probability of selecting any bin and could also be unevenly
 sized which would indicate a weighted probability. SUS uses this same concept
 except allows for N evenly spaced pointers corresponding to the selection of N
 items. Key things to note are that the set, or "bins" in my roulette
-analogy, must be shuffled prior to selection and there is a minimum spacing
-allowed for the pointers to prevent selection of the same bin by two pointers.
+analogy, must be shuffled prior to selection. Also, there is a minimum spacing
+allowed for the pointers to prevent selection of the same bin.
 
 #### Reservoir Sampling
 
@@ -320,7 +321,7 @@ Vitter showed that the probability of selecting an item after i iterations of
 the algorithm is k/i. This is not directly useful for my investigation into
 weighted random sampling; however, it is useful to give an overview of this
 algorithm since Efraimidis and Spirakis [12] use a variation of AlgorithmR that
-utilizes random sort and weights to accomplish a weighted-random variation of
+utilizes a random sort and weights to accomplish a weighted-random variation of
 reservoir sampling. This is explained in the next section.
 
 ##### Weighted Random Sampling via Reservoir
@@ -356,7 +357,7 @@ Testing and Benchmarks
 ### Testing Replica Selection via Synthetic Workload Generation
 
 To determine the viability of various fitness function parameters in different
-heterogeneous cluster topologies, I will need repeatedly simulate specific
+heterogeneous cluster topologies, I will need to repeatedly simulate specific
 workloads on varying hardware configurations. A tool must be written to deploy
 virtual machines on each node in the cluster and run a workload similar to
 those that can be found in real production systems. 
@@ -369,14 +370,14 @@ have many examples on usage. On the other hand, VMware's ESXi hypervisor
 exposes a Python library (PyVMomi) which allows for complete automation of
 virtual machine deployment and configuration. PyVMomi is very well documented
 and has multiple community samples, but the choice in programming language will
-be strictly limited to Python.
+be strictly limited to Python or Ruby.
 
 Once a virtual machine is deployed, it must generate I/O in a configurable
-manner. For this, I will use fio, a tool that will spawn a number of threads or
-processes to generate I/O. This will allow for repeatability of various
-workloads with specific read/write ratios, queue depths, run times, and working
-sets. My tool will connect to each virtual machine simultaneously via SSH and
-run the fio script corresponding to the desired workload.
+manner. For this, I will use fio to drive I/O on the virtual machine. This will
+allow for repeatability of various workloads with specific read/write ratios,
+queue depths, run times, and working sets. My workload generation tool will
+connect to each virtual machine simultaneously via SSH and run the fio script
+corresponding to the desired workload.
 
 After the fio scripts have finished running, the workload generation tool must
 aggregate various performance statistics gathered by the fio processes running
@@ -387,15 +388,15 @@ Related Work
 ------------
 
 Xie et. al. showed that data placement schemes based on the computing
-capacities of nodes in the Hadoop Distributed File System (HDFS) [5]. These
-computing capacities are determined for each node in the cluster by profiling a
-target application leveraging the HDFS. Their MapReduced wordcount and grep
-results showed up to a 33.1% reduction in response time. Similarly, Perez et.
-al. applied adaptive data placement features to the Expand parallel file system
-based on available free space [8]. Though effective in their given contexts,
-the main drawback to this work is that it assumes the specific application is
-working without interference and does not account for other workloads on the
-system.
+capacities of nodes in the Hadoop Distributed File System (HDFS) significantly
+improved workload performance [5]. These computing capacities are determined
+for each node in the cluster by profiling a target application leveraging the
+HDFS. Their MapReduced wordcount and grep results showed up to a 33.1%
+reduction in response time. Similarly, Perez et.  al. applied adaptive data
+placement features to the Expand parallel file system based on available free
+space [8]. Though effective in their given contexts, the main drawback to this
+work is that it assumes the specific application is working without
+interference and does not account for other workloads on the system.
 
 One adaptive data placement approach that can account for other workloads on
 the system was introduced by Jin et. al. in their work on ADAPT [7]. The work
@@ -411,22 +412,22 @@ incorporates the concept of a value calculated from request feedback from their
 servers that allows for decisions to be made on server selection. In addition
 to the ranking function in C3, they implemented a distributed rate control
 mechanism to prevent scenarios where many individual clients can bombard a
-single highly desirable server with requests. Many of the same problems the
-work in this proposal seeks to remedy are also addressed by the C3 algorithm;
-however, given the Nutanix file system's architecture, some C3 solutions are
-not feasible.
+single highly desirable server with requests. Many of the same problems that
+the work in this proposal seeks to remedy are also addressed by the C3
+algorithm; however, given the Nutanix file system's architecture, some C3
+solutions are not feasible.
 
 The C3 algorithm takes into account the request queue length of certain servers
-in much the same way my work will use disk queue lengths, but in addition
-Suresh et. al. factor in the service latencies of each server so that they may
-consider a different ideal queue length for each server. With this approach,
-longer service times will warrant a lower queue length and vice versa. This
-is beneficial for scenarios where there are multiple different underlying
-storage technologies such as NVMe drives, SSDs, and HDDs under consideration at
-the same time, but the Nutanix file system's architecture does not allow for
-multiple replicas to span storage tiers. This forces the ideal queue lengths
-for each selection pool to be the same, so my work does not incorporate service
-latencies in the fitness value calculations.
+similar to the way I will use disk queue lengths. In addition Suresh et. al.
+factor in the service latencies of each server so that they may consider a
+different ideal queue length for each server. With this approach, longer
+service times will warrant a lower queue length and vice versa. This is
+beneficial for scenarios where there are multiple underlying storage
+technologies such as NVMe drives, SSDs, and HDDs under consideration, but the
+Nutanix file system's architecture does not allow for multiple replicas to span
+storage tiers. This forces the ideal queue lengths for each selection pool to
+be the same. Therefore, my work does not incorporate service latencies in the
+fitness value calculations.
 
 Herding of requests to a single highly suitable server is a problem that arises
 in any replica ranking algorithm. C3 mitigates this issue by rate limiting
@@ -438,13 +439,13 @@ using a weighted random selection tied to the calculated fitness values.
 Hardware Requirements
 ---------------------
 
-The replica placement scheme proposed earlier can be tested and verified using
-an exhaustive battery of software tests. However, we still require real
-hardware for the performance testing of synthetic workloads in heterogeneous
-clusters. If we are to verify that the proposed work will not introduce a
-performance regression in existing configurations and also improve performance
-in current troublesome scenarios, we will need to create multiple different
-hardware configurations.
+The replica placement scheme proposed earlier can be verified using an
+exhaustive battery of software tests. However, we still require real hardware
+for the performance testing of synthetic workloads in heterogeneous clusters.
+If we are to verify that the proposed work will not introduce a performance
+regression in existing configurations and also improve performance in current
+troublesome scenarios, we will need to create multiple different hardware
+configurations.
 
 The hardware required for each problem is shown the table below:
 
@@ -456,8 +457,8 @@ The hardware required for each problem is shown the table below:
 | Heterogeneous hybrid and all flash cluster performance | 1x all-flash node, 2x any hybrid node |
 
 Storage tier size differentials can be simulated via modification of the
-Nutanix file system, but if the hardware is available, it makes the most sense
-to use real hardware to run the automated benchmarks.
+Nutanix distributed file system, but if the hardware is available, it makes the
+most sense to use real hardware to run the automated benchmarks.
 
 Software Requirements
 ---------------------
@@ -466,7 +467,7 @@ All software requirements are satisfied by the Nutanix development environment.
 This includes:
 
 * The unit test infrastructure for replica selection simulations. This allows for quick prototyping of schemes.
-* fio
+* Fio
 * Tools for development of a workload generation tool for benchmarking and usage of real disk stats.
 
 Preliminary Schedule
@@ -535,6 +536,8 @@ Bibliography
 16. Suresh, L., Canini, M., Schmid, S., & Feldmann, A. (2015). C3: Cutting tail latency in cloud data stores via adaptive replica selection. In 12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15) (pp. 513-527).
 
 17. Velte, A., & Velte, T. (2009). Microsoft virtualization with Hyper-V. McGraw-Hill, Inc..
+
+18. Lamport, L. (2005). Generalized consensus and Paxos. Technical Report MSR-TR-2005-33, Microsoft Research.s
 
 Glossary
 --------
