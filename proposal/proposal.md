@@ -252,12 +252,13 @@ percentage of 50% and 60%.
 
 ### Weighted Random Selection Algorithms
 
-Part of this work will require an exploration of various weighted random selection
-algorithms that allow for a weighted "N choose 2" and an analysis of their
-behavior and performance under various workloads and conditions. After a weight
-is calculated for a disk in the cluster that will store a replica, we will
-perform a weighted random selection on the set of potential candidate disks.
-The schemes I will explore in this work are summarized in the next section.
+Part of this work will require an exploration of various weighted random
+selection algorithms that allow for a weighted "N choose 2" and an analysis of
+their behavior and performance under various workloads and conditions. After a
+weight is calculated for a disk in the cluster that will store a replica, we
+will perform a weighted random selection on the set of potential candidate
+disks.  The schemes I will explore in this work are summarized in the next
+section.
 
 Upon implementation of various selection algorithms, it will be necessary to
 evaluate the chances of encountering their failure scenarios in day-to-day file
@@ -343,13 +344,24 @@ Efraimidis and Spirakis proved that the resulting priority queue will contain a
 set of k elements whose probability of being included with the set is
 proportional to their weights.
 
-### Weighted Random Selection Alternatives
+### Alternative Sampling Methods
 
-I will also explore various ways to use the fitness values for very large sets
-of disks. For example, when it's not feasible to perform a linear or
-logarithmic selection from the set of disks, we can select some number of disks
-that match our criteria and choose the disk with the largest fitness value.
-This can be compared with the performance of the weighted sampling algorithms.
+I will also explore the two-choice method introduced by Azar et. al. [19] for
+and its effect on very large sets of disks. The two-choice method in this
+proposed work can be summarized as selecting two disks at random from the set
+of all possible disks and considering the higher fitness chosen disk. If we
+treat the NDFS replica placement problem as a balls and bins model (where the
+balls are data replicas and bins are nodes chosen for placement), it is known
+that with high probability, the maximum number of replicas placed on each node
+is approximately log(n)/log(log(n)).  Azar et.  al. showed that use of the
+two-choice method can reduce the maximum number of replicas placed on each node
+is log(log(n))/log(2).
+
+This selection method is ideal in two scenarios:
+
+1) When there are too many disks to perform a linear or logarithmic selection for performance reasons.
+
+2) When one would like to avoid herding behaviors inevitably found in heavily utilized clusters that add new nodes.
 
 Testing and Benchmarks
 ======================
@@ -538,6 +550,8 @@ Bibliography
 17. Velte, A., & Velte, T. (2009). Microsoft virtualization with Hyper-V. McGraw-Hill, Inc..
 
 18. Lamport, L. (2005). Generalized consensus and Paxos. Technical Report MSR-TR-2005-33, Microsoft Research.s
+
+19. Y. Azar, A. Broder, A. Karlin, and E. Upfal. Balanced allocations. In Proceedings of the 26th ACM Symposium on the Theory of Computing, pages 593{602, 1994.
 
 Glossary
 --------
