@@ -490,7 +490,7 @@ Preliminary Schedule
 | CODE: Workload VM deployment tool | 2 weeks | Feb. 20, 2017 |
 | CODE: Workload data analysis scripts | 1 weeks | Feb. 27, 2017 |
 | WRITE: Synthetic workload section of thesis | 2 weeks | Mar. 13, 2017 |
-| MILESTONE: Workload generation complete | ----- |
+| MILESTONE: Workload generation complete | ----- ||
 | CODE: Fitness function framework for use with replica placement | Mar. 27, 2017 |
 | WRITE: NDFS fitness function implementation section of thesis | Apr. 10, 2017 |
 | CODE: Implement weighted random selection algorithms | Apr. 17, 2017 |
@@ -498,11 +498,11 @@ Preliminary Schedule
 | WRITE: Weighted random and pathological case section of thesis | May 1, 2017 |
 | CODE: Use disk usage and performance stats for placement decisions | May 8, 2017 |
 | TEST: Basic unit test simulations to sanity check fitness function | May 15, 2017 |
-| MILESTONE: Adaptive data placement implementation complete | ----- |
+| MILESTONE: Adaptive data placement implementation complete | ----- ||
 | TEST: Add instrumentation to code base to troubleshoot odd behavior | May 18, 2017 |
 | WRITE: Unit test simulation and instrumentation section of thesis | May 22, 2017 |
 | BENCHMARK: Generate workloads on multiple clusters and analyze the improvements | Jun. 5, 2017 |
-| MILESTONE: Testing and benchmarking on multiple clusters complete | ----- |
+| MILESTONE: Testing and benchmarking on multiple clusters complete | ----- ||
 | WRITE: Benchmark results section of thesis (include analysis of algorithms) | Jun. 19, 2017 |
 | WRITE: Conclusions and future work | Jun. 26, 2017 |
 | WRITE: Introduction, Prior work | Jul. 10, 2017 |
