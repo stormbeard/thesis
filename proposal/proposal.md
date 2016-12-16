@@ -2,7 +2,7 @@
 #### For Partial Fulfillment of Requirements For a Master of Liberal Arts Degree
 
 #### Harvard University Extension School
-#### Submission Date TODO
+#### Submission Date 12/16/2016
 
 #### Cyril Allen
 1525 9th Ave., Apt 2601
@@ -484,31 +484,31 @@ This includes:
 
 Preliminary Schedule
 --------------------
-| Task          | Time in Weeks |
-| ------------- |:-------------:|
-| CODE: Fio workload scripts | < 1 week |
-| CODE: Workload VM deployment tool | 2 weeks |
-| CODE: Workload data analysis scripts | 1 weeks |
-| WRITE: Synthetic workload section of thesis | 2 weeks |
+| Task          | Time in Weeks | Expected date |
+| ------------- |:-------------:| ------------- |
+| CODE: Fio workload scripts | < 1 week | Feb. 6, 2017 |
+| CODE: Workload VM deployment tool | 2 weeks | Feb. 20, 2017 |
+| CODE: Workload data analysis scripts | 1 weeks | Feb. 27, 2017 |
+| WRITE: Synthetic workload section of thesis | 2 weeks | Mar. 13, 2017 |
 | MILESTONE: Workload generation complete | ----- |
-| CODE: Fitness function framework for use with replica placement | 2 weeks |
-| WRITE: NDFS fitness function implementation section of thesis | 2 week |
-| CODE: Implement weighted random selection algorithms | 1 week |
-| TEST/BENCHMARK: Weighted random pathological case unit test and evaluation | 1 week |
-| WRITE: Weighted random and pathological case section of thesis | 1 week |
-| CODE: Use disk usage and performance stats for placement decisions | < 1 week |
-| TEST: Basic unit test simulations to sanity check fitness function | 1 week |
+| CODE: Fitness function framework for use with replica placement | Mar. 27, 2017 |
+| WRITE: NDFS fitness function implementation section of thesis | Apr. 10, 2017 |
+| CODE: Implement weighted random selection algorithms | Apr. 17, 2017 |
+| TEST/BENCHMARK: Weighted random pathological case unit test and evaluation | Apr. 24, 2017 |
+| WRITE: Weighted random and pathological case section of thesis | May 1, 2017 |
+| CODE: Use disk usage and performance stats for placement decisions | May 8, 2017 |
+| TEST: Basic unit test simulations to sanity check fitness function | May 15, 2017 |
 | MILESTONE: Adaptive data placement implementation complete | ----- |
-| TEST: Add instrumentation to code base to troubleshoot odd behavior | < 1 week |
-| WRITE: Unit test simulation and instrumentation section of thesis | 1 week |
-| BENCHMARK: Generate workloads on multiple clusters and analyze the improvements | 2 weeks |
+| TEST: Add instrumentation to code base to troubleshoot odd behavior | May 18, 2017 |
+| WRITE: Unit test simulation and instrumentation section of thesis | May 22, 2017 |
+| BENCHMARK: Generate workloads on multiple clusters and analyze the improvements | Jun. 5, 2017 |
 | MILESTONE: Testing and benchmarking on multiple clusters complete | ----- |
-| WRITE: Benchmark results section of thesis (include analysis of algorithms) | 2 weeks |
-| WRITE: Conclusions and future work | 1 week |
-| WRITE: Introduction, Prior work | 2 weeks |
-| WRITE: Nutanix file system overview | 1 week |
-| WRITE: Finish thesis write-up | 2 weeks |
-| THESIS APPROVAL | 4 weeks |
+| WRITE: Benchmark results section of thesis (include analysis of algorithms) | Jun. 19, 2017 |
+| WRITE: Conclusions and future work | Jun. 26, 2017 |
+| WRITE: Introduction, Prior work | Jul. 10, 2017 |
+| WRITE: Nutanix file system overview | Jul. 17, 2017 |
+| WRITE: Finish thesis write-up | Jul. 31, 2017 |
+| THESIS APPROVAL | Aug. 28, 2017 |
 
 Approximate time to completion: 28 weeks
 
