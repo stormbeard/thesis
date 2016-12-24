@@ -1,3 +1,37 @@
+Why use a single job to write to multiple disks instead of multiple?
+
 http://www.n0derunner.com/2014/06/multiple-devicesjobs-in-fio/
 
+-------------------------------------------------------------------------------
 
+Why use zipf distribution for realistic workloads?
+
+in fio config file use:
+random_distribution=zipf:1.1
+
+M.F. Arlitt and C.L. Williamson. Web server workload characterization: The search for invariants. In Proceeding of the ACM SIGMETRICS '96 Conference, Philadelphia, PA, April 1996.
+
+Virgilio Almeida, Azer Bestavros, Mark Crovella, and Adriana de Oliveira.  Characterizing reference locality in the WWW. In Proceedings of 1996 International Conference on Paral lel and Distributed Information Systems (PDIS '96), pages 92{103, December 1996.
+
+G. K. Zipf. Human Behavior and the Principle of Least-Eort. Addison-Wesley, Cambridge, MA, 1949.
+
+-------------------------------------------------------------------------------
+
+
+REMEMBER:
+=========
+-- Drop firewalls on integrity VM when running fio.
+
+Run fio as server (port 4444) on worker VM:
+fio --server=,4444
+
+Run fio somwhere as client:
+fio --client=<server_ip>,<port> \
+    --output=tony_test.json \
+    --bandwidth-log \
+    --status-interval=1 \
+    --output-format=json
+
+Questions for Jamie:
+--------------------
+-- Is it necessary to simulate realistic workload?

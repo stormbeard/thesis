@@ -1,0 +1,22 @@
+; Sequential write workload
+;
+; Author: Tony Allen (cyril0allen@gmail.com)
+;
+; This fio config assumes that the worker VM's OS resides on /dev/sda and that
+; there are 6 devices in sdb to sdg that must be written to.
+
+[global]
+direct=1
+ioengine=libaio
+bs=8k
+iodepth=128
+randrepeat=0
+group_reporting
+time_based=1
+runtime=60
+filesize=6G
+
+[job1]
+rw=write
+filename=/dev/sdb:/dev/sdd:/dev/sde:/dev/sdf:/dev/sdg
+name=sequential-write
