@@ -1,6 +1,6 @@
 # Author: tallen@nutanix.com
 #
-# Vsphere utility class for easy worker VM deployment automation.
+# Vsphere utility class for easy UVM deployment automation.
 #
 # Some limitations:
 #   -- All user/pass combos are hard-coded.
@@ -19,7 +19,7 @@ from pyVmomi import vim
 
 class VsphereConnector(object):
   """
-  Wrapper class for PyVim various tasks.
+  Provides core functionality when connecting to a vSphere environment
   """
 
   def __init__(self, vcenter_ip, username, password):
@@ -264,9 +264,8 @@ class VsphereConnector(object):
 
 # -----------------------------------------------------------------------------
 
-  def __deploy_virtual_appliance(self, lease, vmdk_paths):
-    """
-    Begins deployment of a vapp given the lease.
+  def __deploy_vapp(self, lease, vmdk_paths):
+    """ Begins deployment of a vapp given the lease.
     """
     while (True):
       # If the lease is ready, begin deployment procedure.
@@ -426,7 +425,7 @@ class VsphereConnector(object):
 # -----------------------------------------------------------------------------
 
   def upload_file_vm(self, vm, filepath, remote_path):
-    # TODO: This is somewhere in the community samples. Deal with it later.
+    # This is somewhere in the community samples. Deal with it later.
     raise NotImplementedError
 
 # -----------------------------------------------------------------------------
@@ -435,7 +434,7 @@ class VsphereConnector(object):
     """
     Retrieves a file on a guest and saves in a local directory
     """
-    # TODO: This is somewhere in the community samples. Deal with it later.
+    # This is somewhere in the community samples. Deal with it later.
     raise NotImplementedError
 
 # -----------------------------------------------------------------------------
@@ -525,7 +524,7 @@ class VsphereConnector(object):
     # Import the virtual appliance.
     lease = resource_pool.ImportVApp(
       import_spec.importSpec, folder=vm_folder, host=host_obj)
-    self.__deploy_virtual_appliance(lease, vmdk_paths)
+    self.__deploy_vapp(lease, vmdk_paths)
 
     return lease.info.entity
 
@@ -592,3 +591,8 @@ class VsphereConnector(object):
 
     for t in task_list:
       self.__wait_for_task(t)
+
+# -----------------------------------------------------------------------------
+
+  def disconnect(self):
+    connect.Disconnect(self.service_instance)
