@@ -1,0 +1,40 @@
+% Example LaTeX document for GP111 - note % sign indicates a comment
+\documentstyle[11pt]{article}
+% Default margins are too wide all the way around. I reset them here
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{.125in}
+\setlength{\textwidth}{6.25in}
+\begin{document}
+\author{Cyril Allen\\
+Harvard Extension School}
+\renewcommand{\today}{who knows}
+
+
+
+\section{Synthetic Workload Generation}
+
+To verify that the work presented in this paper is improving upon the already
+existing filesystem, it's necessary to generate a repeatable, synthetic
+workload on the system in addition to simulations that verify the correct
+behavior of the replica selection algorithm. To perform this workload
+generation, I use fio[1].
+
+\subsection{fio - flexible I/O tester}
+
+fio is a tool that simulates I/O via spawning multiple threads or processes to
+do a particular type of I/O action and it has the ability to generate latency
+and bandwidth logs for each job [2]. Using fio removes the need to write
+separate test programs for each type of workload and allows configuration via a
+file that outlines the workload parameters. In addition to the convenience of
+configuraiton files, fio provides a JSON output format that allows for easy
+graphing of latency/bandwidth information.
+
+
+
+
+
+
+Biblio:
+1. Axboe, J. (2014). Fio. urlhttp://freecode. comlprojects/fio.
+2. Axboe, J., & Carroll, A. fio (1)-Linux man page. URl: http://linux. die. net/man/1/fio.
