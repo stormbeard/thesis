@@ -10,9 +10,8 @@
 Harvard Extension School}
 \renewcommand{\today}{who knows}
 
-
-
-\section{Synthetic Workload Generation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Workload Generation}
 
 To verify that the work presented in this paper is improving upon the already
 existing filesystem, it's necessary to generate a repeatable, synthetic
@@ -20,7 +19,7 @@ workload on the system in addition to simulations that verify the correct
 behavior of the replica selection algorithm. To perform this workload
 generation, I use fio[1].
 
-\subsection{fio - flexible I/O tester}
+\section{fio - flexible I/O tester}
 
 fio is a tool that simulates I/O via spawning multiple threads or processes to
 do a particular type of I/O action and it has the ability to generate latency
@@ -30,10 +29,38 @@ file that outlines the workload parameters. In addition to the convenience of
 configuraiton files, fio provides a JSON output format that allows for easy
 graphing of latency/bandwidth information.
 
+\section{Test Workload Characteristics}
 
+Testing with fio allows one to specify the workload's write pattern via a
+configuration file. For this work, a simple 50\% sequential read/write pattern
+will suffice as it will provide bandwidth and latency information for
+simultaneous reads and writes.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\chapter{Test Automation}
 
+\section{Unit Tests}
+
+\section{Synthetic Workload Automation}
+\subsection{VMware API}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The WeightedVector Class}
+
+It became necessary to perform repeated weighted sampling of disk IDs, given
+their fitness values. An object container class was needed similar to a C++ STL
+container[CITE] that can also access elements via arbitrary sampling methods.
+The WeightedVector class was implemented to allow for insertion, removal, and
+weighted random sampling of arbitrary objects based on their fitness values as
+weights.
+
+\subsection{Interface}
+
+\subsection{Implementation}
+
+\subsubsection{Sampling Techniques}
 
 Biblio:
 1. Axboe, J. (2014). Fio. urlhttp://freecode. comlprojects/fio.
