@@ -2,8 +2,11 @@
 #
 # Author: Tony Allen (cyril0allen@gmail.com)
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
+matplotlib.rcParams.update({'font.size': 22})
 
 svmips = ["10.61.192.108", "10.61.192.109", "10.61.192.110"]
 odd_man_out = "10.61.192.110"
@@ -19,17 +22,20 @@ def plot_from_map(svmip, selection_map):
     y = selection_map[svmip]
     plt.plot(x, y)
 
+# Calculate pct usages.
 for i in svmips:
     # Adaptive test data.
     data = open(adaptive_selection_test + "/" + i + ".txt", 'r').readlines()
     usage_pcts = (
-        map(lambda x: float(x.split(",")[1]) / float(x.split(",")[0]), data))
+        map(lambda x: 100 * float(x.split(",")[1]) / float(x.split(",")[0]),
+            data))
     adaptive_selection_map[i] = list(usage_pcts)
 
     # Random test data.
     data = open(random_selection_test + "/" + i + ".txt", 'r').readlines()
     usage_pcts = (
-        map(lambda x: float(x.split(",")[1]) / float(x.split(",")[0]), data))
+        map(lambda x: 100 * float(x.split(",")[1]) / float(x.split(",")[0]),
+            data))
     random_selection_map[i] = list(usage_pcts)
 
 adaptive_avg_fullness_primary = []
