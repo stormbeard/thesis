@@ -4,10 +4,13 @@
 
 import bisect
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import random
 import time
+
+matplotlib.rcParams.update({'font.size': 22})
 
 """ Evaluate runtimes of various algorithms. """
 
@@ -58,7 +61,7 @@ def random_selection(lst):
     ret.append(lst[random.randint(0,len(lst)-1)])
     return ret
 
-def roullette_wheel(lst):
+def sus(lst):
     weight_sum = len(lst)
     ret = []
     for times in range(3):
@@ -85,20 +88,6 @@ def truncation_selection(lst):
     ret.append(top_t[random.randint(0, len(top_t) - 1)])
     return ret
 
-def weighted_reservoir(lst):
-    """
-    Give up at the halfway point of the list.
-    """
-    pqueue = []
-    for i in lst[:len(lst)/2]:
-        r = random.random() ** (1/i)
-        if len(pqueue) < 3:
-            bisect.insort(pqueue, i)
-        else:
-            pqueue.pop(0)
-            bisect.insort(pqueue, i)
-    return pqueue
-
 def two_choice(lst):
     ret = []
     for i in range(3):
@@ -111,9 +100,8 @@ def two_choice(lst):
 Run tests
 """
 funcs = [random_selection,
-         roullette_wheel,
+         sus,
          truncation_selection,
-         weighted_reservoir,
          two_choice]
 
 def run_tests():
