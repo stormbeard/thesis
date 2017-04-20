@@ -1,0 +1,6 @@
+run with:
+diagnostics/diagnostics.py
+--runtime_test_args="num_disks=3,num_outstanding=5,disk_size=42949672960”
+--tests=fio_seq_write run
+
+aggression 2

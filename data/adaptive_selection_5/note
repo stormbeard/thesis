@@ -1,0 +1,4 @@
+3x 1060
+diagnostics only on 2 nodes w/ default fitness weights
+
+The queue length term is eclipsing the disk usage! Making it useless.

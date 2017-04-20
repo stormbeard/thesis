@@ -1,0 +1,3 @@
+3x 1060
+2 worker vm
+diagnostics/diagnostics.py --nodes="10.61.193.108,10.61.193.109" --runtime_test_args="num_disks=3,num_outstanding=1,disk_size=53687091200" --tests=fio_seq_write run
