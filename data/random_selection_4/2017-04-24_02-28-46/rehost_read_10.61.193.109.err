@@ -1,0 +1,1 @@
+fio: only root may flush block devices. Cache flush bypassed!

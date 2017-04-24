@@ -1,0 +1,28 @@
+Ran tests with container replication factor 2 on the following nodes:
+  node 0: 10.61.193.108
+  node 1: 10.61.193.109
+
+Ran the following tests:
+  Result = 
+cassandra_latency_JMX:
+  Result = 1609.97 min=1609.97 max=1609.97 avg=1609.97
+
+cassandra_latency_VARS:
+  Result = 1747.00 min=1747.00 max=1747.00 avg=1747.00
+
+fio_seq_write: Sequential write bandwidth
+Command = bash fio_seq_write.sh 3 53687091200 5 1048576
+
+Begin fio_seq_write: Sun Apr 23 19:17:03 2017
+  Result = 298 MBps
+
+cassandra_latency_JMX:
+  Result = 5230.95 min=1356.24 max=6785.57 avg=5230.95
+
+cassandra_latency_VARS:
+  Result = 3655.96 min=1748.00 max=4072.00 avg=3655.96
+
+End fio_seq_write: Sun Apr 23 19:34:44 2017
+Average CPU: 10.61.192.110: 33%   10.61.192.108: 52%   10.61.192.109: 44%   
+Duration fio_seq_write : 1061 secs
+*******************************************************************************

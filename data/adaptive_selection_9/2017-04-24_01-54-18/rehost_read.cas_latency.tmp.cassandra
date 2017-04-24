@@ -1,0 +1,123 @@
+<html>
+<title>MX4J - MBean View</title>
+<link rel="stylesheet" href="stylesheet.css" type="text/css">
+<meta http-equiv="Expires" content="0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="generator" content="MX4J HttpAdaptor, JMX, JMX implementation">
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td class="darker" colspan="2"></td>
+</tr>
+<tr>
+<td class="topheading">MX4J/Http Adaptor<br>
+<div class="subtitle">JMX Management Console</div>
+</td><td class="topheading" align="right"><a href="http://mx4j.sourceforge.net"><img src="logo.gif" width="100" height="50" border="0" alt="MX4J logo"></a></td>
+</tr>
+<tr>
+<td class="darker" colspan="2"></td>
+</tr>
+</table>
+<br>
+<table cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td class="backtab"><a href="/serverbydomain" class="tabs">Server view</a></td><td width="2"></td><td class="fronttab"><a href="/empty?template=emptymbean" class="tabs">MBean view</a></td><td width="2"></td><td class="backtab"><a href="/serverbydomain?instanceof=javax.management.timer.Timer&amp;template=timer" class="tabs">Timers</a></td><td width="2"></td><td class="backtab"><a href="/serverbydomain?instanceof=javax.management.monitor.Monitor&amp;template=monitor" class="tabs">Monitors</a></td><td width="2"></td><td class="backtab"><a href="/relation?instanceof=javax.management.relation.Relation&amp;template=relation" class="tabs">Relations</a></td><td width="2"></td><td class="backtab"><a href="/serverbydomain?instanceof=javax.management.loading.MLetMBean&amp;template=mlet" class="tabs">MLet</a></td><td width="2"></td><td class="backtab"><a href="/mbean?objectname=JMImplementation%3Atype%3DMBeanServerDelegate&amp;template=about" class="tabs">About</a></td>
+</tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td class="page_title">MBean org.apache.cassandra.protobuf:type=CassandraProtoToThriftRpc<br>Description Information on the management interface of the MBean</td>
+</tr>
+<tr>
+<td width="100%" class="mbeans">Attributes</td>
+</tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr class="darkline">
+<td width="20%" align="left" class="darkline">
+<div class="tableheader">Name</div>
+</td><td width="20%" align="left" class="darkline">
+<div class="tableheader">Description</div>
+</td><td width="20%" align="left" class="darkline">
+<div class="tableheader">Type</div>
+</td><td width="20%" align="right" class="darkline">
+<div class="tableheader">Value</div>
+</td><td width="*" align="right" class="darkline">
+<div class="tableheader">New Value</div>
+</td>
+</tr>
+<form action="setattributes" method="get">
+<tr class="clearline">
+<td class="mbean_row">AverageQueueLatencyMicros</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">double</td><td align="right" class="mbean_row">105.02962999441873</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="darkline">
+<td class="mbean_row">AverageWriteLatencyMicros</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">double</td><td align="right" class="mbean_row">1491.3380038608557</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="clearline">
+<td class="mbean_row">CurrentRPCsPerSec</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">double</td><td align="right" class="mbean_row">9.988994360754688</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="darkline">
+<td class="mbean_row">InFlightRPCs</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">java.util.List</td><td align="right" class="mbean_row"><a href="getattribute?objectname=org.apache.cassandra.protobuf:type=CassandraProtoToThriftRpc&amp;attribute=InFlightRPCs&amp;format=collection&amp;template=viewcollection">View collection</a></td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="clearline">
+<td class="mbean_row">LeaderToClientResponseQueueLength</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">int</td><td align="right" class="mbean_row">0</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="darkline">
+<td class="mbean_row">RecentQueueLatencyMicros</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">double</td><td align="right" class="mbean_row">105.02962999441873</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="clearline">
+<td class="mbean_row">RecentRangeScanLatencyMicros</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">double</td><td align="right" class="mbean_row">NaN</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="darkline">
+<td class="mbean_row">RecentReadLatencyMicros</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">double</td><td align="right" class="mbean_row">787.5689655172414</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="clearline">
+<td class="mbean_row">RecentWriteLatencyMicros</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">double</td><td align="right" class="mbean_row">1171.0</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<tr class="darkline">
+<td class="mbean_row">ResetCounters</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">boolean</td><td align="right" class="mbean_row">false</td><td align="right" class="mbean_row"><input name="value_ResetCounters" type="radio" value="true">true </input><input name="value_ResetCounters" type="radio" checked="checked" value="false">false </input><input type="Submit" name="set_ResetCounters" value="set"></td>
+</tr>
+<tr class="clearline">
+<td class="mbean_row">RPCsOutstanding</td><td class="mbean_row">Attribute exposed for management</td><td class="mbean_row">int</td><td align="right" class="mbean_row">0</td><td align="right" class="mbean_row">Read-only attribute</td>
+</tr>
+<td colspan="5" align="right" class="attributes_setall"><input type="hidden" name="objectname" value="org.apache.cassandra.protobuf:type=CassandraProtoToThriftRpc"><input type="Submit" name="setall" value="Set all"></td>
+</form>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td colspan="7" width="100%" class="mbeans">Operations</td>
+</tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr class="darkline">
+<td width="20%">
+<div class="tableheader">Name</div>
+</td><td width="20%">
+<div class="tableheader">Return type</div>
+</td><td width="*">
+<div class="tableheader">Description</div>
+</td><td></td>
+</tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td colspan="7" width="100%" class="mbeans">Constructors</td>
+</tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0"></table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td class="fronttab">&nbsp;</td>
+</tr>
+<tr>
+<td class="darker"></td>
+</tr>
+<tr>
+<td>
+<div align="center" class="footer">Built using <a href="http://mx4j.sourceforge.net">MX4J</a> HttpAdaptor</div>
+</td>
+</tr>
+</table>
+</body>
+</html>
