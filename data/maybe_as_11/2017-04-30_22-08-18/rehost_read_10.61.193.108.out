@@ -1,0 +1,30 @@
+read1: (g=0): rw=read, bs=4K-4K/4K-4K/4K-4K, ioengine=libaio, iodepth=3
+fio-2.11
+Starting 1 process
+
+read1: (groupid=0, jobs=1): err= 0: pid=1415: Sun Apr 30 22:13:33 2017
+  read : io=12288B, bw=2400.0KB/s, iops=600, runt=     5msec
+    slat (usec): min=15, max=63, avg=31.67, stdev=27.15
+    clat (usec): min=4260, max=4333, avg=4296.33, stdev=36.50
+     lat (usec): min=4276, max=4399, avg=4329.67, stdev=62.98
+    clat percentiles (usec):
+     |  1.00th=[ 4256],  5.00th=[ 4256], 10.00th=[ 4256], 20.00th=[ 4256],
+     | 30.00th=[ 4256], 40.00th=[ 4320], 50.00th=[ 4320], 60.00th=[ 4320],
+     | 70.00th=[ 4320], 80.00th=[ 4320], 90.00th=[ 4320], 95.00th=[ 4320],
+     | 99.00th=[ 4320], 99.50th=[ 4320], 99.90th=[ 4320], 99.95th=[ 4320],
+     | 99.99th=[ 4320]
+    lat (msec) : 10=100.00%
+  cpu          : usr=0.00%, sys=0.00%, ctx=1, majf=0, minf=23
+  IO depths    : 1=33.3%, 2=66.7%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued    : total=r=3/w=0/d=0, short=r=0/w=0/d=0, drop=r=0/w=0/d=0
+     latency   : target=0, window=0, percentile=100.00%, depth=3
+
+Run status group 0 (all jobs):
+   READ: io=12KB, aggrb=2400KB/s, minb=2400KB/s, maxb=2400KB/s, mint=5msec, maxt=5msec
+
+Disk stats (read/write):
+  sdb: ios=0/0, merge=0/0, ticks=0/0, in_queue=0, util=0.00%
+  sdc: ios=0/0, merge=0/0, ticks=0/0, in_queue=0, util=0.00%
+  sdd: ios=0/0, merge=0/0, ticks=0/0, in_queue=0, util=0.00%

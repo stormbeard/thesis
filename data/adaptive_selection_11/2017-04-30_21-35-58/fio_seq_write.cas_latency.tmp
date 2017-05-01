@@ -1,0 +1,186 @@
+medusa/avg_cassandra_call_latency_usec 6220.74
+medusa/extent_group_id_map/lookup/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/lookup/cassandra_calls_latency_usecs [1550, 1812, 1891] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/lookup/cassandra_ops_outstanding 0
+medusa/extent_group_id_map/lookup/cassandra_ops_per_sec [154, 0] // [avg, weighted-avg]
+medusa/extent_group_id_map/lookup/medusa_op_ops_sec [153.935, 0] // [avg, weighted-avg]
+medusa/extent_group_id_map/lookup/medusa_ops_outstanding 0
+medusa/extent_group_id_map/lookup/num_transitions [3, 3, 3] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/lookup/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/lookup/op_latency_usecs [2061, 2348, 2428] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/lookup/ops 13124
+medusa/extent_group_id_map/lookup/queue_latency_usecs [613, 733, 715] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/lookup/total_execution_time_usecs [1470, 1634, 1732] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/update/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/update/cassandra_calls_latency_usecs [7601, 9176, 7106] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/update/cassandra_ops_outstanding 6
+medusa/extent_group_id_map/update/cassandra_ops_per_sec [346.194, 342] // [avg, weighted-avg]
+medusa/extent_group_id_map/update/medusa_op_ops_sec [371.226, 361] // [avg, weighted-avg]
+medusa/extent_group_id_map/update/medusa_ops_outstanding 6
+medusa/extent_group_id_map/update/num_transitions [2, 3, 3] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/update/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/update/op_latency_usecs [8057, 9758, 7697] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/update/ops 151365
+medusa/extent_group_id_map/update/queue_latency_usecs [142, 181, 146] // [short-term, medium-term, long-term]
+medusa/extent_group_id_map/update/total_execution_time_usecs [7738, 9293, 7235] // [short-term, medium-term, long-term]
+medusa/extentgroup_access_data_map/update/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/extentgroup_access_data_map/update/cassandra_calls_latency_usecs [19113, 24569, 14467] // [short-term, medium-term, long-term]
+medusa/extentgroup_access_data_map/update/cassandra_ops_outstanding 0
+medusa/extentgroup_access_data_map/update/cassandra_ops_per_sec [0, 0] // [avg, weighted-avg]
+medusa/extentgroup_access_data_map/update/medusa_op_ops_sec [0, 0] // [avg, weighted-avg]
+medusa/extentgroup_access_data_map/update/medusa_ops_outstanding 0
+medusa/extentgroup_access_data_map/update/num_transitions [3, 3, 3] // [short-term, medium-term, long-term]
+medusa/extentgroup_access_data_map/update/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/extentgroup_access_data_map/update/op_latency_usecs [27567, 32769, 18291] // [short-term, medium-term, long-term]
+medusa/extentgroup_access_data_map/update/ops 17
+medusa/extentgroup_access_data_map/update/queue_latency_usecs [1084, 885, 567] // [short-term, medium-term, long-term]
+medusa/extentgroup_access_data_map/update/total_execution_time_usecs [27574, 32970, 18247] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/lookup/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/lookup/cassandra_calls_latency_usecs [1611, 1474, 1227] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/lookup/cassandra_ops_outstanding 0
+medusa/nearsync_consistencygroup_map/lookup/cassandra_ops_per_sec [0, 0] // [avg, weighted-avg]
+medusa/nearsync_consistencygroup_map/lookup/medusa_op_ops_sec [0, 0] // [avg, weighted-avg]
+medusa/nearsync_consistencygroup_map/lookup/medusa_ops_outstanding 0
+medusa/nearsync_consistencygroup_map/lookup/num_transitions [2, 3, 3] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/lookup/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/lookup/op_latency_usecs [1680, 1559, 1351] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/lookup/ops 77
+medusa/nearsync_consistencygroup_map/lookup/queue_latency_usecs [74, 72, 77] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/lookup/total_execution_time_usecs [1635, 1524, 1329] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/update/batch_size [1, 2, 1] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/update/cassandra_calls_latency_usecs [3276, 7308, 4803] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/update/cassandra_ops_outstanding 0
+medusa/nearsync_consistencygroup_map/update/cassandra_ops_per_sec [0.193548, 0] // [avg, weighted-avg]
+medusa/nearsync_consistencygroup_map/update/medusa_op_ops_sec [0.451613, 0] // [avg, weighted-avg]
+medusa/nearsync_consistencygroup_map/update/medusa_ops_outstanding 0
+medusa/nearsync_consistencygroup_map/update/num_transitions [3, 3, 2] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/update/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/update/op_latency_usecs [3477, 7839, 5730] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/update/ops 437
+medusa/nearsync_consistencygroup_map/update/queue_latency_usecs [143, 223, 156] // [short-term, medium-term, long-term]
+medusa/nearsync_consistencygroup_map/update/total_execution_time_usecs [3318, 7350, 4891] // [short-term, medium-term, long-term]
+medusa/num_outstanding_events 0
+medusa/total_cassandra_ops_sec 724.71
+medusa/total_cassandra_outstanding_ops 12
+medusa/total_lookup_cassandra_ops_sec 178.452
+medusa/total_lookup_cassandra_outstanding_ops 0
+medusa/total_lookup_medusa_ops_per_sec 187.548
+medusa/total_lookup_medusa_outstanding_ops 0
+medusa/total_medusa_ops_per_sec 761.742
+medusa/total_medusa_outstanding_ops 12
+medusa/total_update_cassandra_ops_sec 546.258
+medusa/total_update_cassandra_outstanding_ops 12
+medusa/total_update_medusa_ops_per_sec 574.194
+medusa/total_update_medusa_outstanding_ops 12
+medusa/unified_cache/current_size_bytes 286181892
+medusa/unified_cache/deletions 0 // Cumulative stats for unified cache
+medusa/unified_cache/entries 71038
+medusa/unified_cache/evictions 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/current_size_bytes 259506123
+medusa/unified_cache/extent_group_id_map/deletions 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/entries 14232
+medusa/unified_cache/extent_group_id_map/evictions 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/hit_ratio 0.834038 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/hits 14398 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/insertions 15104 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/max_size_bytes 3572397543
+medusa/unified_cache/extent_group_id_map/misses 2865 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/multi_touch_entries 14225 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/multi_touch_usage 259494454 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/negative_entry_detections 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/omitted_inserts 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/single_touch_entries 7 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/single_touch_usage 11669 // Cumulative stats for unified cache
+medusa/unified_cache/extent_group_id_map/updates 13614 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/current_size_bytes 0
+medusa/unified_cache/extent_id_map/deletions 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/entries 0
+medusa/unified_cache/extent_id_map/evictions 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/hit_ratio 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/hits 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/insertions 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/max_size_bytes 3572397543
+medusa/unified_cache/extent_id_map/misses 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/multi_touch_entries 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/multi_touch_usage 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/negative_entry_detections 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/omitted_inserts 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/single_touch_entries 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/single_touch_usage 0 // Cumulative stats for unified cache
+medusa/unified_cache/extent_id_map/updates 0 // Cumulative stats for unified cache
+medusa/unified_cache/hit_ratio 0.903237 // Cumulative stats for unified cache
+medusa/unified_cache/hits 45982 // Cumulative stats for unified cache
+medusa/unified_cache/insertions 28386 // Cumulative stats for unified cache
+medusa/unified_cache/max_size_bytes 3572397543
+medusa/unified_cache/misses 4926 // Cumulative stats for unified cache
+medusa/unified_cache/multi_touch_entries 71004 // Cumulative stats for unified cache
+medusa/unified_cache/multi_touch_usage 286168495 // Cumulative stats for unified cache
+medusa/unified_cache/negative_entry_detections 0 // Cumulative stats for unified cache
+medusa/unified_cache/omitted_inserts 0 // Cumulative stats for unified cache
+medusa/unified_cache/single_touch_entries 34 // Cumulative stats for unified cache
+medusa/unified_cache/single_touch_usage 13397 // Cumulative stats for unified cache
+medusa/unified_cache/updates 20932 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/current_size_bytes 26675769
+medusa/unified_cache/vdisk_block_map/deletions 0 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/entries 56806
+medusa/unified_cache/vdisk_block_map/evictions 0 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/hit_ratio 0.938743 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/hits 31584 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/insertions 13282 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/max_size_bytes 3572397543
+medusa/unified_cache/vdisk_block_map/misses 2061 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/multi_touch_entries 56779 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/multi_touch_usage 26674041 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/negative_entry_detections 0 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/omitted_inserts 0 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/single_touch_entries 27 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/single_touch_usage 1728 // Cumulative stats for unified cache
+medusa/unified_cache/vdisk_block_map/updates 7318 // Cumulative stats for unified cache
+medusa/vdisk_block_map/lookup/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/lookup/cassandra_calls_latency_usecs [1738, 1858, 1840] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/lookup/cassandra_ops_outstanding 0
+medusa/vdisk_block_map/lookup/cassandra_ops_per_sec [24.3871, 25] // [avg, weighted-avg]
+medusa/vdisk_block_map/lookup/medusa_op_ops_sec [33.5484, 43] // [avg, weighted-avg]
+medusa/vdisk_block_map/lookup/medusa_ops_outstanding 0
+medusa/vdisk_block_map/lookup/num_transitions [3, 3, 3] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/lookup/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/lookup/op_latency_usecs [1980, 2070, 2052] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/lookup/ops 10012
+medusa/vdisk_block_map/lookup/queue_latency_usecs [133, 174, 151] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/lookup/total_execution_time_usecs [1875, 1982, 1965] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/update/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/update/cassandra_calls_latency_usecs [16392, 18689, 14513] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/update/cassandra_ops_outstanding 6
+medusa/vdisk_block_map/update/cassandra_ops_per_sec [199.806, 213] // [avg, weighted-avg]
+medusa/vdisk_block_map/update/medusa_op_ops_sec [202.452, 213] // [avg, weighted-avg]
+medusa/vdisk_block_map/update/medusa_ops_outstanding 6
+medusa/vdisk_block_map/update/num_transitions [3, 3, 3] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/update/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/update/op_latency_usecs [16567, 18886, 14744] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/update/ops 81331
+medusa/vdisk_block_map/update/queue_latency_usecs [157, 200, 173] // [short-term, medium-term, long-term]
+medusa/vdisk_block_map/update/total_execution_time_usecs [16431, 18705, 14544] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/lookup/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/lookup/cassandra_calls_latency_usecs [1362, 1627, 1800] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/lookup/cassandra_ops_outstanding 0
+medusa/vdisk_oplog_map/lookup/cassandra_ops_per_sec [0.0645161, 0] // [avg, weighted-avg]
+medusa/vdisk_oplog_map/lookup/medusa_op_ops_sec [0.0645161, 0] // [avg, weighted-avg]
+medusa/vdisk_oplog_map/lookup/medusa_ops_outstanding 0
+medusa/vdisk_oplog_map/lookup/num_transitions [3, 3, 3] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/lookup/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/lookup/op_latency_usecs [1428, 1699, 1875] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/lookup/ops 5
+medusa/vdisk_oplog_map/lookup/queue_latency_usecs [76, 75, 73] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/lookup/total_execution_time_usecs [1389, 1668, 1855] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/update/batch_size [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/update/cassandra_calls_latency_usecs [3339, 3473, 3771] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/update/cassandra_ops_outstanding 0
+medusa/vdisk_oplog_map/update/cassandra_ops_per_sec [0.0645161, 0] // [avg, weighted-avg]
+medusa/vdisk_oplog_map/update/medusa_op_ops_sec [0.0645161, 0] // [avg, weighted-avg]
+medusa/vdisk_oplog_map/update/medusa_ops_outstanding 0
+medusa/vdisk_oplog_map/update/num_transitions [2, 3, 3] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/update/number_of_cassandra_calls_done [1, 1, 1] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/update/op_latency_usecs [3402, 3542, 3843] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/update/ops 5
+medusa/vdisk_oplog_map/update/queue_latency_usecs [62, 62, 62] // [short-term, medium-term, long-term]
+medusa/vdisk_oplog_map/update/total_execution_time_usecs [3365, 3512, 3817] // [short-term, medium-term, long-term]

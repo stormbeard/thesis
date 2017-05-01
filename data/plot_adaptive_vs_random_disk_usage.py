@@ -10,13 +10,10 @@ matplotlib.rcParams.update({'font.size': 22})
 
 svmips = ["10.61.192.108", "10.61.192.109", "10.61.192.110"]
 odd_man_out = "10.61.192.110"
-#tests_to_plot = ["random_selection_3",
-#                 "adaptive_selection_7",
-#                 "adaptive_selection_8"]
-
-tests_to_plot = ["adaptive_selection_9",
-                 "adaptive_selection_10",
-                 "random_selection_4"]
+tests_to_plot = ["adaptive_selection_8",
+                 "adaptive_selection_7",
+                 "maybe_as_11",
+                 "random_selection_3"]
 
 # Map from test to map from svm ip to fullness timeseries
 selection_maps = {}
@@ -67,11 +64,13 @@ for test in tests_to_plot:
 legend = []
 for test in tests_to_plot:
     legend.append(test)
-    # TODO: make this in real time units via some map
-    plt.plot(range(len(deviations[test])), deviations[test])
+    # The samples are ~5 seconds apart. We'll just say 5 and call it a day.
+    secs = 5.0
+    xaxis = map(lambda x: secs * x, range(len(deviations[test])))
+    plt.plot(xaxis, deviations[test])
 
 plt.legend(legend)
 plt.title("Idle Node Hot-tier Deviation")
-plt.xlabel("Time (arbitrary units)")
+plt.xlabel("Time (seconds)")
 plt.ylabel("% Deviation")
 plt.show()
