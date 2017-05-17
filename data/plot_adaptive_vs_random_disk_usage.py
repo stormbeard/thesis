@@ -10,10 +10,14 @@ matplotlib.rcParams.update({'font.size': 22})
 
 svmips = ["10.61.192.108", "10.61.192.109", "10.61.192.110"]
 odd_man_out = "10.61.192.110"
-tests_to_plot = ["adaptive_selection_8",
-                 "adaptive_selection_7",
-                 "maybe_as_11",
-                 "random_selection_3"]
+
+testname_2_title = \
+    {"adaptive_selection_10" : "Adaptive selection, queue length only",
+     "adaptive_selection_9" : "Adaptive selection, linear fitness",
+     "adaptive_selection_11" : "Adaptive selection, multiplicative fitness",
+     "random_selection_4" : "Random selection"}
+
+tests_to_plot = testname_2_title.keys()
 
 # Map from test to map from svm ip to fullness timeseries
 selection_maps = {}
@@ -58,19 +62,19 @@ for test in tests_to_plot:
     deviations[test] = []
     minrange = min(map(lambda x: len(x), selection_maps[test].values()))
     for ii in range(minrange):
-        deviations[test].append(abs(selection_maps[test][odd_man_out][ii] -
-                                fullness_primaries[test][ii]))
+        deviations[test].append(fullness_primaries[test][ii] -
+                                selection_maps[test][odd_man_out][ii])
 
 legend = []
 for test in tests_to_plot:
-    legend.append(test)
+    legend.append(testname_2_title[test])
     # The samples are ~5 seconds apart. We'll just say 5 and call it a day.
     secs = 5.0
     xaxis = map(lambda x: secs * x, range(len(deviations[test])))
     plt.plot(xaxis, deviations[test])
 
 plt.legend(legend)
-plt.title("Idle Node Hot-tier Deviation")
+plt.title("Idle Node Hot-tier Deviation (buggy, high outstanding ops)")
 plt.xlabel("Time (seconds)")
 plt.ylabel("% Deviation")
 plt.show()
