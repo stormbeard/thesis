@@ -55,7 +55,7 @@ def truncation_selection(lst):
     top_t = []
     for i in lst:
         bisect.insort(top_t, i)
-        if len(top_t) > len(lst) / 10:
+        if len(top_t) > len(lst) / 4:
             top_t.pop(0)
     ret = []
     ret.append(top_t[random.randint(0, len(top_t) - 1)])
