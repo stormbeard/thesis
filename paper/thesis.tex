@@ -23,6 +23,8 @@ Harvard Extension School}
 \renewcommand{\today}{who knows}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\tableofcontents
 \listoffigures
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -196,23 +198,170 @@ remedy the common problems found in many heterogeneous clustered file systems.
     \subsubsection{ReplicaSelector Unit Tests}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Results and Evaluation}
+\section{Evaluation and Results}
 
-% TODO
-
-  \subsection{Write Patterns and Fio}
-
-% TODO
+The experiments below seek to measure the effect of the additive and
+multiplicative term fitness functions on both the tier utilization of each node
+and the queue lengths of disks residing on those nodes compared with uniform
+random selection.
 
   \subsection{Experimental Setup}
 
-% TODO
+  The replica selection schemes were evaluated using a NX-1350 for evaluating
+  the disk fullness and a NX-3-node cluster). Each node contains a single 300GB
+  SSD and 4 HDDs 1TB in size. When evaluating the new replica disk selection
+  framework, two heterogeneous workload scenarios are tested:
+ 
+  \begin{enumerate}
+    \item Two worker VMs on separate nodes running a workload with low outstanding ops.
+    \item Two worker VMs on separate nodes with running a workload with high outstanding ops.
+  \end{enumerate}
+ 
+  \subsection{Fio and Write Patterns}
 
-  \subsection{Low Outstanding Operation Test Results}
+  When generating I/O in these experiments, Fio is used on the worker VMs. Fio,
+  short for Flexible IO, is an I/O workload generator that can take
+  configuration files to specify the parameters of a test. On each worker VM,
+  fio is used to generate a sequential write workload that completely fills the
+  cluster's hot-tier. I choose to use exclusively sequential writes for all
+  tests because they are the default for fio tests and the purpose of these
+  experiments is to generate new replicas in a consistent manner. For the
+  purposes of replica placement, the Nutanix file system does not distinguish
+  targets based on the write pattern that generatred an extent group.
 
-% TODO
+  \subsection{Tier Utilization Experiments}
 
-  \subsection{High Outstanding Operation Test Results}
+  The tier utilization experiments define the hot-tier deviation,
+  $d_{hot tier}$, as the average SSD utilization percentage of the nodes
+  running a workload, $u_{w}$, subtracted by the SSD utilization percentage of
+  the node without a workload, $u_{o}$:
+  
+  \begin{equation}
+    d_{hot\ tier} = \frac{u_{w1} + u_{w2}}{u_{o}}
+  \end{equation}
+  
+  Ideally, the idle node would absorb the majority of secondary replicas from
+  the running workloads. However, uniform random selection causes only 50\% of
+  secondary replicas to go to the idle node even though it can potentially
+  handle more work due to the fact that it does not have to service a local
+  workload. In a uniform random replica selection scheme, we expect the
+  nodes running a workload have to bear 100\% of their own primary replicas and
+  50\% of secondary replicas from the other worker node. This causes total SSD
+  utilization to be skewed towards the worker nodes and for this skew to grow
+  as the tests run. This is indicated by higher $d_{hot\ tier}$ values. We
+  expect a more sophisticated replica selection scheme to minimize
+  $d_{hot\ tier}$ by biasing secondary replicas towards the idle node and
+  limiting the skew.
+
+  % TODO: should I include fio scripts here, in some appendix, or in the user
+  % guide?
+
+    \subsubsection{Low Outstanding Operation Results}
+
+    \begin{figure}[h!]
+      \centering
+      \includegraphics[scale=0.35]{images/low_outstanding_exp.png} 
+      \caption{$d_{hot\ tier}$ values over time for low outstanding I/O
+               operations.}
+      \label{fig:low_outstanding_tier_disparity}
+    \end{figure}
+
+    Figure \ref{fig:low_outstanding_tier_disparity} shows the results of a
+    workload with only a single outstanding operation. This causes the queue
+    length reported by Stargate to be at most 1, resulting in the fitness
+    function's queue length term to be roughly constant and approximately 1.
+    
+    We can see that the additive fitness function does not minimize the
+    hot-tier deviation as well as the multiplicative. This is because an
+    additive fitness function's behavior varies depending on the weight chosen
+    for the queue length term. By default, the linear fitness function
+    gives equal weight to both the disk fullness and queue length terms;
+    however, for one run of this experiment the queue length term was given no
+    weight. Linear fitness that gives equal weight to both terms does not
+    reduce skew by very much while giving no weight to the queue length term
+    keeps all nodes' usages within 10\% of each other. This is because the
+    queue length term is contributing the maximum amount possible to the
+    fitness value due to the consistently low queue length values. We can
+    illustrate this by defining a disk selection bias, $b_r$, as the
+    probability some disk, $d$, will be selected when compared with another
+    disk, $d'$ whose utilization is 10\% higher and queue length value is
+    identical. Given a fitness function, $f$, we can calculate $b_r$ as
+    follows:
+
+    \begin{equation}
+      b_r = \frac{f(d)}{f(d) + f(d')}
+    \end{equation}
+
+    Figures \ref{fig:bias_max_qlen} and \ref{fig:bias_min_qlen} show the disk
+    selection biases for very large and very small queue lengths respectively.
+
+    \begin{figure}[h!]
+      \centering
+      \includegraphics[scale=0.35]{images/replica_selection_bias_max_qlen.png} 
+      \caption{$b_r$ values with static queue lengths at the fitness
+               function ceiling values.}
+      \label{fig:bias_max_qlen}
+    \end{figure}
+
+    \begin{figure}[h!]
+      \centering
+      \includegraphics[scale=0.35]{images/replica_selection_bias_min_qlen.png} 
+      \caption{$b_r$ values with static queue lengths at 1.}
+      \label{fig:bias_min_qlen}
+    \end{figure}
+
+    We can see that for an additive fitness function, the bias towards a less
+    utilized disk decreases as the disk fullness percentages for $d$ and $d'$
+    increase, even though they still only differ by 10\% in the figure above.
+    This is because the entire linear fitness function does not scale with each
+    term, so we can conclude that the multiplicative fitness function is
+    superior.
+
+    \subsubsection{High Outstanding Operation Results}
+
+    \begin{figure}[h!]
+      \centering
+      \includegraphics[scale=0.35]{images/high_outstanding_exp.png} 
+      \caption{$b_r$ values with static queue lengths at 1.}
+      \label{fig:high_outstanding_tier_disparity}
+    \end{figure}
+
+
+    In Figure \ref{fig:high_outstanding_tier_disparity}, we can see that both
+    additive and multiplicative fitness functions reduce the disk fullness skew
+    from 30\% to less than 10\%. Multiplicative fitness performs slightly
+    better at minimizing $d_{hot\ tier}$ than additive fitness, possibly due to
+    scaling the fitness value by the value of both the fullness and queue
+    length terms, rather than weights.
+  
+  \subsection{Disk Queue Length Experiments}
+
+  Since a low outstanding operation workload would not give useful
+  information for measuring the effects of fitness-based replica selection on
+  disk queue lengths, the high outstanding I/O operation experiment in the
+  previous section was re-run for all fitness function types and for fitness
+  function queue length term ceilings of 200 and 100. Figures
+  \ref{fig:qlen_100} and \ref{fig:qlen_200} show a reduction in
+  queue length quartiles when fitness-based selection is used for disks on
+  nodes that host local workloads. Lower queue length ceilings are
+  observed to provide better results in reducing the queue lengths for the
+  worker nodes.
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.35]{images/qlen_100_box.png} 
+    \caption{Queue lengths for all SSDs on the specified nodes sampled every 1
+             second.}
+    \label{fig:qlen_100}
+  \end{figure}
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.35]{images/qlen_200_box.png} 
+    \caption{Queue lengths for all SSDs on the specified nodes sampled every 1
+             second.}
+    \label{fig:qlen_200}
+  \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{User Guide}
