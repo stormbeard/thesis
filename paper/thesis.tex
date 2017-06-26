@@ -178,6 +178,12 @@ remedy the common problems found in many heterogeneous clustered file systems.
   \subsection{Weighted Random Selection Algorithms}
 
 % TODO
+    \begin{figure}[h!]
+      \centering
+      \includegraphics[scale=0.25]{images/random_scalability.png} 
+      \caption{Running times of various weight random selection algorithms.}
+      \label{fig:random_scalability}
+    \end{figure}
 
   \subsection{WeightedVector Class}
 
@@ -322,7 +328,8 @@ random selection.
     \begin{figure}[h!]
       \centering
       \includegraphics[scale=0.35]{images/high_outstanding_exp.png} 
-      \caption{$b_r$ values with static queue lengths at 1.}
+      \caption{$d_{hot\ tier}$ values over time for low outstanding I/O
+               operations.}
       \label{fig:high_outstanding_tier_disparity}
     \end{figure}
 
