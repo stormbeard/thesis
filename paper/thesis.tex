@@ -76,9 +76,9 @@ remedy the common problems found in many heterogeneous clustered file systems.
     to avoid the busy node and bias secondary replica placement on an idle
     node. 
 
-    \begin{figure}[h!]
+    \begin{figure}[h]
       \centering
-      \includegraphics[scale=0.5]{images/homogeneous_workload_disparity.pdf} 
+      \includegraphics[scale=0.4]{images/homogeneous_workload_disparity.pdf} 
       \caption{A cluster with identical nodes running a heterogeneous workload.}
       \label{fig:workload_disparity}
     \end{figure}
@@ -103,9 +103,9 @@ remedy the common problems found in many heterogeneous clustered file systems.
     replicas and biasing placement of secondary replicas on the nodes with more
     free capacity.
 
-    \begin{figure}[h!]
+    \begin{figure}[h]
       \centering
-      \includegraphics[scale=0.5]{images/homogeneous_tier_disparity.pdf} 
+      \includegraphics[scale=0.4]{images/homogeneous_tier_disparity.pdf} 
       \caption{A cluster with nodes of varying resource capacity.}
       \label{fig:tier_size_disparity}
     \end{figure}
@@ -177,11 +177,221 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
   \subsection{Weighted Random Selection Algorithms}
 
-% TODO
-    \begin{figure}[h!]
+  After a weight is calculated for a disk in the cluster that will store a
+  replica, the WeightedVector class' Sample() calls will perform a weighted
+  random selection on the set of potential candidate disks. To determine the
+  best method of weighted random selection for Stargate's WeightedVector class,
+  an exploration of various weighted random selection algorithms was necessary.
+  Since the file system only supports replication factors of 2 or 3, the
+  investigation was limited to algorithms that allow for a weighted $N$ choose
+  $Y$, where $Y$ is the data replication factor.
+
+  %TODO: Talk about herding here.
+  
+  This section provides an overview of the algorithms investigated via
+  simulations to compare each algorithm at different orders of magnitude.
+
+    \subsubsection{Scalability Simulation Methodology}
+     To test the scalability of the weighted random selection algorithms
+     evaluated in the next section, a single-threaded Python script was written
+     to to evaluate the change in run time as sample sets increase. Each
+     algorithm's time to select is calculated for each of a fixed number of
+     iterations for multiple sample sets. pseudo-code for the simulations
+     can be written as follows:
+
+     \begin{verbatim}
+     for each selection_algorithm in algorithm_list:
+         run_time_values = empty_list()
+         for each sample_set_size in all_sample_set_sizes:
+             sample_set = generate_sample_set(sample_set_size)
+             all_elapsed_times = empty_list()
+             for each iteration:
+                 start_time = time.now()
+                 selection_algorithm(sample_set)
+                 elapsed_time = time.now() - start_time
+                 all_elapsed_times.append(elapsed_time)
+             calculate_avg_elapsed_time(all_elapsed_times)
+             calculate_std_error(all_elapsed_times)
+     \end{verbatim}
+        
+    Object weights are constant throughout the simulation, so selection schemes
+    that require some amount of preprocessing (such as the top T\% calculation
+    for truncation selection) are performing their preprocessing steps for each
+    selection. This gives information about the worst-case behavior for each
+    algorithm in comparison with others'.
+
+    \subsubsection{Herding Behavior Evaluation Methodology}
+    Herding behaviors can be seen in some weighted random selection
+    algorithms when (TODO: cite some papers) the weights of a subset of objects
+    in the sampling pool cause a disproportionate amount of selections to
+    target those objects. In the case of replica disk selections in a Nutanix
+    cluster, this can cause too many operations to target an especially
+    suitable disk, resulting in poor performance. We can simulate an
+    exaggerated scenario in which the susceptibility to herding behavior can be
+    observed by having a single object with a weight that is multiple orders of
+    magnitude heavier than the next highest object in the sampling set. It is
+    also necessary to observe any herding behavior for a sampling set with low
+    weight skew. This section describes the simulation methodology for each.
+
+    High-skew sampling sets of 11 objects were generated such that the array
+    index of the first 10 objects was assigned as the object weight, and the
+    last object was given a weight of 1000. This creates an extremely large
+    skew in weights and makes the high-weight object a target for herding
+    behavior. Given this sampling set, weighted random selections were
+    performed and a histogram was kept that tracked the number of selections
+    for each object. 1e3, 1e4, and 1e5 iterations were performed to observe any
+    changes in herding behavior at larger time scales. In addition to the
+    high-skew sampling sets, low-skew sets of 100 objects were also simulated.
+    These low-skew sets were identical to the high-skew sets, except there was
+    not a single object with an exaggerated weight of 1000. All element weights
+    were their array indices.
+
+    \subsubsection{Stochastic Universal Sampling (SUS) Simulations}
+    SUS is another sampling technique first introduced by Baker in 1987 [10].
+    The algorithm can be understood as follows: On a standard roulette wheel
+    there's a single pointer that indicates the winner. The roulette wheel's
+    "bins" can all be the same size which would indicate a uniform probability
+    of selecting any bin and could also be unevenly sized which would indicate
+    a weighted probability. SUS uses this same concept except allows for N
+    evenly spaced pointers corresponding to the selection of N items. Key
+    things to note are that the set, or "bins" in my roulette analogy, must be
+    shuffled prior to selection. Also, there is a minimum spacing allowed for
+    the pointers to prevent selection of the same bin.
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/herding_roullette.png} 
+      \caption{Histograms generated by simulation of Stochastic Universal
+               Sampling using sample sizes of 1e3, 1e4, and 1e5. Object weights
+               for the histograms are in the range [1,100].}
+      \label{fig:herding_roullette}
+    \end{figure}
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/pathological_roullette.png} 
+      \caption{Histograms generated by simulation of Stochastic Universal
+               Sampling using sample sizes of 1e3, 1e4, and 1e5. Object weights
+               are in the range [0,9] with a single outlier of weight 1000 to
+               illustrate the effect of herding behavior.}
+      \label{fig:pathological_roullette}
+    \end{figure}
+
+    Figure \ref{fig:herding_roullette} shows the evolution of the
+    distribution of selection frequencies for SUS as the number of samples
+    increases. We can see that the selection frequency is proportional to the
+    object weight. This can prove problematic for outlier objects with weights
+    that are much larger than the other objects in the set as shown in Figure
+    \ref{fig:pathological_roullette}. We can see that the high weight object's
+    selection frequency eclipses all other objects in the selection pool which
+    can lead to extreme herding behaviors.
+
+    \subsubsection{Tructation Selection Simulations}
+    Truncation selection[TODO: CITE] does not consider any objects for
+    selection below some threshold, $T$. In figure
+    \ref{fig:herding_truncation}, only the top 10\% of objects ranked by weight
+    are considered for selection. Within this subset, weight has no meaning so
+    there is a uniform distribution of selections. However, this may not be
+    suitable for use cases where all objects must be candidates for selection.
+    Depending on the threshold chosen, this algorithm can be resistant to
+    herding behavior as shown in Figure \ref{fig:pathological_truncation}. 
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/herding_truncation.png} 
+      \caption{Histograms generated by simulation of truncation selection
+               using sample sizes of 1e3, 1e4, and 1e5. Object weights
+               for the histograms are in the range [1,100].}
+      \label{fig:herding_truncation}
+    \end{figure}
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/pathological_truncation.png} 
+      \caption{Histograms generated by simulation of truncation selection
+               using sample sizes of 1e3, 1e4, and 1e5. Object weights are in
+               the range [0,9] with a single outlier of weight 1000 to
+               illustrate the effect of herding behavior.}
+      \label{fig:pathological_truncation}
+    \end{figure}
+
+    \subsubsection{Two-choice Sampling Simulations}
+    Two-choice sampling, first introduced by %TODO: mitzenmacher paper
+    has proven to be extremely resilient to herding behavior as shown in
+    Figure \ref{fig:pathological_two_choice} and selection frequencies for all
+    objects are influenced by object weights in a way similar to SUS. While an
+    object with a higher weight is more likely to be selected, it is not
+    selected with a probability proportional to its fitness value. This makes
+    the algorithm resistant to any herding behaviors, but will not be a good
+    candidate if we desire the WeightedVector to select objects with
+    probability proportional to its weight.
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/herding_two_choice.png} 
+      \caption{Histograms generated by simulation of two-choice selection
+               using sample sizes of 1e3, 1e4, and 1e5. Object weights
+               for the histograms are in the range [1,100].}
+      \label{fig:herding_two_choice}
+    \end{figure}
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/pathological_two_choice.png} 
+      \caption{Histograms generated by simulation of two-choice selection
+               using sample sizes of 1e3, 1e4, and 1e5. Object weights are in
+               the range [0,9] with a single outlier of weight 1000 to
+               illustrate the effect of herding behavior.}
+      \label{fig:pathological_two_choice}
+    \end{figure}
+
+    \subsubsection{Uniform Random Selection Simulations}
+    Uniform random selection is completely indifferent to object weights.
+    Therefore, it exhibits no herding behavior and no usefulness for the
+    WeightedVector's sampling, but it is important to include its analysis for
+    comparison with other selection algorithms.
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/herding_random.png} 
+      \caption{Histograms generated by simulation of uniform random selection
+               using sample sizes of 1e3, 1e4, and 1e5. Object weights
+               for the histograms are in the range [1,100].}
+      \label{fig:herding_random}
+    \end{figure}
+
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=0.30]{images/pathological_random.png} 
+      \caption{Histograms generated by simulation of uniform random selection
+               using sample sizes of 1e3, 1e4, and 1e5. Object weights are in
+               the range [0,9] with a single outlier of weight 1000 to
+               illustrate the effect of herding behavior.}
+      \label{fig:pathological_random}
+    \end{figure}
+
+    Figure \ref{fig:pathological_truncation} shows that we can expect uniform
+    selection probabilities and Figure \ref{fig:pathological_random} confirms
+    that we can expect no herding behavior with a uniform random selection
+    scheme.
+
+    \subsubsection{Weighted Random Algorithm Scalability Simulations}
+    It's clearly seen that even though both SUS and truncation selection are
+    [TODO: cite runtimes for each]
+    exponential in run time, truncation selection is slower than SUS by an
+    order of magnitude. This is mainly due to the need for the truncation
+    selection algorithm to calculate the top T\% of the set for every selection
+    performed. As expected, two-choice and random selections are
+    observed to be constant-time algorithms. Two-choice is slightly slower than
+    random selection due to the second selection and comparison operation that
+    must occur.
+
+    \begin{figure}[h]
       \centering
       \includegraphics[scale=0.25]{images/random_scalability.png} 
-      \caption{Running times of various weight random selection algorithms.}
+      \caption{Running times of various weight random selection algorithms.
+               Each algorithm is run for 10 iterations at each object pool
+               size.}
       \label{fig:random_scalability}
     \end{figure}
 
@@ -219,8 +429,10 @@ random selection.
   framework, two heterogeneous workload scenarios are tested:
  
   \begin{enumerate}
-    \item Two worker VMs on separate nodes running a workload with low outstanding ops.
-    \item Two worker VMs on separate nodes with running a workload with high outstanding ops.
+    \item Two worker VMs on separate nodes running a workload with low
+          outstanding ops.
+    \item Two worker VMs on separate nodes with running a
+          workload with high outstanding ops.
   \end{enumerate}
  
   \subsection{Fio and Write Patterns}
@@ -264,9 +476,9 @@ random selection.
 
     \subsubsection{Low Outstanding Operation Results}
 
-    \begin{figure}[h!]
+    \begin{figure}[h]
       \centering
-      \includegraphics[scale=0.35]{images/low_outstanding_exp.png} 
+      \includegraphics[scale=0.30]{images/low_outstanding_exp.png} 
       \caption{$d_{hot\ tier}$ values over time for low outstanding I/O
                operations.}
       \label{fig:low_outstanding_tier_disparity}
@@ -301,17 +513,17 @@ random selection.
     Figures \ref{fig:bias_max_qlen} and \ref{fig:bias_min_qlen} show the disk
     selection biases for very large and very small queue lengths respectively.
 
-    \begin{figure}[h!]
+    \begin{figure}[h]
       \centering
-      \includegraphics[scale=0.35]{images/replica_selection_bias_max_qlen.png} 
+      \includegraphics[scale=0.30]{images/replica_selection_bias_max_qlen.png} 
       \caption{$b_r$ values with static queue lengths at the fitness
                function ceiling values.}
       \label{fig:bias_max_qlen}
     \end{figure}
 
-    \begin{figure}[h!]
+    \begin{figure}[h]
       \centering
-      \includegraphics[scale=0.35]{images/replica_selection_bias_min_qlen.png} 
+      \includegraphics[scale=0.30]{images/replica_selection_bias_min_qlen.png} 
       \caption{$b_r$ values with static queue lengths at 1.}
       \label{fig:bias_min_qlen}
     \end{figure}
@@ -325,9 +537,9 @@ random selection.
 
     \subsubsection{High Outstanding Operation Results}
 
-    \begin{figure}[h!]
+    \begin{figure}[h]
       \centering
-      \includegraphics[scale=0.35]{images/high_outstanding_exp.png} 
+      \includegraphics[scale=0.30]{images/high_outstanding_exp.png} 
       \caption{$d_{hot\ tier}$ values over time for low outstanding I/O
                operations.}
       \label{fig:high_outstanding_tier_disparity}
@@ -354,17 +566,17 @@ random selection.
   observed to provide better results in reducing the queue lengths for the
   worker nodes.
 
-  \begin{figure}[h!]
+  \begin{figure}[!htb]
     \centering
-    \includegraphics[scale=0.35]{images/qlen_100_box.png} 
+    \includegraphics[scale=0.30]{images/qlen_100_box.png} 
     \caption{Queue lengths for all SSDs on the specified nodes sampled every 1
              second.}
     \label{fig:qlen_100}
   \end{figure}
 
-  \begin{figure}[h!]
+  \begin{figure}[!htb]
     \centering
-    \includegraphics[scale=0.35]{images/qlen_200_box.png} 
+    \includegraphics[scale=0.30]{images/qlen_200_box.png} 
     \caption{Queue lengths for all SSDs on the specified nodes sampled every 1
              second.}
     \label{fig:qlen_200}
