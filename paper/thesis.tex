@@ -145,6 +145,10 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
 % TODO
 
+    \subsubsection{Arithmos Interactions}
+
+% TODO
+
     \subsubsection{Storage Tiering}
 
 % TODO
@@ -163,17 +167,64 @@ remedy the common problems found in many heterogeneous clustered file systems.
 % TODO
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Implementation}
 
-% TODO
+  \subsection{Stargate Disk Stats Collection}
 
-  \subsection{Overview}
+  Prior to this work, Stargate's periodic disk stats collection was limited to
+  caching solely disk usage stats for all disks in the cluster.  This has been
+  expanded to now include disk performance stats for use in disk fitness
+  values.
 
-% TODO
+  Stargate maintains a mapping, henceforth referred to as the $disk\_map\_$,
+  from cluster disk ID to a disk state structure. The $disk\_map\_$'s state
+  structure contains disk usage and performance information that has been
+  published to Arithmos by other Stargates in the cluster. Upon gathering fresh
+  stats from Arithmos, the information is used to create a disk fitness value
+  for each disk in the cluster.
 
   \subsection{Fitness Values and Functions}
 
-% TODO
+  To calculate a value to represent the desirability of a disk for replica
+  placement, we'll use a function, $f_{fitness}$ that takes as its argument
+  disk stats and returns a positive number we will call a fitness value. A low
+  fitness value indicates a poor placement candidacy for a disk and a high
+  fitness value will indicate a highly desirable disk for replica placement. In
+  this thesis, I evaluate two fitness functions that are comprised of terms
+  that utilize a disk's average queue length over some stretch of time,
+  $t_{q}$, and a disk's percentage utilization, $t_{u}$.
+
+  \begin{equation}
+    t_{q} = 1 - \frac{q}{q_{ceil}}
+  \end{equation}
+
+  $q_{ceiling}$ is defined as the maximum observed queue length such that
+  beyond this value, $t_{q}$ does not contribute to the fitness
+  value. This ensures that as the queue length grows, $t_{q}$
+  approaches zero. 
+
+  \begin{equation}
+    t_{u} = \frac{1}{a^{u}}
+  \end{equation}
+
+  $u$ is the disk utilization percentage and $a$ is an aggression variable used
+  to control the exponential decay of $t_{u}$. The larger $a$ is, the
+  more aggressively $t_{u}$ will decay as $u$ increases. An
+  aggressive decay results in more preference given to less utilized disks when
+  compared with disks that are slightly more utilized.
+
+  These terms are used in two different fitness functions evaluated in this
+  thesis:
+
+  \begin{equation}
+    f_{add} = t_{u} + t_{q}
+  \end{equation}
+
+  \begin{equation}
+    f_{mult} = t_{u}t_{q}
+  \end{equation}
+
 
   \subsection{Weighted Random Selection Algorithms}
 
@@ -186,8 +237,6 @@ remedy the common problems found in many heterogeneous clustered file systems.
   investigation was limited to algorithms that allow for a weighted $N$ choose
   $Y$, where $Y$ is the data replication factor.
 
-  %TODO: Talk about herding here.
-  
   This section provides an overview of the algorithms investigated via
   simulations to compare each algorithm at different orders of magnitude.
 
@@ -397,12 +446,110 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
   \subsection{WeightedVector Class}
 
-% TODO
+  % TODO: Fix the code spacing.
 
-  \subsection{Changes to the Stargate Disk Stats}
+  It's necessary to perform repeated weighted sampling of disk IDs, easily, and
+  given their fitness values. An object container class is needed similar to a
+  C++ STL container [XXX CITE XXX] that can also access elements of arbitrary
+  types via arbitrary weighted random sampling methods. The WeightedVector
+  class was implemented to fulfill this requirement. 
 
-% TODO
+  Upon instantiation of the WeightedVector class, a fitness function is
+  provided to store the fitness values of all objects internally. The
+  WeightedVector class has implemented insertion, removal, and weighted random
+  sampling of objects of some arbitrary type, $T$, based on the object's
+  fitness value as a weight.
 
+  The set of objects and their fitness values are stored in $std::vector$
+  objects , one for the object references stored in the WeightedVector and one
+  for their corresponding fitness values. The objects and their corresponding
+  fitness values share an index into their respective internal vectors.
+
+    \subsubsection{Public Interface}
+
+     \begin{verbatim}
+       WeightedVector(const std::function<double(const T)>)
+     \end{verbatim}
+
+     The WeightedVector class is instantiated by providing a fitness function
+     that accepts a reference to an object of type \emph{T} and returns a
+     fitness value that is of type \emph{double}. The provided fitness function
+     is used to create a mapping between inserted objects and their
+     corresponding fitness values for sampling.
+
+     The WeightedVector class asserts that the fitness function returns positive
+     values.
+
+     \begin{verbatim}
+       void EmplaceBack(const T& element)
+     \end{verbatim}
+
+     The EmplaceBack function constructs and inserts an object of type
+     \emph{T} at the end of the vector. This increases the WeightedVector's
+     size by 1.
+
+     \begin{verbatim}
+       bool Empty()
+     \end{verbatim}
+
+     Returns true if the WeightedVector is of size 0.
+
+     \begin{verbatim}
+       void Clear()
+     \end{verbatim}
+
+     Resets all state in the WeightedVector object, sets the size to 0, and
+     clears all internal vectors.
+
+     \begin{verbatim}
+       T& Sample()
+     \end{verbatim}
+
+     Returns a reference to an object stored inside of the WeightedVector.
+     Objects are sampled via weighted random selection and subsequent calls to
+     Sample are guaranteed not to return the same object unless Reset is called
+     before sampling again. The WeightedVector class asserts that Sample is not
+     called more times than the size of the WeightedVector.
+
+     \begin{verbatim}
+       void Reset()
+     \end{verbatim}
+
+     Resets the sampling state of the WeightedVector, allowing sampled objects
+     to be eligible for selection in subsequent Sample calls.
+
+     \begin{verbatim}
+       size_t size()
+     \end{verbatim}
+
+     Returns the size of the WeightedVector.
+
+    \subsubsection{Internals}
+
+    Internally, the WeightedVector class keeps 3 different std:vector objects
+    to keep track of sampling state and the object-to-fitness value mapping.
+    There is the inner\_vector\_ variable which stores the objects
+    inserted via EmplaceBack, the weights\_ variable which stores the
+    fitness values of all objects in the inner\_vector\_, and the
+    sampling\_weights\_ variable which is identical to weights\_
+    except that objects weights are set to 0 when sampled. This allows us to
+    exclude objects from being sampled multiple times, since a weight of 0
+    gives a probability of 0 for sampling. With this scheme, a Reset call
+    simply copies weights\_ into sampling\_weights\_.
+
+    \subsubsection{Unit Testing}
+
+    The WeightedVector class' unit tests all start by defining a fitness
+    function unique to the test. The expected probability of each object is
+    then calculated prior to the test. For example, a fitness function that
+    just returns a uniform random number as the value would warrant an expected
+    probability inversely proportional to num\_elements for each element.
+    Elements are then sampled for a number of times several orders of magnitude
+    larger than the number of elements. Each sampled element's number of times
+    being selected is tracked in a test-local map. We then calculate the actual
+    selection probability of each element in the WeightedVector with the
+    expected value and verify the difference is within an acceptable tolerance.
+      
   \subsection{Unit Testing}
 
 % TODO
