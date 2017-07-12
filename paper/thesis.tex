@@ -159,9 +159,74 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
     \subsubsection{Replica Selection}
 
-% TODO
+    When a Stargate write operation wants to select disks for data placement,
+    it is done on a per-tier basis. The interface for a replica selection
+    function call, DetermineNewReplicas, takes the following arguments:
+
+    \begin{center}
+      \begin{tabular}{ | p{0.4\linewidth} | p{0.6\linewidth} | }
+        \hline
+        \textbf{Argument Name} & \textbf{Description} \\ \hline
+        \verb|replica_vec| & A std::vector that is populated with the selected
+                             disk IDs. The number of selections made is the
+                             size of this vector. \\ \hline
+
+        \verb|storage_tier| & The name of the storage tier (set of disks) to
+                              select for data placement. \\ \hline
+ 
+        \verb|storage_pool_vec| & The collection of all disks in the cluster.  \\ \hline
+
+        \verb|preferred_node_vec| & Nodes we prefer to choose disks from. This
+                                    means we will consider disks from these
+                                    nodes first and only consider other disks
+                                    if the ones belonging to these nodes are
+                                    not suitable. \\ \hline
+
+        \verb|predicate_func| & A function that accepts a disk ID and returns a
+                                boolean. If this function evaluates to false
+                                for any disk, it is not considered for
+                                selection. \\ \hline
+
+        \verb|exclude_replica_vec| & Disk IDs that will be excluded from
+                                     selection. \\ \hline
+
+        \verb|exclude_node_vec| & Node IDs whose disks will be excluded from
+                                  selection. \\ \hline
+
+        \verb|exclude_rackable_unit_vec| & Rack IDs whose disks will be
+                                           excluded from selection. \\ \hline
+
+        \hline
+      \end{tabular}
+    \end{center}
+
+    Upon calling DetermineNewReplicas, we first attempt to select replicas from
+    the preferred nodes. This involves finding the set of disks that belong to
+    each node on the specified tier, shuffling the disks, and sequentially
+    evaluating each disk until a suitable one is found (the evaluation step).
+    If a suitable disk is not found on a preferred node, all other disks
+    belonging to the specified tier are shuffled and considered sequentially
+    until enough disks are found to satisfy the requirement set by replica\_vec.
+
+    A suitable disk is one that:
+
+    \begin{enumerate}
+      \item Contains enough space to accept new data. This is less than 95\% by
+            default for Nutanix clusters.  \item Returns "true" when evaluated by the
+            predicate\_func.
+      \item Is not included in the exclude\_replic\_vec, exclude\_node\_vec,
+            and exclude\_rackable\_unit\_vec.
+    \end{enumerate}
+
+    If a disk does not meet the criteria above, we simply continue searching
+    the shuffled set of disks belonging to the specified tier. If a disk is
+    found to be suitable, we must add the disk to the replic\_vec and add the
+    node that the disk belongs to in the exclude\_nod\_vec. This prevents us
+    from considering other disks on that node to maintain a node fault
+    tolerance guaranteed by the cluster's replication factor.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Prior Work}
 
 % TODO
@@ -632,17 +697,8 @@ remedy the common problems found in many heterogeneous clustered file systems.
     non-uniform test, we expect larger integers to be sampled an amount of
     times proportional to their value.
       
-  \subsection{Replica Selection Unit Testing}
-
-% TODO
-
-    \subsubsection{WeightedVector Unit Tests}
-
-% TODO
-
-    \subsubsection{ReplicaSelector Unit Tests}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Evaluation and Results}
 
 The experiments below seek to measure the effect of the additive and
