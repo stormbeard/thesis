@@ -602,25 +602,35 @@ remedy the common problems found in many heterogeneous clustered file systems.
     The WeightedVector class' unit test has four phases:
 
     \begin{enumerate}
-      \item Testing Average() functionality
-      \item Testing there are no duplicate samples
-      \item Testing sampling with uniform probabilities
-      \item Testing sampling with non-uniform probabilities
+      \item Test Average() functionality
+      \item Test there are no duplicate samples
+      \item Test sampling with uniform probabilities
+      \item Test sampling with non-uniform probabilities
     \end{enumerate}
-    
-all start by defining a fitness
-    function unique to each phase of the test:
-    
-    
-    The expected probability of each object is
-    then calculated prior to the test. For example, a fitness function that
-    just returns a uniform random number as the value would warrant an expected
-    probability inversely proportional to num\_elements for each element.
-    Elements are then sampled for a number of times several orders of magnitude
-    larger than the number of elements. Each sampled element's number of times
-    being selected is tracked in a test-local map. We then calculate the actual
-    selection probability of each element in the WeightedVector with the
-    expected value and verify the difference is within an acceptable tolerance.
+
+    The testing of the Average() function's behavior includes simply adding all
+    zeros, all ones, and monotonically increasing integers in the range
+    $[0,N]$. For each phase, we verify that the reported average is 0, 1, and
+    $\frac{N(N-1)}{2N}$ respectively.  
+
+    Verification that there are no duplicate samples involves adding
+    monotonically increasing integers in the range $[0,N]$, inserting all
+    sampled elements into a hash set, and verifying that the size of the hash
+    set is equal to the size of the WeightedVector.
+
+    To test sampling of objects with uniform and non-uniform weights, I add
+    monotonically increasing integers in the range $[0,N]$ to the
+    WeightedVector. The fitness function provided for the uniform test simply
+    returns a weight of 1 for all objects inserted into the WeightedVector.
+    Elements are then sampled and Reset() is called for a number of times
+    several orders of magnitude larger than the number of elements. Each
+    sampled element's number of times being selected is tracked in a test-local
+    hash map. We then calculate the actual selection probability of each
+    element in the WeightedVector with the expected value and verify the
+    difference is within an acceptable tolerance. For the uniform test, we
+    expect all integers to be sampled roughly the same amount and for the
+    non-uniform test, we expect larger integers to be sampled an amount of
+    times proportional to their value.
       
   \subsection{Replica Selection Unit Testing}
 
