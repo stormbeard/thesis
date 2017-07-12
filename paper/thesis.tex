@@ -879,45 +879,25 @@ random selection.
   \subsection{Scraping Data From the Nutanix Cluster}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conclusions}
+\section{Future Work}
 
 % TODO
 
-  \subsection{Summary}
+  \subsection{Real-time Fitness Feedback}
+
+    % Realtime feedback from disks using historical latency numbers.
+  
+% TODO
+
+  \subsection{Read Replica Selection}
+
+    % Based on historical latencies.
 
 % TODO
 
-    \subsubsection{Low Outstanding Operation Test}
+  \subsection{More Fitness Function Variables}
 
-% TODO
-
-    \subsubsection{High Outstanding Operation Test}
-
-  \subsection{Conclusion}
-
-    % Explain how this work solves the stated problems.
-
-% TODO
-
-  \subsection{Future Work}
-
-% TODO
-
-    \subsubsection{Real-time Fitness Feedback}
-
-      % Realtime feedback from disks using historical latency numbers.
-    
-% TODO
-
-    \subsubsection{Read Replica Selection}
-
-      % Based on historical latencies.
-
-% TODO
-
-    \subsubsection{More Fitness Function Variables}
-
-      % CPU, disk wear, data access patterns.
+    % CPU, disk wear, data access patterns.
 
 % TODO
 
@@ -928,7 +908,69 @@ random selection.
 
   \subsection{Herding Behavior Due to Implementation Bug}
 
-% TODO
+  During the 128 outstanding op experiments, herding behavior
+  was observed unexpectedly after implementing fitness based replica placement
+  as shown in Figure \ref{fig:herding_bug}. By default, disk usage and
+  performance stats are supposed to be refreshed every 10 seconds. This is
+  frequent enough to avoid herding behavior, but the 128 outstanding op
+  experiments exhibited herding.
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.25]{images/buggy.png} 
+    \caption{$d_{hot\ tier}$ values over time for low outstanding I/O
+             operations. This set of experiments contains the stats update bug.}
+    \label{fig:herding_bug}
+  \end{figure}
+
+  The experiment with additive fitness seemed to only exhibit mild herding
+  behavior, whereas the test with multiplicative fitness showcased much more
+  dramatic shifts in SSD usage skews. In conjunction with the complete absence
+  of this behavior in the single outstanding op experiments, it was thought to
+  be highly likely that this herding behavior was caused by a bug in the queue
+  length term of the fitness functions. An additive fitness function is less
+  affected by this bug due to the attenuated effect of each term in the fitness
+  function.
+
+  Within Stargate, we keep a mapping from disk ID to a DiskState object (called
+  \verb|disk_map_|) containing information and cached statistics related to the
+  disk. The disk performance and disk usage stats are two separate elements
+  within the DiskState structure.
+
+  Every 10 seconds, an alarm handler will execute and iterate through each
+  active disk in the cluster and asynchronously query disk stats and bind a
+  callback to each query to be executed when a response is received. Disk usage
+  and performance lookups each have their own callback functions:
+
+  \begin{center}
+    \begin{tabular}{ | p{0.5\linewidth} | p{0.5\linewidth} | }
+      \hline
+      \textbf{Function Name} & \textbf{Description} \\ \hline
+      \verb|UsageStatLookupCallback| & Decrement the outstanding stats lookup
+                                       counter, acquire lock and populate
+                                       performance stats in \verb|disk_map_|,
+                                       and leave performance stats untouched.
+                                       \\ \hline
+
+      \verb|PerformanceStatLookupCallback| & Decrement outstanding stats
+                                             lookup counter, lock and
+                                             populate performance stats in
+                                             \verb|disk_map_|, and leave
+                                             usage stats untouched. \\ \hline
+
+      \hline
+    \end{tabular}
+  \end{center}
+
+  The two callbacks introduce a race condition regarding \verb|disk_map_| even
+  though the structure is locked. Any time PerformanceStatLookupCallback
+  returns before the callback for usage stats, all performance stats will be
+  cleared and cause the fitness function to assume worst-case values for the
+  queue length term.
+
+  This problem is fixed by simply serializing our usage and performance stats
+  lookups.
+
 
   \subsection{Glossary}
 
