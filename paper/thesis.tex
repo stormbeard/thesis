@@ -229,7 +229,56 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
 \section{Prior Work}
 
-% TODO
+Xie et. al. showed that data placement schemes based on the computing
+capacities of nodes in the Hadoop Distributed File System (HDFS) significantly
+improved workload performance [5]. These computing capacities are determined
+for each node in the cluster by profiling a target application leveraging the
+HDFS. Their MapReduced wordcount and grep results showed up to a 33.1%
+reduction in response time. Similarly, Perez et. al. applied adaptive data
+placement features to the Expand parallel file system based on available free
+space [8]. Though effective in their given contexts, the main drawback to this
+work is that it assumes the specific application is working without
+interference and does not account for other workloads on the system.
+
+One adaptive data placement approach that can account for other workloads on
+the system was introduced by Jin et. al. in their work on ADAPT [7]. The work
+predicts how failure-prone a node in a MapReduce cluster is and advises their
+availability-aware data placement algorithm to avoid those nodes. This proves
+useful for performance by avoiding faulty nodes that could fail mid-task and
+cause data transfers and re-calculation of data.
+
+Work by Suresh et. al. approaches adaptive replica selection in much the same
+way proposed in this paper, though their work was mainly focused on decreasing
+tail latencies for Cassandra reads [16]. Their load balancing algorithm, C3,
+incorporates the concept of a value calculated from request feedback from their
+servers that allows for decisions to be made on server selection. In addition
+to the ranking function in C3, they implemented a distributed rate control
+mechanism to prevent scenarios where many individual clients can bombard a
+single highly desirable server with requests. Many of the same problems that
+the work in this proposal seeks to remedy are also addressed by the C3
+algorithm; however, given the Nutanix file system's architecture, some C3
+solutions are not feasible.
+
+The C3 algorithm takes into account the request queue length of certain servers
+similar to the way I will use disk queue lengths. In addition Suresh et. al.
+factor in the service latencies of each server so that they may consider a
+different ideal queue length for each server. With this approach, longer
+service times will warrant a lower queue length and vice versa. This is
+beneficial for scenarios where there are multiple underlying storage
+technologies such as NVMe drives, SSDs, and HDDs under consideration, but the
+Nutanix file system's architecture does not allow for multiple replicas to span
+storage tiers. This forces the ideal queue lengths for each selection pool to
+be the same. Therefore, my work does not incorporate service latencies in the
+fitness value calculations.
+
+Herding of requests to a single highly suitable server is a problem that arises
+in any replica ranking algorithm. C3 mitigates this issue by rate limiting
+client requests to each server via a decentralized calculation using a
+configured time interval and local sending rate information. I've opted to use
+a simpler probabilistic spreading of client requests via selecting remote nodes
+using a weighted random selection tied to the calculated fitness values.
+
+TODO:  CEF's SMART algorithm.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
