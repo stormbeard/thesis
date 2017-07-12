@@ -524,23 +524,95 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
      Returns the size of the WeightedVector.
 
-    \subsubsection{Internals}
+    \subsubsection{Weighted Vector Internals}
 
     Internally, the WeightedVector class keeps 3 different std:vector objects
     to keep track of sampling state and the object-to-fitness value mapping.
     There is the inner\_vector\_ variable which stores the objects
-    inserted via EmplaceBack, the weights\_ variable which stores the
+    inserted via EmplaceBack(), the weights\_ variable which stores the
     fitness values of all objects in the inner\_vector\_, and the
     sampling\_weights\_ variable which is identical to weights\_
     except that objects weights are set to 0 when sampled. This allows us to
-    exclude objects from being sampled multiple times, since a weight of 0
-    gives a probability of 0 for sampling. With this scheme, a Reset call
-    simply copies weights\_ into sampling\_weights\_.
+    exclude objects from being sampled multiple times with time complexity
+    $O(1)$, since a weight of 0 gives a probability of 0 for sampling using
+    Stochastic Universal Sampling as shown in the example below.
 
-    \subsubsection{Unit Testing}
+    Before sampling, we have identical weights\_ and sampling\_weights\_
+    accompanying an inner\_vector\_ of objects:
 
-    The WeightedVector class' unit tests all start by defining a fitness
-    function unique to the test. The expected probability of each object is
+    \begin{center}
+      \begin{tabular}{ | l | c | c | c | r | }
+        \hline
+        \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
+        \verb|weights_| & 1 & 3 & 3 & 7 \\ \hline
+        \verb|sampling_weights_| & 1 & 3 & 3 & 7 \\ \hline
+        \hline
+      \end{tabular}
+    \end{center}
+
+    Suppose we then call Sample() on the WeightedVector and it returns $D$. The
+    probability of this event is 0.5, so to maintain sampling state within the
+    WeightedVector, the weight associated with object $D$ is set to zero:
+
+    \begin{center}
+      \begin{tabular}{ | l | c | c | c | r | }
+        \hline
+        \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
+        \verb|weights_| & 1 & 3 & 3 & 7 \\ \hline
+        \verb|sampling_weights_| & 1 & 3 & 3 & 0 \\ \hline
+        \hline
+      \end{tabular}
+    \end{center}
+
+    If we call Sample() again, it is not possible to return $D$ since its
+    sampling weight is now zero. The probabilities of returning $A$, $B$, or
+    $C$ in subsequent calls to Sample() are $\frac{1}{7}$, $\frac{3}{7}$, and
+    $\frac{3}{7}$ respectively. Suppose two more calls to Sample() lead to the
+    following state:
+
+    \begin{center}
+      \begin{tabular}{ | l | c | c | c | r | }
+        \hline
+        \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
+        \verb|weights_| & 1 & 3 & 3 & 7 \\ \hline
+        \verb|sampling_weights_| & 0 & 3 & 0 & 0 \\ \hline
+        \hline
+      \end{tabular}
+    \end{center}
+
+    We may only call Sample() one more time without triggering an assertion
+    failure and the WeightedVector is obligated to return $D$. The only way to
+    restore sampling state is to call Reset(). A Reset call simply copies
+    weights\_ into sampling\_weights\_ and all objects are eligible for
+    sampling again:
+
+    \begin{center}
+      \begin{tabular}{ | l | c | c | c | r | }
+        \hline
+        \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
+        \verb|weights_| & 1 & 3 & 3 & 7 \\ \hline
+        \verb|sampling_weights_| & 1 & 3 & 3 & 7 \\ \hline
+        \hline
+      \end{tabular}
+    \end{center}
+
+
+    \subsubsection{Weighted Vector Unit Testing}
+
+    The WeightedVector class' unit test has four phases:
+
+    \begin{enumerate}
+      \item Testing Average() functionality
+      \item Testing there are no duplicate samples
+      \item Testing sampling with uniform probabilities
+      \item Testing sampling with non-uniform probabilities
+    \end{enumerate}
+    
+all start by defining a fitness
+    function unique to each phase of the test:
+    
+    
+    The expected probability of each object is
     then calculated prior to the test. For example, a fitness function that
     just returns a uniform random number as the value would warrant an expected
     probability inversely proportional to num\_elements for each element.
@@ -550,7 +622,7 @@ remedy the common problems found in many heterogeneous clustered file systems.
     selection probability of each element in the WeightedVector with the
     expected value and verify the difference is within an acceptable tolerance.
       
-  \subsection{Unit Testing}
+  \subsection{Replica Selection Unit Testing}
 
 % TODO
 
