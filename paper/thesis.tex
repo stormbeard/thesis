@@ -696,6 +696,16 @@ remedy the common problems found in many heterogeneous clustered file systems.
     expect all integers to be sampled roughly the same amount and for the
     non-uniform test, we expect larger integers to be sampled an amount of
     times proportional to their value.
+
+  \subsection{Replica Selection Changes}
+    
+  Stargate was modified to store disk IDs in a WeightedVector rather than a
+  \verb|std::vector|. When considering a disk for candidacy, rather than
+  shuffling the \verb|std::vector| and iterating through each disk until enough
+  replica targets are found, we call \verb|WeightedVector::Sample()| until
+  enough replica targets are found. All of Stargate's replica placement logic
+  is untouched and I've simply modified the order in which candidate disks are
+  considered.
       
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
