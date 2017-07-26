@@ -93,7 +93,7 @@ remedy the common problems found in many heterogeneous clustered file systems.
     the single weak node has only 128GB of SSD tier and 1TB of HDD tier. If 3
     simultaneous workloads were to generate data such that the working sets of
     the workloads are 50\% of the local SSD tier, the weaker node is at a
-    significant disadvantage. Given the current NDFS replica selection
+    significant disadvantage. Given the current ADSF replica selection
     algorithm, we can expect 500GB of replica traffic to flood the weak node
     and fill up its SSD tier well before the workload is finished. This results
     in an inability for the workload on the smaller node to place its primary
@@ -112,7 +112,7 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
   \subsection{Acropolis Base System}
 
-  NDFS is facilitated by a clustering of controller virtual machines (CVMs)
+  ADSF is facilitated by a clustering of controller virtual machines (CVMs)
   which reside, one per node, on each server in the cluster. The CVM presents
   via NFS (for VMWare's ESXi [14]), SMB (for Microsoft's Hyper-V [17]), or
   iSCSI (for Nutanix's AHV [1]) an interface to each hypervisor that they
@@ -141,13 +141,22 @@ remedy the common problems found in many heterogeneous clustered file systems.
   statistics stored in the database and are pulled periodically and are then
   used to make decisions on data placement when performing writes.
 
-    \subsubsection{Oplog and Extent Store}
+    \subsubsection{The Extent Store}
 
-% TODO
+    The Extent Store is a sub-component of Stargate that serves as the
+    persistent bulk storage. Data stored within the Extent Store are referred
+    to as extent groups (also referred to as egroups), or 4MB pieces of
+    physically contiguous data. These extent groups are replicated a number of
+    times dependent on the cluster replication factor and each replica is
+    placed on a different CVM except for a single replica that resides on the
+    local node. The current replica selection algorithm will be explained in
+    further detail in the "Replica Selection" section.
 
     \subsubsection{Arithmos Interactions}
 
-% TODO
+    Arithmos is a process that serves as the consumer for all published stats
+    in the ADSF. Periodically, Stargate %TODO: continue writing
+
 
     \subsubsection{Storage Tiering}
 
@@ -159,9 +168,10 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
     \subsubsection{Replica Selection}
 
-    When a Stargate write operation wants to select disks for data placement,
-    it is done on a per-tier basis. The interface for a replica selection
-    function call, DetermineNewReplicas, takes the following arguments:
+    When a Stargate write operation wants to select disks for data placement
+    upon entrance into the Extent Store, it is done on a per-tier basis. The
+    interface for a replica selection function call, DetermineNewReplicas,
+    takes the following arguments:
 
     \begin{center}
       \begin{tabular}{ | p{0.4\linewidth} | p{0.6\linewidth} | }
@@ -928,8 +938,6 @@ random selection.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{User Guide}
-
-% TODO
 
   \subsection{Re-creating Experiments}
 
