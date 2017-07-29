@@ -136,8 +136,8 @@ remedy the common problems found in many heterogeneous clustered file systems.
   on the disk (queue length), how much data in bytes currently resides on the
   disk, and average time to complete an operation on the disk. These statistics
   are only gathered on the local disks; however, they are then stored in a
-  distributed database provided by another ADSF service along with the
-  statistics gathered by every other Stargate in the cluster. These disk
+  distributed database provided by another ADSF service, Arithmos, along with
+  the statistics gathered by every other Stargate in the cluster. These disk
   statistics stored in the database and are pulled periodically and are then
   used to make decisions on data placement when performing writes.
 
@@ -152,19 +152,20 @@ remedy the common problems found in many heterogeneous clustered file systems.
     local node. The current replica selection algorithm will be explained in
     further detail in the "Replica Selection" section.
 
-    \subsubsection{Arithmos Interactions}
+    \subsubsection{Storage Tiering and Data Replication}
 
-    Arithmos is a process that serves as the consumer for all published stats
-    in the ADSF. Periodically, Stargate %TODO: continue writing
+    Data in the system is physically stored on disks of varying type. Within a
+    given cluster, one can find NVMe, PCIe SSD, SATA SSD, and HDD drive types.
+    These disks are separated out into groupings of similar drive types
+    referred to as storage tiers. Extent groups and their replicas are created
+    on a particular storage tier, but may be migrated between tiers depending
+    on data access patterns.
 
-
-    \subsubsection{Storage Tiering}
-
-% TODO
-
-    \subsubsection{Data Replication and Fault Tolerance}
-
-% TODO
+    Data replicas for each extent group are written on separate fault domains
+    on the same tier to ensure that in the event a failure occurs and a
+    replica becomes unavailable, that piece of data can still be accessed. An
+    example of a fault domain can be a node (single CVM) or a block (a rackable
+    unit of hardware containing multiple nodes). 
 
     \subsubsection{Replica Selection}
 
@@ -939,11 +940,14 @@ random selection.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{User Guide}
 
+  \subsection{Scraping Data From the Nutanix Cluster}
+
+  TODO: mention get_thesis_disk_stats.py and changes made to it to also grab
+  the disk queue lengths from the 2009 page.
+
   \subsection{Re-creating Experiments}
 
 % TODO
-
-  \subsection{Scraping Data From the Nutanix Cluster}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work}
@@ -970,8 +974,6 @@ random selection.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Appendix}
-
-% TODO
 
   \subsection{Herding Behavior Due to Implementation Bug}
 
@@ -1035,9 +1037,8 @@ random selection.
   cleared and cause the fitness function to assume worst-case values for the
   queue length term.
 
-  This problem is fixed by simply serializing our usage and performance stats
+  This problem was fixed by simply serializing our usage and performance stats
   lookups.
-
 
   \subsection{Glossary}
 
