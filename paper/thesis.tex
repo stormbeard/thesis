@@ -1005,6 +1005,11 @@ random selection.
   \verb|cluster -s <cvm IPs> create|. The process is then repeated for each
   test.
 
+  \subsection{Plotting Data from Experiments}
+
+  TODO: Probably easier to just include the scripts that generate the graphs...
+  makes no sense to write this up. Consult with Jamie on this one.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work}
 
@@ -1012,21 +1017,30 @@ random selection.
 
   \subsection{Real-time Fitness Feedback}
 
-    % Realtime feedback from disks using historical latency numbers.
-  
-% TODO
+  The replica placement scheme shown in this work relies on periodic stats
+  updates, so the system is always working with older stats for data placement
+  decisions. One change that can be made to this system is to track the time to
+  completion of various ops that place data on each disk and bias the replica
+  placements towards the faster disks. This would require Stargate to keep
+  historical latency data and would remove the dependence on a centralized
+  stats repository.
 
   \subsection{Read Replica Selection}
 
-    % Based on historical latencies.
-
-% TODO
+  When choosing which replicas to read from, we always select local disks
+  form the SSD tier and sometimes select remote HDDs at random. This process
+  does not take the new disk fitness information that is available and would
+  benefit from adapting read replica selection decisions based on the disk
+  fitness values.
 
   \subsection{More Fitness Function Variables}
 
-    % CPU, disk wear, data access patterns.
-
-% TODO
+  The disk fitness values do not need to be limited to derivation from disk
+  queue length and fullness percentage. The cluster tracks many other variables
+  such as average node CPU utilization, number of Stargate failures in a
+  specified time window, number of active user VMs, and data access patterns
+  among other pieces of information. More investigation should occur to see how
+  this data can be used to make better data placement decisions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Appendix}
