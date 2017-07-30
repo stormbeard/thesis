@@ -942,12 +942,68 @@ random selection.
 
   \subsection{Scraping Data From the Nutanix Cluster}
 
-  TODO: mention get_thesis_disk_stats.py and changes made to it to also grab
-  the disk queue lengths from the 2009 page.
+  Stargate exposes a webserver on the CVM, listening on port 2009, that exposes
+  various real-time stats such as the number of operations in flight, disk
+  throughput, disk queue length, and many other pieces of information. I wrote
+  a Python script to parse and derive the following information for each node:
+
+  \begin{enumerate}
+    \item SSD tier usage
+    \item SSD tier availability
+    \item SSD tier max capacity
+    \item Read/Write counts for each disk
+    \item Queue lengths for each disk
+  \end{enumerate}
+
+  The script will filter out all disks in the HDD tier and only pull the
+  statistics for the SSD tier. Upon each invocation of the script, information
+  is appended to a file for each node that is created if it is non-existent.
+  The data is layed out in a CSV format for easy plotting via the Matplotlib
+  library. For each experiment, the script was called every 5 seconds via the
+  Linux 'watch' command.
 
   \subsection{Re-creating Experiments}
 
-% TODO
+  An NX-1350 with VMware ESXi 5.5u2 hypervisor and a single 300GB SSD on each
+  node was used for all experiments in this thesis. This means that for an RF2
+  cluster, there is less than 150GB of useable hot tier available since a small
+  amount of space is reserved on each disk for other services on the CVM.
+
+  A single CentOS 6.5 worker VM was manually created on a single node with 4GB
+  RAM, single 150GB disk, and installation of fio. The 150GB disk size ensures
+  that the entire hot tier of each node will be fully utilized when the disk is
+  filled via workload generation on each node. Each other node then clones the
+  worker VM so that all nodes in the cluster have an identical VM and tier
+  utilization.
+
+  The fio script used to generate a sequential write workload on each node is
+  as follows:
+  
+  \begin{verbatim}
+    [global]
+    direct=1
+    ioengine=libaio
+    bs=32k
+    iodepth=128
+    randrepeat=0
+    group_reporting
+    filesize=150G
+
+    [job1]
+    rw=write
+    filename=/dev/sdb
+    name=sequential-write
+  \end{verbatim}
+
+  The \verb|iodepth| variable is modified depending on the number of
+  outstanding I/Os needed.
+
+  When resetting the cluster for a new test, on the CVM I run
+  \verb|cluster stop ; cluster destroy| and swap out the Stargate binary in
+  the \verb|/home/nutanix/bin/| directory with the binary required for the next
+  test. When ready, I recreate the Nutanix cluster via
+  \verb|cluster -s <cvm IPs> create|. The process is then repeated for each
+  test.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work}
