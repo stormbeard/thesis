@@ -14,8 +14,8 @@ odd_man_out = "10.61.192.165"
 
 testname_2_title = \
     {"random_selection_5" : "Random",
-     "adaptive_selection_19" : "Linear",
-     "adaptive_selection_20" : "Multiplicative"}
+     "adaptive_selection_17" : "Linear",
+     "adaptive_selection_18" : "Multiplicative"}
 
 tests_to_plot = testname_2_title.keys()
 
@@ -93,9 +93,10 @@ ax.set_xlim([-1,10])
 # draw temporary red and blue lines and use them to create a legend
 hB, = plt.plot([1,1],'b-')
 hR, = plt.plot([1,1],'r-')
-plt.legend((hB, hR),('Worker VM Node', 'Empty Node'))
+plt.legend((hB, hR),('Worker VM Node', 'Empty Node'), loc="upper right")
 hB.set_visible(False)
 hR.set_visible(False)
 
-plt.title("Realtime Queue Length Values (qlen ceiling = 100)")
+plt.title("Realtime Queue Length Values (qlen ceiling = 200)")
+plt.ylabel("Disk Queue Length")
 plt.show()

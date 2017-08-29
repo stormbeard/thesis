@@ -12,9 +12,8 @@ svmips = ["10.61.192.108", "10.61.192.109", "10.61.192.110"]
 odd_man_out = "10.61.192.110"
 
 testname_2_title = \
-    {"adaptive_selection_10" : "Adaptive selection, queue length only",
-     "adaptive_selection_9" : "Adaptive selection, linear fitness",
-     "adaptive_selection_11" : "Adaptive selection, multiplicative fitness",
+    {"adaptive_selection_15" : "Adaptive selection, linear fitness",
+     "adaptive_selection_14" : "Adaptive selection, multiplicative fitness",
      "random_selection_4" : "Random selection"}
 
 tests_to_plot = testname_2_title.keys()
@@ -73,8 +72,8 @@ for test in tests_to_plot:
     xaxis = map(lambda x: secs * x, range(len(deviations[test])))
     plt.plot(xaxis, deviations[test])
 
-plt.legend(legend)
-plt.title("Idle Node Hot-tier Deviation (buggy, high outstanding ops)")
+plt.legend(legend, loc="upper right")
+plt.title("Hot-tier Deviation (high outstanding ops)")
 plt.xlabel("Time (seconds)")
-plt.ylabel("% Deviation")
+plt.ylabel("$d_{hot tier}$")
 plt.show()

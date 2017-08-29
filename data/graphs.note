@@ -1,0 +1,21 @@
+stats update bug graph:
+testname_2_title = \ 
+    {"adaptive_selection_10" : "Adaptive selection, queue length only",
+     "adaptive_selection_9" : "Adaptive selection, linear fitness",
+     "adaptive_selection_11" : "Adaptive selection, multiplicative fitness",
+     "random_selection_4" : "Random selection"}
+
+
+low outstanding:
+testname_2_title = \ 
+    {"adaptive_selection_7" : "Adaptive selection, linear fitness",
+     "adaptive_selection_8" : "Adaptive selection, disk usage term only",
+     "adaptive_selection_12" : "Adaptive selection, multiplicative fitness",
+     "random_selection_3" : "Random selection"}
+
+high outstanding:
+testname_2_title = \
+    {"adaptive_selection_15" : "Adaptive selection, linear fitness",
+     "adaptive_selection_14" : "Adaptive selection, multiplicative fitness",
+     "random_selection_4" : "Random selection"}
+
