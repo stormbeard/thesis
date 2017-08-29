@@ -31,24 +31,22 @@ Harvard Extension School}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Abstract}
 
-% TODO
+With the advent of cloud computing, datacenters are making use of distributed
+applications more than ever. MapReduce is used to generate over 20 petabytes of
+data per day using very large numbers of commodity servers \cite{mapreduce}. Many companies
+use large scale clusters to perform various computational tasks via the the
+open-source MapReduce implementation, Hadoop \cite{hadoop}, or they can possess a
+virtualized datacenter allowing them to migrate virtual machines between
+various machines for high-availability reasons. As economics change for
+hardware, it is likely that a scalable cloud will have the requirement to mix
+node types, which will lead to higher performance and higher capacity nodes to
+be mixed with lower performance, lower capacity nodes. This thesis presents an
+adaptive data placement method in the Nutanix distributed file system (ADSF)
+which will attempt to remedy the common problems found in many heterogeneous
+clustered file systems.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-
-With the advent of cloud computing, datacenters are making use of distributed
-applications more than ever. Companies like Google use software such as
-MapReduce to generate over 20 petabytes of data per day using very large
-numbers of commodity servers [3]. Many other companies use large scale clusters
-to perform various computational tasks via the the open-source MapReduce
-implementation, Hadoop [4], or they can possess a virtualized datacenter
-allowing them to migrate virtual machines between various machines for
-high-availability reasons. As economics change for hardware, it is likely that
-a scalable cloud will have the requirement to mix node types, which will lead
-to higher performance/capacity nodes being mixed with lower
-performance/capacity HDD nodes. This thesis presents an adaptive data placement
-method in the Nutanix distributed file system (ADSF) which will attempt to
-remedy the common problems found in many heterogeneous clustered file systems.
 
   \subsection{Motivation}
 
@@ -115,10 +113,11 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
   ADSF is facilitated by a clustering of controller virtual machines (CVMs)
   which reside, one per node, on each server in the cluster. The CVM presents
-  via NFS (for VMWare's ESXi [14]), SMB (for Microsoft's Hyper-V [17]), or
-  iSCSI (for Nutanix's AHV [1]) an interface to each hypervisor that they
+  via NFS (for VMWare's ESXi \cite{esxi2008}), SMB (for Microsoft's Hyper-V
+  \cite{hyperv2009}), or
+  iSCSI (for Nutanix's AHV \cite{bible}) an interface to each hypervisor that they
   reside on. For example, the interface provided by the CVMs to VMware's ESXi
-  hypervisor [14] will be interfaced with as a datastore. The virtual machines'
+  hypervisor will be interfaced with as a datastore. The virtual machines'
   virtual disk files will reside on the Nutanix datastore and be accessed via
   NFS through the CVM sharing a host with the user VM. Within the CVM exists an
   ecosystem of process that make up the ADSF. This work is scoped specifically
@@ -243,17 +242,19 @@ remedy the common problems found in many heterogeneous clustered file systems.
 
 Xie et. al. showed that data placement schemes based on the computing
 capacities of nodes in the Hadoop Distributed File System (HDFS) significantly
-improved workload performance [5]. These computing capacities are determined
-for each node in the cluster by profiling a target application leveraging the
+improved workload performance \cite{hdfs2008}. These computing capacities are
+determined for each node in the cluster by profiling a target application
+leveraging the
 HDFS. Their MapReduced wordcount and grep results showed up to a 33.1%
 reduction in response time. Similarly, Perez et. al. applied adaptive data
 placement features to the Expand parallel file system based on available free
-space [8]. Though effective in their given contexts, the main drawback to this
+space \cite{perez2003}. Though effective in their given contexts, the main drawback to this
 work is that it assumes the specific application is working without
 interference and does not account for other workloads on the system.
 
 One adaptive data placement approach that can account for other workloads on
-the system was introduced by Jin et. al. in their work on ADAPT [7]. The work
+the system was introduced by Jin et. al. in their work on ADAPT
+\cite{adapt2012}. The work
 predicts how failure-prone a node in a MapReduce cluster is and advises their
 availability-aware data placement algorithm to avoid those nodes. This proves
 useful for performance by avoiding faulty nodes that could fail mid-task and
@@ -261,7 +262,7 @@ cause data transfers and re-calculation of data.
 
 Work by Suresh et. al. approaches adaptive replica selection in much the same
 way proposed in this paper, though their work was mainly focused on decreasing
-tail latencies for Cassandra reads [16]. Their load balancing algorithm, C3,
+tail latencies for Cassandra reads \cite{suresh2015}. Their load balancing algorithm, C3,
 incorporates the concept of a value calculated from request feedback from their
 servers that allows for decisions to be made on server selection. In addition
 to the ranking function in C3, they implemented a distributed rate control
@@ -368,11 +369,11 @@ TODO:  CEF's SMART algorithm.
 
     \subsubsection{Scalability Simulation Methodology}
      To test the scalability of the weighted random selection algorithms
-     evaluated in the next section, a single-threaded Python script was written
-     to to evaluate the change in run time as sample sets increase. Each
-     algorithm's time to select is calculated for each of a fixed number of
-     iterations for multiple sample sets. pseudo-code for the simulations
-     can be written as follows:
+     evaluated in the next section, a single-threaded Python \cite{python}
+     script was written to to evaluate the change in run time as sample sets
+     increase. Each algorithm's time to select is calculated for each of a
+     fixed number of iterations for multiple sample sets. pseudo-code for the
+     simulations can be written as follows:
 
      \begin{verbatim}
      for each selection_algorithm in algorithm_list:
@@ -397,16 +398,16 @@ TODO:  CEF's SMART algorithm.
 
     \subsubsection{Herding Behavior Evaluation Methodology}
     Herding behaviors can be seen in some weighted random selection
-    algorithms when (TODO: cite some papers) the weights of a subset of objects
-    in the sampling pool cause a disproportionate amount of selections to
-    target those objects. In the case of replica disk selections in a Nutanix
-    cluster, this can cause too many operations to target an especially
-    suitable disk, resulting in poor performance. We can simulate an
-    exaggerated scenario in which the susceptibility to herding behavior can be
-    observed by having a single object with a weight that is multiple orders of
-    magnitude heavier than the next highest object in the sampling set. It is
-    also necessary to observe any herding behavior for a sampling set with low
-    weight skew. This section describes the simulation methodology for each.
+    algorithms when the weights of a subset of objects in the sampling pool
+    cause a disproportionate amount of selections to target those objects. In
+    the case of replica disk selections in a Nutanix cluster, this can cause
+    too many operations to target an especially suitable disk, resulting in
+    poor performance. We can simulate an exaggerated scenario in which the
+    susceptibility to herding behavior can be observed by having a single
+    object with a weight that is multiple orders of magnitude heavier than the
+    next highest object in the sampling set. It is also necessary to observe
+    any herding behavior for a sampling set with low weight skew. This section
+    describes the simulation methodology for each.
 
     High-skew sampling sets of 11 objects were generated such that the array
     index of the first 10 objects was assigned as the object weight, and the
@@ -414,7 +415,7 @@ TODO:  CEF's SMART algorithm.
     skew in weights and makes the high-weight object a target for herding
     behavior. Given this sampling set, weighted random selections were
     performed and a histogram was kept that tracked the number of selections
-    for each object. 1e3, 1e4, and 1e5 iterations were performed to observe any
+    for each object. $10^3$, $10^4$, and $10^5$ iterations were performed to observe any
     changes in herding behavior at larger time scales. In addition to the
     high-skew sampling sets, low-skew sets of 100 objects were also simulated.
     These low-skew sets were identical to the high-skew sets, except there was
@@ -422,7 +423,8 @@ TODO:  CEF's SMART algorithm.
     were their array indices.
 
     \subsubsection{Stochastic Universal Sampling (SUS) Simulations}
-    SUS is another sampling technique first introduced by Baker in 1987 [10].
+    SUS is another sampling technique first introduced by Baker in 1987
+    \cite{baker1987}.
     The algorithm can be understood as follows: On a standard roulette wheel
     there's a single pointer that indicates the winner. The roulette wheel's
     "bins" can all be the same size which would indicate a uniform probability
@@ -462,8 +464,8 @@ TODO:  CEF's SMART algorithm.
     can lead to extreme herding behaviors.
 
     \subsubsection{Tructation Selection Simulations}
-    Truncation selection[TODO: CITE] does not consider any objects for
-    selection below some threshold, $T$. In figure
+    Truncation selection \cite{truncation1973} does not consider any objects
+    for selection below some threshold, $T$. In figure
     \ref{fig:herding_truncation}, only the top 10\% of objects ranked by weight
     are considered for selection. Within this subset, weight has no meaning so
     there is a uniform distribution of selections. However, this may not be
@@ -491,15 +493,14 @@ TODO:  CEF's SMART algorithm.
     \end{figure}
 
     \subsubsection{Two-choice Sampling Simulations}
-    Two-choice sampling, first introduced by %TODO: mitzenmacher paper
-    has proven to be extremely resilient to herding behavior as shown in
-    Figure \ref{fig:pathological_two_choice} and selection frequencies for all
-    objects are influenced by object weights in a way similar to SUS. While an
-    object with a higher weight is more likely to be selected, it is not
-    selected with a probability proportional to its fitness value. This makes
-    the algorithm resistant to any herding behaviors, but will not be a good
-    candidate if we desire the WeightedVector to select objects with
-    probability proportional to its weight.
+    Two-choice sampling \cite{2choice}, has proven to be extremely resilient to
+    herding behavior as shown in Figure \ref{fig:pathological_two_choice} and
+    selection frequencies for all objects are influenced by object weights in a
+    way similar to SUS. While an object with a higher weight is more likely to
+    be selected, it is not selected with a probability proportional to its
+    fitness value. This makes the algorithm resistant to any herding behaviors,
+    but will not be a good candidate if we desire the WeightedVector to select
+    objects with probability proportional to its weight.
 
     \begin{figure}[h]
       \centering
@@ -551,15 +552,14 @@ TODO:  CEF's SMART algorithm.
     scheme.
 
     \subsubsection{Weighted Random Algorithm Scalability Simulations}
-    It's clearly seen that even though both SUS and truncation selection are
-    [TODO: cite runtimes for each]
-    exponential in run time, truncation selection is slower than SUS by an
-    order of magnitude. This is mainly due to the need for the truncation
-    selection algorithm to calculate the top T\% of the set for every selection
-    performed. As expected, two-choice and random selections are
-    observed to be constant-time algorithms. Two-choice is slightly slower than
-    random selection due to the second selection and comparison operation that
-    must occur.
+    Even though both SUS and truncation selection have $O(N^2)$ time
+    complexity, truncation selection is slower than SUS by an order of
+    magnitude. This is mainly due to the need for the truncation selection
+    algorithm to calculate the top T\% of the set for every selection
+    performed. As expected, two-choice and random selections are observed to be
+    constant-time algorithms. Two-choice is slightly slower than random
+    selection due to the second selection and comparison operation that must
+    occur.
 
     \begin{figure}[h]
       \centering
@@ -572,11 +572,9 @@ TODO:  CEF's SMART algorithm.
 
   \subsection{WeightedVector Class}
 
-  % TODO: Fix the code spacing.
-
   It's necessary to perform repeated weighted sampling of disk IDs, easily, and
   given their fitness values. An object container class is needed similar to a
-  C++ STL container [XXX CITE XXX] that can also access elements of arbitrary
+  C++ STL container \cite{stl} that can also access elements of arbitrary
   types via arbitrary weighted random sampling methods. The WeightedVector
   class was implemented to fulfill this requirement. 
 
@@ -960,8 +958,8 @@ random selection.
   statistics for the SSD tier. Upon each invocation of the script, information
   is appended to a file for each node that is created if it is non-existent.
   The data is layed out in a CSV format for easy plotting via the Matplotlib
-  library. For each experiment, the script was called every 5 seconds via the
-  Linux 'watch' command.
+  library \cite{matplotlib}. For each experiment, the script was called every 5
+  seconds via the command \verb|watch -n 5|.
 
   \subsection{Re-creating Experiments}
 
@@ -1008,7 +1006,7 @@ random selection.
 
   \subsection{Plotting Data from Experiments}
 
-
+  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work}
@@ -1108,10 +1106,6 @@ random selection.
   This problem was fixed by simply serializing our usage and performance stats
   lookups.
 
-  \subsection{Glossary}
-
-% TODO
-
  \begin{thebibliography}{99}
 
    \bibitem{bible} Poitras, S. (n.d.) The Nutanix Bible. Retrieved August 09, 2017, from \url{http://www.nutanixbible.com/}
@@ -1151,6 +1145,16 @@ random selection.
    \bibitem{paxos2005} Lamport, L. (2005). Generalized consensus and Paxos. Technical Report MSR-TR-2005-33, Microsoft Research.s
 
    \bibitem{azar1994} Y. Azar, A. Broder, A. Karlin, and E. Upfal. Balanced allocations. In Proceedings of the 26th ACM Symposium on the Theory of Computing, pages 593\{602, 1994.
+
+   \bibitem{truncation1973} Crow, J. F., and Kimura, M. (1979). Efficiency of truncation selection. Proceedings of the National Academy of Sciences of the United States of America, 76(1), 396–399.
+
+   \bibitem{2choice} Mitzenmacher, M. (2001). The power of two choices in randomized load balancing. IEEE Transactions on Parallel and Distributed Systems, 12(10), 1094-1104.
+
+   \bibitem{matplotlib} Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. Computing In Science and Engineering, 9(3), 90-95.
+
+   \bibitem{python} Van Rossum, G., and Drake, F. L. (2003). Python language reference manual (p. 144). Network Theory.
+
+   \bibitem{stl} Plauger, P. J., Lee, M., Musser, D., and Stepanov, A. A. (2000). C++ Standard Template Library. Prentice Hall PTR.
 
  \end{thebibliography}
 
