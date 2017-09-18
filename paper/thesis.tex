@@ -26,7 +26,10 @@ Harvard Extension School}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \tableofcontents
+
 \listoffigures
+
+\listoftables
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Abstract}
@@ -174,7 +177,8 @@ clustered file systems.
     interface for a replica selection function call, DetermineNewReplicas,
     takes the following arguments:
 
-    \begin{center}
+    \begin{table}
+      \caption{Argument descriptions for DetermineNewReplicas.}
       \begin{tabular}{ | p{0.4\linewidth} | p{0.6\linewidth} | }
         \hline
         \textbf{Argument Name} & \textbf{Description} \\ \hline
@@ -209,7 +213,7 @@ clustered file systems.
 
         \hline
       \end{tabular}
-    \end{center}
+    \end{table}
 
     Upon calling DetermineNewReplicas, we first attempt to select replicas from
     the preferred nodes. This involves finding the set of disks that belong to
@@ -662,7 +666,8 @@ using a weighted random selection tied to the calculated fitness values.
     Before sampling, we have identical weights\_ and sampling\_weights\_
     accompanying an inner\_vector\_ of objects:
 
-    \begin{center}
+    \begin{table}
+      \caption{Inner vector example part 1.}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
         \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
@@ -670,13 +675,14 @@ using a weighted random selection tied to the calculated fitness values.
         \verb|sampling_weights_| & 1 & 3 & 3 & 7 \\ \hline
         \hline
       \end{tabular}
-    \end{center}
+    \end{table}
 
     Suppose we then call Sample() on the WeightedVector and it returns $D$. The
     probability of this event is 0.5, so to maintain sampling state within the
     WeightedVector, the weight associated with object $D$ is set to zero:
 
-    \begin{center}
+    \begin{table}
+      \caption{Inner vector example part 2.}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
         \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
@@ -684,7 +690,7 @@ using a weighted random selection tied to the calculated fitness values.
         \verb|sampling_weights_| & 1 & 3 & 3 & 0 \\ \hline
         \hline
       \end{tabular}
-    \end{center}
+    \end{table}
 
     If we call Sample() again, it is not possible to return $D$ since its
     sampling weight is now zero. The probabilities of returning $A$, $B$, or
@@ -692,7 +698,8 @@ using a weighted random selection tied to the calculated fitness values.
     $\frac{3}{7}$ respectively. Suppose two more calls to Sample() lead to the
     following state:
 
-    \begin{center}
+    \begin{table}
+      \caption{Inner vector example part 3.}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
         \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
@@ -700,7 +707,7 @@ using a weighted random selection tied to the calculated fitness values.
         \verb|sampling_weights_| & 0 & 3 & 0 & 0 \\ \hline
         \hline
       \end{tabular}
-    \end{center}
+    \end{table}
 
     We may only call Sample() one more time without triggering an assertion
     failure and the WeightedVector is obligated to return $D$. The only way to
@@ -708,7 +715,8 @@ using a weighted random selection tied to the calculated fitness values.
     weights\_ into sampling\_weights\_ and all objects are eligible for
     sampling again:
 
-    \begin{center}
+    \begin{table}
+      \caption{Inner vector example part 3.}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
         \verb|inner_vector_| & $A$ & $B$ & $C$ & $D$ \\ \hline
@@ -716,7 +724,7 @@ using a weighted random selection tied to the calculated fitness values.
         \verb|sampling_weights_| & 1 & 3 & 3 & 7 \\ \hline
         \hline
       \end{tabular}
-    \end{center}
+    \end{table}
 
 
     \subsubsection{Weighted Vector Unit Testing}
@@ -1075,7 +1083,8 @@ random selection.
   callback to each query to be executed when a response is received. Disk usage
   and performance lookups each have their own callback functions:
 
-  \begin{center}
+  \begin{table}
+    \caption{Disk usage and performance lookup callback functions.}
     \begin{tabular}{ | p{0.5\linewidth} | p{0.5\linewidth} | }
       \hline
       \textbf{Function Name} & \textbf{Description} \\ \hline
@@ -1093,7 +1102,7 @@ random selection.
 
       \hline
     \end{tabular}
-  \end{center}
+  \end{table}
 
   The two callbacks introduce a race condition regarding \verb|disk_map_| even
   though the structure is locked. Any time PerformanceStatLookupCallback
