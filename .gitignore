@@ -1,2 +1,9 @@
+code/*
+paper/thesis.aux
+paper/thesis.lof
+paper/thesis.log
+paper/thesis.lot
+paper/thesis.toc
 *.swo
 *.swp
+*.pyc
