@@ -8,7 +8,7 @@
 
 \documentclass[12pt]{article}
 \usepackage[pdftex]{graphicx}
-\usepackage{setspace,caption,url}
+\usepackage{setspace,caption,url,tcolorbox}
 \doublespacing
 
 % Default margins are too wide all the way around. I reset them here
@@ -221,6 +221,7 @@ clustered file systems.
 
     A suitable disk is one that:
 
+    \begin{tcolorbox}
     \begin{enumerate}
       \item Contains enough space to accept new data. This is less than 95\% by
             default for Nutanix clusters.  \item Returns "true" when evaluated by the
@@ -228,6 +229,7 @@ clustered file systems.
       \item Is not included in the exclude\_replic\_vec, exclude\_node\_vec,
             and exclude\_rackable\_unit\_vec.
     \end{enumerate}
+    \end{tcolorbox}
 
     If a disk does not meet the criteria above, we simply continue searching
     the shuffled set of disks belonging to the specified tier. If a disk is
@@ -373,6 +375,8 @@ using a weighted random selection tied to the calculated fitness values.
      fixed number of iterations for multiple sample sets. pseudo-code for the
      simulations can be written as follows:
 
+     \singlespace
+     \begin{tcolorbox}
      \begin{verbatim}
      for each selection_algorithm in algorithm_list:
          run_time_values = empty_list()
@@ -387,6 +391,8 @@ using a weighted random selection tied to the calculated fitness values.
              calculate_avg_elapsed_time(all_elapsed_times)
              calculate_std_error(all_elapsed_times)
      \end{verbatim}
+     \end{tcolorbox}
+     \doublespace
         
     Object weights are constant throughout the simulation, so selection schemes
     that require some amount of preprocessing (such as the top T\% calculation
@@ -988,6 +994,8 @@ random selection.
   The fio script used to generate a sequential write workload on each node is
   as follows:
   
+  \singlespace
+  \begin{tcolorbox}
   \begin{verbatim}
     [global]
     direct=1
@@ -1003,6 +1011,8 @@ random selection.
     filename=/dev/sdb
     name=sequential-write
   \end{verbatim}
+  \end{tcolorbox}
+  \doublespace
 
   The \verb|iodepth| variable is modified depending on the number of
   outstanding I/Os needed.
