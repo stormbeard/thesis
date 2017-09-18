@@ -10,6 +10,7 @@
 \usepackage[pdftex]{graphicx}
 \usepackage{setspace,caption,url,tcolorbox}
 \doublespacing
+\pagenumbering{gobble}
 
 % Default margins are too wide all the way around. I reset them here
 \usepackage[left=1.5in,right=1in,top=1in,bottom=1in,includefoot,nohead]{geometry}
@@ -42,31 +43,65 @@
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Abstract}
+\section*{Abstract}
+\thispagestyle{empty}
 
 With the advent of cloud computing, datacenters are making use of distributed
-applications more than ever. MapReduce is used to generate over 20 petabytes of
-data per day using very large numbers of commodity servers \cite{mapreduce}. Many companies
-use large scale clusters to perform various computational tasks via the the
-open-source MapReduce implementation, Hadoop \cite{hadoop}, or they can possess a
-virtualized datacenter allowing them to migrate virtual machines between
-various machines for high-availability reasons. As economics change for
-hardware, it is likely that a scalable cloud will have the requirement to mix
-node types, which will lead to higher performance and higher capacity nodes to
-be mixed with lower performance, lower capacity nodes. This thesis presents an
-adaptive data placement method in the Nutanix distributed file system (ADSF)
-which will attempt to remedy the common problems found in many heterogeneous
-clustered file systems.
+applications more than ever. MapReduce is used to generate over 20 petabytes
+of data per day using very large numbers of commodity servers
+\cite{mapreduce}.  Many companies use large scale clusters to perform various
+computational tasks via the the open-source MapReduce implementation, Hadoop
+\cite{hadoop}, or they can possess a virtualized datacenter allowing them to
+migrate virtual machines between various machines for high-availability
+reasons. As economics change for hardware, it is likely that a scalable cloud
+will have the requirement to mix node types, which will lead to higher
+performance and higher capacity nodes to be mixed with lower performance,
+lower capacity nodes. This thesis presents an adaptive data placement method
+in the Nutanix distributed file system (ADSF) which will attempt to remedy
+the common problems found in many heterogeneous clustered file systems.
+
+\clearpage
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Acknowledgements}
+\thispagestyle{empty}
+
+First off, I would like to thank my father, Dr. Cyril Allen. He sparked  and
+supported my interest in technology as a child and convinced me to pursue a
+graduate degree as an adult. Thanks for all of your guidance, Dada.
+
+I also want to thank my mother, Dr. Hengameh Allen-Schaal, for her
+unconditional love and support. She has always been there for me when I needed
+her, even when we began living in different states. I could not have done any
+of this without her. Thanks, Mama.
+
+% Monique, my love, thank you for enriching my life.
+
+% Jamie, my advisor
+
+% Nutanix/Pete, for hardware and resources
+
+% Harvard? eh..
+
+\clearpage
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{roman}
 
 \tableofcontents
+\newpage
 
 \listoffigures
+\newpage
 
 \listoftables
 
+\pagenumbering{arabic}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{Introduction}
 
   \subsection{Motivation}
@@ -261,7 +296,7 @@ clustered file systems.
     tolerance guaranteed by the cluster's replication factor.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+\newpage
 \section{Prior Work}
 
 Xie et. al. showed that data placement schemes based on the computing
@@ -317,6 +352,7 @@ using a weighted random selection tied to the calculated fitness values.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newpage
 \section{Implementation}
 
   \subsection{Stargate Disk Stats Collection}
@@ -806,6 +842,7 @@ using a weighted random selection tied to the calculated fitness values.
       
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newpage
 \section{Evaluation and Results}
 
 The experiments below seek to measure the effect of the additive and
@@ -975,6 +1012,7 @@ random selection.
   \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{User Guide}
 
   \subsection{Scraping Data From the Nutanix Cluster}
@@ -1047,6 +1085,7 @@ random selection.
   test.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{Future Work}
 
   \subsection{Real-time Fitness Feedback}
@@ -1077,6 +1116,7 @@ random selection.
   this data can be used to make better data placement decisions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{Appendix}
 
   \subsection{Herding Behavior Due to Implementation Bug}
