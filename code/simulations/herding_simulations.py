@@ -10,7 +10,7 @@ import numpy as np
 import random
 import time
 
-matplotlib.rcParams.update({'font.size': 22})
+matplotlib.rcParams.update({'font.size': 18})
 
 # Number of times to perform selection on each set of disks.
 selection_counts = [1000, 10000, 100000]
