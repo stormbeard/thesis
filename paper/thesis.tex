@@ -57,8 +57,8 @@ reasons. As economics change for hardware, it is likely that a scalable cloud
 will have the requirement to mix node types, which will lead to higher
 performance and higher capacity nodes to be mixed with lower performance,
 lower capacity nodes. This thesis presents an adaptive data placement method
-in the Nutanix distributed file system (ADSF) which will attempt to remedy
-the common problems found in many heterogeneous clustered file systems.
+in the Nutanix distributed file system which will attempt to remedy the common
+problems found in many heterogeneous clustered file systems.
 
 \clearpage
 \newpage
@@ -116,20 +116,20 @@ of this without her. Thanks, Mama.
   write's performance is at the mercy of the slowest disk and node.  There are
   several scenarios, both pathological and daily occurences, where a more
   robust replica placement heuristic is required. For the work in this thesis,
-  I will focus on two orthogonal cases described below.
+  I will focus on two orthogonal cases described in the next section.
 
     \subsubsection{Interfering Workloads}
 
     An example of interfering workloads can take the form of a 3-node
     homogeneous cluster with only 2 nodes hosting active workloads as shown in
     Figure \ref{fig:workload_disparity}. In the current random selection scheme
-    in use by the ADSF, writes are equally likely to place their replica on the
-    other node with an active workload as they would be to place it on the idle
-    node. This can impact performance on both the local and remote workloads as
-    secondary writes will be slower on nodes whose resources are being utilized
-    by their primary workloads. An adaptive replica placement scheme is needed
-    to avoid the busy node and bias secondary replica placement on an idle
-    node. 
+    in use by Nutanix clusters, writes are equally likely to place their
+    replica on the other node with an active workload as they would be to place
+    it on the idle node. This can impact performance on both the local and
+    remote workloads as secondary writes will be slower on nodes whose
+    resources are being utilized by their primary workloads. An adaptive
+    replica placement scheme is needed to avoid the busy node and bias
+    secondary replica placement on an idle node. 
 
     \begin{figure}[h]
       \centering
@@ -148,15 +148,15 @@ of this without her. Thanks, Mama.
     the single weak node has only 128GB of SSD tier and 1TB of HDD tier. If 3
     simultaneous workloads were to generate data such that the working sets of
     the workloads are 50\% of the local SSD tier, the weaker node is at a
-    significant disadvantage. Given the current ADSF replica selection
-    algorithm, we can expect 500GB of replica traffic to flood the weak node
-    and fill up its SSD tier well before the workload is finished. This results
-    in an inability for the workload on the smaller node to place its primary
-    replicas locally and forces the workload to rely on remote CVMs, increasing
-    latency. An adaptive replica placement heuristic would mitigate this issue
-    by taking disk usages into consideration during the placement of secondary
-    replicas and biasing placement of secondary replicas on the nodes with more
-    free capacity.
+    significant disadvantage. Given the replica selection algorithm in Nutanix
+    cluster versions prior to 5.0, we can expect 500GB of replica traffic to
+    flood the weak node and fill up its SSD tier well before the workload is
+    finished.  This results in an inability for the workload on the smaller
+    node to place its primary replicas locally and forces the workload to rely
+    on remote CVMs, increasing latency. An adaptive replica placement heuristic
+    would mitigate this issue by taking disk usages into consideration during
+    the placement of secondary replicas and biasing placement of secondary
+    replicas on the nodes with more free capacity.
 
     \begin{figure}[h]
       \centering
@@ -165,37 +165,69 @@ of this without her. Thanks, Mama.
       \label{fig:tier_size_disparity}
     \end{figure}
 
-  \subsection{Acropolis Base System}
+    To create a context for the work in this thesis, it's necessary to delve
+    deeper into what a Nutanix cluster is and give a brief overview of the
+    I/O path. Section \ref{sssec:abs} will be devoted to this overview.
 
-  ADSF is facilitated by a clustering of controller virtual machines (CVMs)
-  which reside, one per node, on each server in the cluster. The CVM presents
-  via NFS (for VMWare's ESXi \cite{esxi2008}), SMB (for Microsoft's Hyper-V
-  \cite{hyperv2009}), or
-  iSCSI (for Nutanix's AHV \cite{bible}) an interface to each hypervisor that they
-  reside on. For example, the interface provided by the CVMs to VMware's ESXi
-  hypervisor will be interfaced with as a datastore. The virtual machines'
-  virtual disk files will reside on the Nutanix datastore and be accessed via
-  NFS through the CVM sharing a host with the user VM. Within the CVM exists an
-  ecosystem of process that make up the ADSF. This work is scoped specifically
-  to the I/O manager process, Stargate.
+  \subsection{Nutanix and the Acropolis Base System} \label{sssec:abs}
 
+  The work in this thesis was performed in the context of a distributed
+  filesystem designed by Nutanix for enterprise clusters. In this section I'll
+  provide an overview of the key features provided by the storage system to
+  provide the necessary background for understanding the changes performed to
+  the data replica placement.
 
-  \subsection{Stargate}
+    \subsubsection{Architecture}
 
-  The Stargate process is responsible for all data management and I/O
-  operations. The NFS/SMB/iSCSI interface presented to the hypervisor is also
-  presented by Stargate. All file allocations and data replica placement
-  decisions are made by this process.
+    A Nutanix cluster is facilitated by a clustering of controller virtual
+    machines (CVMs) which reside, one per node, on each server in the cluster.
+    CVMs work together to form a distributed system that provides an NFS (for
+    VMWare's ESXi \cite{esxi2008}), SMB (for Microsoft's Hyper-V
+    \cite{hyperv2009}), or iSCSI (for Nutanix's AHV \cite{bible}) interface to
+    each hypervisor that they reside on. For example, the interface provided by
+    the CVMs to VMware's ESXi hypervisor will be interfaced with as a
+    datastore. The virtual machines' virtual disk files will reside on the
+    Nutanix datastore and be accessed via NFS through the CVM sharing a host
+    with the user VM.
 
-  As the Stargate process facilitates writes to physical disks, it gathers
-  statistics for each disk such as the number of operations currently in flight
-  on the disk (queue length), how much data in bytes currently resides on the
-  disk, and average time to complete an operation on the disk. These statistics
-  are only gathered on the local disks; however, they are then stored in a
-  distributed database provided by another ADSF service, Arithmos, along with
-  the statistics gathered by every other Stargate in the cluster. These disk
-  statistics stored in the database and are pulled periodically and are then
-  used to make decisions on data placement when performing writes.
+    Users of a Nutanix cluster will typically have virtual machines (VMs)
+    hosted by one of the hypervisors previously mentioned. These VMs will have
+    their storage requests forwarded to the local CVM hosted on the same node,
+    or another CVM in the cluster in the event that the local CVM is down. This
+    fault tolerance is one of the advantages to using a clustered filesystem
+    such as Nutanix as opposed to a monolithic storage array.
+    
+    \begin{figure}[h]
+      \centering
+      \includegraphics[scale=1.0]{images/converged_platform.png} 
+      \caption{Nutanix node architecture diagram from the Nutanix
+               Bible\cite{bible}.}
+      \label{fig:adsf_architecture}
+    \end{figure}
+
+    The CVMs expose some number of block devices, known as vDisks, that are
+    used by the VMs hosted by the hypervisor. Within each CVM exists an
+    ecosystem of processes responsible for the services provided by the Nutanix
+    cluster. The work in this thesis is scoped specifically to the I/O manager
+    process, Stargate, which is discussed in the following section.
+
+    \subsubsection{Stargate}
+
+    The Stargate process is responsible for all data management and I/O
+    operations. The messages sent via NFS/SMB/iSCSI from the hypervisor to the
+    CVM are consumed and acted upon by Stargate. All file allocations and data
+    replica placement decisions are made by this process.
+
+    As the Stargate process facilitates writes to physical disks, it gathers
+    statistics for each disk such as the number of operations currently in flight
+    on the disk (queue length), how much data in bytes currently resides on the
+    disk, and average time to complete an operation on the disk. These statistics
+    are only gathered on the local disks; however, they are then stored in a
+    distributed database provided by another service on the CVM, known
+    internally as Arithmos, along with the statistics gathered by every other
+    Stargate in the cluster.  These disk statistics stored in the database and
+    are pulled periodically and are then used to make decisions on data
+    placement when performing writes.
 
     \subsubsection{The Extent Store}
 
@@ -299,37 +331,36 @@ of this without her. Thanks, Mama.
 \newpage
 \section{Prior Work}
 
-Xie et. al. showed that data placement schemes based on the computing
-capacities of nodes in the Hadoop Distributed File System (HDFS) significantly
-improved workload performance \cite{hdfs2008}. These computing capacities are
+Xie et. al. \cite{xie2010} showed that data placement schemes based on the
+computing capacities of nodes in the Hadoop Distributed File System (HDFS)
+significantly improved workload performance. These computing capacities are
 determined for each node in the cluster by profiling a target application
-leveraging the
-HDFS. Their MapReduced wordcount and grep results showed up to a 33.1\%
-reduction in response time. Similarly, Perez et. al. applied adaptive data
-placement features to the Expand parallel file system based on available free
-space \cite{perez2003}. Though effective in their given contexts, the main drawback to this
-work is that it assumes the specific application is working without
-interference and does not account for other workloads on the system.
+leveraging the HDFS. Their MapReduced wordcount and grep results showed up to a
+33.1\% reduction in response time. Similarly, Perez et. al. \cite{perez2003}
+applied adaptive data placement features to the Expand parallel file system
+based on available free space. Though effective in their given contexts, the
+main drawback to this work is that it assumes the specific application is
+working without interference and does not account for other workloads on the
+system.
 
 One adaptive data placement approach that can account for other workloads on
-the system was introduced by Jin et. al. in their work on ADAPT
-\cite{adapt2012}. The work
-predicts how failure-prone a node in a MapReduce cluster is and advises their
-availability-aware data placement algorithm to avoid those nodes. This proves
-useful for performance by avoiding faulty nodes that could fail mid-task and
-cause data transfers and re-calculation of data.
+the system was introduced by Jin et. al. \cite{adapt2012} in their work on
+ADAPT . The work predicts how failure-prone a node in a MapReduce cluster is
+and advises their availability-aware data placement algorithm to avoid those
+nodes. This proves useful for performance by avoiding faulty nodes that could
+fail mid-task and cause data transfers and re-calculation of data.
 
-Work by Suresh et. al. approaches adaptive replica selection in much the same
-way proposed in this paper, though their work was mainly focused on decreasing
-tail latencies for Cassandra reads \cite{suresh2015}. Their load balancing algorithm, C3,
-incorporates the concept of a value calculated from request feedback from their
-servers that allows for decisions to be made on server selection. In addition
-to the ranking function in C3, they implemented a distributed rate control
-mechanism to prevent scenarios where many individual clients can bombard a
-single highly desirable server with requests. Many of the same problems that
-the work in this proposal seeks to remedy are also addressed by the C3
-algorithm; however, given the Nutanix file system's architecture, some C3
-solutions are not feasible.
+Work by Suresh et. al. \cite{suresh2015} approaches adaptive replica selection
+in much the same way proposed in this paper, though their work was mainly
+focused on decreasing tail latencies for Cassandra reads. Their load balancing
+algorithm, C3, incorporates the concept of a value calculated from request
+feedback from their servers that allows for decisions to be made on server
+selection. In addition to the ranking function in C3, they implemented a
+distributed rate control mechanism to prevent scenarios where many individual
+clients can bombard a single highly desirable server with requests. Many of the
+same problems that the work in this proposal seeks to remedy are also addressed
+by the C3 algorithm; however, given the Nutanix file system's architecture,
+some C3 solutions are not feasible.
 
 The C3 algorithm takes into account the request queue length of certain servers
 similar to the way I will use disk queue lengths. In addition Suresh et. al.
@@ -349,6 +380,8 @@ client requests to each server via a decentralized calculation using a
 configured time interval and local sending rate information. I've opted to use
 a simpler probabilistic spreading of client requests via selecting remote nodes
 using a weighted random selection tied to the calculated fitness values.
+
+% Non-distributed FS replication. Other replicating file systems.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
