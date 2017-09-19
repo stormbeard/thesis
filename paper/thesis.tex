@@ -112,8 +112,8 @@ of this without her. Thanks, Mama.
   variables such as disparities in tier size, CPU power, workloads, and disk
   health among other things.
 
-  Considering that a write is not complete until all replicas are written, the
-  write's performance is at the mercy of the slowest disk and node.  There are
+  Given that a write is not complete until all replicas are written, the
+  write's performance is at the mercy of the slowest disk and node. There are
   several scenarios, both pathological and daily occurences, where a more
   robust replica placement heuristic is required. For the work in this thesis,
   I will focus on two orthogonal cases described in the next section.
@@ -218,16 +218,16 @@ of this without her. Thanks, Mama.
     CVM are consumed and acted upon by Stargate. All file allocations and data
     replica placement decisions are made by this process.
 
-    As the Stargate process facilitates writes to physical disks, it gathers
-    statistics for each disk such as the number of operations currently in flight
-    on the disk (queue length), how much data in bytes currently resides on the
-    disk, and average time to complete an operation on the disk. These statistics
-    are only gathered on the local disks; however, they are then stored in a
-    distributed database provided by another service on the CVM, known
-    internally as Arithmos, along with the statistics gathered by every other
-    Stargate in the cluster.  These disk statistics stored in the database and
-    are pulled periodically and are then used to make decisions on data
-    placement when performing writes.
+    As the Stargate process facilitates reads and writes to physical disks, it
+    gathers statistics for each disk such as the number of operations currently
+    in flight on the disk (queue length), how much data in bytes currently
+    resides on the disk, and average time to complete an operation on the disk.
+    These statistics are only gathered on the local disks; however, they are
+    then stored in a distributed database provided by another service on the
+    CVM, known internally as Arithmos, along with the statistics gathered by
+    every other Stargate in the cluster. These disk statistics stored in the
+    database and are pulled periodically and are then used to make decisions on
+    data placement when performing writes.
 
     \subsubsection{The Extent Store}
 
@@ -256,6 +256,20 @@ of this without her. Thanks, Mama.
     unit of hardware containing multiple nodes). 
 
     \subsubsection{Replica Selection}
+
+    Stargate is inherently limited in its choices of disk to service reads
+    since it must select a disk that contains the desired data. If the data is
+    on a local disk, this disk is always selected due to the unnecessary
+    overhead of data traversal over the network when selecting a remote disk.
+    However, when selecting disks to service writes, Stargate must decide
+    whether to perform an in-place overwrite for writes over existing ranges of
+    data or whether to generate new data. In-place overwrites are similar to
+    reads in that the choice of target disk is limited by where the relevant
+    data resides. In-place overwrites are ruled out in the case of deduplicated
+    data, since multiple ranges within a vDisk point to the same physical data.
+    In the case of deduplicated data and all other scenarios where data is
+    being created for the first time, Stargate has the freedom to choose any
+    disk in the cluster.
 
     When a Stargate write operation wants to select disks for data placement
     upon entrance into the Extent Store, it is done on a per-tier basis. The
