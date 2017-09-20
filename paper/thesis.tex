@@ -684,73 +684,65 @@ using a weighted random selection tied to the calculated fitness values.
   for their corresponding fitness values. The objects and their corresponding
   fitness values share an index into their respective internal vectors.
 
-  \newpage
+  \begin{table}[h]
+    \label{tab:wvpub}
+    \caption{WeightedVector public interface.}
+    \begin{tabular}{ | p{1.0\linewidth} | }
+      \hline
+      \verb|WeightedVector(const std::function<double(const T)>)| \\ \hline
+      The WeightedVector class is instantiated by providing a fitness function
+      that accepts a reference to an object of type \emph{T} and returns a
+      fitness value that is of type \emph{double}. The provided fitness function
+      is used to create a mapping between inserted objects and their
+      corresponding fitness values for sampling.
 
-    \subsubsection{Public Interface}
+      The WeightedVector class asserts that the fitness function returns positive
+      values. \\ \hline
 
-    \begin{table}
-      \caption{WeightedVector public interface.}
-      \begin{tabular}{ | p{1.0\linewidth} | }
-        \hline
-        \verb|WeightedVector(const std::function<double(const T)>)| \\ \hline
-        The WeightedVector class is instantiated by providing a fitness function
-        that accepts a reference to an object of type \emph{T} and returns a
-        fitness value that is of type \emph{double}. The provided fitness function
-        is used to create a mapping between inserted objects and their
-        corresponding fitness values for sampling.
+      \\ \hline
 
-        The WeightedVector class asserts that the fitness function returns positive
-        values. \\ \hline
+      \verb|void EmplaceBack(const T& element)| \\ \hline
+      The EmplaceBack function constructs and inserts an object of type
+      \emph{T} at the end of the vector. This increases the WeightedVector's
+      size by 1. \\ \hline
 
-        \\ \hline
+      \\ \hline
 
-        \verb|void EmplaceBack(const T& element)| \\ \hline
-        The EmplaceBack function constructs and inserts an object of type
-        \emph{T} at the end of the vector. This increases the WeightedVector's
-        size by 1. \\ \hline
+      \verb|bool Empty()| \\ \hline
+      Returns true if the WeightedVector is of size 0. \\  \hline
 
-        \\ \hline
+      \\ \hline
 
-        \verb|bool Empty()| \\ \hline
-        Returns true if the WeightedVector is of size 0. \\  \hline
+      \verb|void Clear()| \\ \hline
+      Resets all state in the WeightedVector object, sets the size to 0, and
+      clears all internal vectors. \\ \hline
 
-        \\ \hline
+      \\ \hline
 
-        \verb|void Clear()| \\ \hline
-        Resets all state in the WeightedVector object, sets the size to 0, and
-        clears all internal vectors. \\ \hline
+      \verb|T& Sample()|\\ \hline
 
-        \\ \hline
+      Returns a reference to an object stored inside of the WeightedVector.
+      Objects are sampled via weighted random selection and subsequent calls to
+      Sample are guaranteed not to return the same object unless Reset is called
+      before sampling again. The WeightedVector class asserts that Sample is not
+      called more times than the size of the WeightedVector.\\ \hline
 
-        \verb|T& Sample()|\\ \hline
+      \\ \hline
 
-        Returns a reference to an object stored inside of the WeightedVector.
-        Objects are sampled via weighted random selection and subsequent calls to
-        Sample are guaranteed not to return the same object unless Reset is called
-        before sampling again. The WeightedVector class asserts that Sample is not
-        called more times than the size of the WeightedVector.\\ \hline
+      \verb|void Reset()|\\ \hline
 
-        \\ \hline
+      Resets the sampling state of the WeightedVector, allowing sampled objects
+      to be eligible for selection in subsequent Sample calls.\\ \hline
 
-        \verb|void Reset()|\\ \hline
+      \\ \hline
 
-        Resets the sampling state of the WeightedVector, allowing sampled objects
-        to be eligible for selection in subsequent Sample calls.\\ \hline
+      \verb|size_t size()|\\ \hline
 
-        \\ \hline
+      Returns the size of the WeightedVector.\\ \hline
+    \end{tabular}
+  \end{table}
 
-        \verb|size_t size()|\\ \hline
-
-        Returns the size of the WeightedVector.\\ \hline
-      \end{tabular}
-    \end{table}
-
-
-     \begin{verbatim}
-       
-     \end{verbatim}
-
-
+  Table \ref{tab:wvpub} shows the WeightedVector public interface.
 
     \subsubsection{Weighted Vector Internals}
 
