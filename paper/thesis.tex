@@ -67,14 +67,14 @@ problems found in many heterogeneous clustered file systems.
 \section*{Acknowledgements}
 \thispagestyle{empty}
 
-First off, I would like to thank my father, Dr. Cyril Allen. He sparked  and
-supported my interest in technology as a child and convinced me to pursue a
-graduate degree as an adult. Thanks for all of your guidance, Dada.
+First off, I would like to thank my father, Dr. Cyril Allen, for sparking my
+initial interest in computing as a child and convincing me to pursue a graduate
+degree.
 
 I also want to thank my mother, Dr. Hengameh Allen-Schaal, for her
 unconditional love and support. She has always been there for me when I needed
 her, even when we began living in different states. I could not have done any
-of this without her. Thanks, Mama.
+of this without her.
 
 % Monique, my love, thank you for enriching my life.
 
@@ -684,64 +684,73 @@ using a weighted random selection tied to the calculated fitness values.
   for their corresponding fitness values. The objects and their corresponding
   fitness values share an index into their respective internal vectors.
 
+  \newpage
+
     \subsubsection{Public Interface}
 
+    \begin{table}
+      \caption{WeightedVector public interface.}
+      \begin{tabular}{ | p{1.0\linewidth} | }
+        \hline
+        \verb|WeightedVector(const std::function<double(const T)>)| \\ \hline
+        The WeightedVector class is instantiated by providing a fitness function
+        that accepts a reference to an object of type \emph{T} and returns a
+        fitness value that is of type \emph{double}. The provided fitness function
+        is used to create a mapping between inserted objects and their
+        corresponding fitness values for sampling.
+
+        The WeightedVector class asserts that the fitness function returns positive
+        values. \\ \hline
+
+        \\ \hline
+
+        \verb|void EmplaceBack(const T& element)| \\ \hline
+        The EmplaceBack function constructs and inserts an object of type
+        \emph{T} at the end of the vector. This increases the WeightedVector's
+        size by 1. \\ \hline
+
+        \\ \hline
+
+        \verb|bool Empty()| \\ \hline
+        Returns true if the WeightedVector is of size 0. \\  \hline
+
+        \\ \hline
+
+        \verb|void Clear()| \\ \hline
+        Resets all state in the WeightedVector object, sets the size to 0, and
+        clears all internal vectors. \\ \hline
+
+        \\ \hline
+
+        \verb|T& Sample()|\\ \hline
+
+        Returns a reference to an object stored inside of the WeightedVector.
+        Objects are sampled via weighted random selection and subsequent calls to
+        Sample are guaranteed not to return the same object unless Reset is called
+        before sampling again. The WeightedVector class asserts that Sample is not
+        called more times than the size of the WeightedVector.\\ \hline
+
+        \\ \hline
+
+        \verb|void Reset()|\\ \hline
+
+        Resets the sampling state of the WeightedVector, allowing sampled objects
+        to be eligible for selection in subsequent Sample calls.\\ \hline
+
+        \\ \hline
+
+        \verb|size_t size()|\\ \hline
+
+        Returns the size of the WeightedVector.\\ \hline
+      \end{tabular}
+    \end{table}
+
+
      \begin{verbatim}
-       WeightedVector(const std::function<double(const T)>)
+       
      \end{verbatim}
 
-     The WeightedVector class is instantiated by providing a fitness function
-     that accepts a reference to an object of type \emph{T} and returns a
-     fitness value that is of type \emph{double}. The provided fitness function
-     is used to create a mapping between inserted objects and their
-     corresponding fitness values for sampling.
 
-     The WeightedVector class asserts that the fitness function returns positive
-     values.
-
-     \begin{verbatim}
-       void EmplaceBack(const T& element)
-     \end{verbatim}
-
-     The EmplaceBack function constructs and inserts an object of type
-     \emph{T} at the end of the vector. This increases the WeightedVector's
-     size by 1.
-
-     \begin{verbatim}
-       bool Empty()
-     \end{verbatim}
-
-     Returns true if the WeightedVector is of size 0.
-
-     \begin{verbatim}
-       void Clear()
-     \end{verbatim}
-
-     Resets all state in the WeightedVector object, sets the size to 0, and
-     clears all internal vectors.
-
-     \begin{verbatim}
-       T& Sample()
-     \end{verbatim}
-
-     Returns a reference to an object stored inside of the WeightedVector.
-     Objects are sampled via weighted random selection and subsequent calls to
-     Sample are guaranteed not to return the same object unless Reset is called
-     before sampling again. The WeightedVector class asserts that Sample is not
-     called more times than the size of the WeightedVector.
-
-     \begin{verbatim}
-       void Reset()
-     \end{verbatim}
-
-     Resets the sampling state of the WeightedVector, allowing sampled objects
-     to be eligible for selection in subsequent Sample calls.
-
-     \begin{verbatim}
-       size_t size()
-     \end{verbatim}
-
-     Returns the size of the WeightedVector.
 
     \subsubsection{Weighted Vector Internals}
 
