@@ -8,7 +8,7 @@
 
 \documentclass[12pt]{article}
 \usepackage[pdftex]{graphicx}
-\usepackage{setspace,caption,url,tcolorbox}
+\usepackage{setspace,caption,url,tcolorbox,float,placeins}
 \doublespacing
 \pagenumbering{gobble}
 
@@ -690,6 +690,8 @@ of this without her.
       \label{fig:pathological_two_choice}
     \end{figure}
 
+    \FloatBarrier
+
     \subsubsection{Uniform Random Selection Simulations}
     Uniform random selection is completely indifferent to object weights.
     Therefore, it exhibits no herding behavior and no usefulness for the
@@ -938,12 +940,12 @@ of this without her.
   \subsection{Replica Selection Changes}
     
   Stargate was modified to store disk IDs in a WeightedVector rather than a
-  \verb|std::vector|. When considering a disk for candidacy, rather than
-  shuffling the \verb|std::vector| and iterating through each disk until enough
-  replica targets are found, we call \verb|WeightedVector::Sample()| until
-  enough replica targets are found. All of Stargate's replica placement logic
-  is untouched and I've simply modified the order in which candidate disks are
-  considered.
+  \texttt{std::vector}. When considering a disk for candidacy, rather than
+  shuffling the \texttt{std::vector} and iterating through each disk until
+  enough replica targets are found, we call \\
+  \texttt{WeightedVector::Sample()} until enough replica targets are
+  found. All of Stargate's replica placement logic is untouched and I've simply
+  modified the order in which candidate disks are considered.
       
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1142,7 +1144,7 @@ random selection.
   is appended to a file for each node that is created if it is non-existent.
   The data is layed out in a CSV format for easy plotting via the Matplotlib
   library \cite{matplotlib}. For each experiment, the script was called every 5
-  seconds via the command \verb|watch -n 5|.
+  seconds via the command \texttt{watch -n 5}.
 
   \subsection{Re-creating Experiments}
 
@@ -1185,10 +1187,10 @@ random selection.
   outstanding I/Os needed.
 
   When resetting the cluster for a new test, on the CVM I run
-  \verb|cluster stop ; cluster destroy| and swap out the Stargate binary in
-  the \verb|/home/nutanix/bin/| directory with the binary required for the next
-  test. When ready, I recreate the Nutanix cluster via
-  \verb|cluster -s <cvm IPs> create|. The process is then repeated for each
+  \texttt{cluster stop ; cluster destroy} and swap out the Stargate binary in
+  the \texttt{/home/nutanix/bin/} directory with the binary required for the
+  next test. When ready, I recreate the Nutanix cluster via
+  \texttt{cluster -s <cvm IPs> create}. The process is then repeated for each
   test.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
