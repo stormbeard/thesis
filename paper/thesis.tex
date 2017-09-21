@@ -97,6 +97,7 @@ of this without her.
 \newpage
 
 \listoftables
+\newpage
 
 \pagenumbering{arabic}
 
@@ -209,9 +210,10 @@ of this without her.
     used by the VMs hosted by the hypervisor. Within each CVM exists an
     ecosystem of processes responsible for the services provided by the Nutanix
     cluster. The work in this thesis is scoped specifically to the I/O manager
-    process, Stargate, which is discussed in the following section.
+    in the CVM ecosystem, Stargate, which is discussed in the following
+    section.
 
-    \subsubsection{Stargate}
+    \subsubsection{Stargate} \label{section-stargate}
 
     The Stargate process is responsible for all data management and I/O
     operations. The messages sent via NFS/SMB/iSCSI from the hypervisor to the
@@ -228,6 +230,14 @@ of this without her.
     every other Stargate in the cluster. These disk statistics stored in the
     database and are pulled periodically and are then used to make decisions on
     data placement when performing writes.
+
+    \subsubsection{Cassandra}
+
+    Cassandra stores and manages all cluster metadata in a distributed manner.
+    The version of Cassandra running in NDFS is a heavily modified Apache
+    Cassandra \cite{cassandra}. One of the main differences between Nutanix
+    Cassandra and Apache Cassandra is that Nutanix has implemented the Paxos
+    \cite{paxos2005} protocol to enforce strict consistency.
 
     \subsubsection{The Extent Store}
 
@@ -276,7 +286,7 @@ of this without her.
     interface for a replica selection function call, DetermineNewReplicas,
     takes the following arguments:
 
-    \begin{table}
+    \begin{table}[h]
       \caption{Argument descriptions for DetermineNewReplicas.}
       \begin{tabular}{ | p{0.4\linewidth} | p{0.6\linewidth} | }
         \hline
@@ -422,6 +432,37 @@ of this without her.
   use a simpler probabilistic spreading of client requests via selecting remote
   nodes using a weighted random selection tied to the calculated fitness
   values.
+
+  \subsection{Non-clustered Data Replication via RAID}
+
+  So far, I have only discussed distributed file systems and data replica
+  placement schemes in a clustered/distributed context. It is worth noting
+  that not all storage replication occurs across a network partition. For
+  example, it is common to see Redundant Arrays of Inexpensive Disks (RAID)
+  \cite{raid} \cite{raid2} used on servers to increase performance or to
+  protect data written to the disks in the event of a drive failure.
+
+  \begin{table}[h]
+    \caption{Common RAID levels and their descriptions.}
+    \label{tbl:raid-levels}
+    \begin{center}
+    \begin{tabular}{ | l | r | }
+      \hline
+      RAID Level & Description \\ \hline
+      RAID 0 & Disk striping with no replication. \\ \hline
+      RAID 1 & Disk mirroring. \\ \hline
+      RAID 5 & Block-level striping with distributed parity. \\ \hline
+      RAID 6 & Block-level striping with doubly distributed parity. \\ \hline
+      \hline
+    \end{tabular}
+    \end{center}
+  \end{table}
+
+  RAID combines multiple physical disks into a single logical disk that is then
+  presented to the operating system as a single device. The exact data
+  replication scheme that dictates the way data is distributed across the
+  drives is known as the RAID level. Table \ref{tbl:raid-levels} shows some of
+  the standard RAID levels.
 
 % Non-distributed FS replication. Other replicating file systems.
 
@@ -715,7 +756,7 @@ of this without her.
   \begin{table}[h]
     \label{tab:wvpub}
     \caption{WeightedVector public interface.}
-    \begin{tabular}{ | p{1.0\linewidth} | }
+    \begin{tabular}{ | p{0.90\linewidth} | }
       \hline
       \verb|WeightedVector(const std::function<double(const T)>)| \\ \hline
       The WeightedVector class is instantiated by providing a fitness function
@@ -788,7 +829,7 @@ of this without her.
     Before sampling, we have identical weights\_ and sampling\_weights\_
     accompanying an inner\_vector\_ of objects:
 
-    \begin{table}
+    \begin{table}[h]
       \caption{Inner vector example part 1.}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
@@ -805,7 +846,7 @@ of this without her.
     probability of this event is 0.5, so to maintain sampling state within the
     WeightedVector, the weight associated with object $D$ is set to zero:
 
-    \begin{table}
+    \begin{table}[h]
       \caption{Inner vector example part 2.}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
@@ -824,7 +865,7 @@ of this without her.
     $\frac{3}{7}$ respectively. Suppose two more calls to Sample() lead to the
     following state:
 
-    \begin{table}
+    \begin{table}[h]
       \caption{Inner vector example part 3.}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
@@ -843,7 +884,7 @@ of this without her.
     weights\_ into sampling\_weights\_ and all objects are eligible for
     sampling again:
 
-    \begin{table}
+    \begin{table}[h]
       \caption{Inner vector example part 3.}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
@@ -861,12 +902,14 @@ of this without her.
 
     The WeightedVector class' unit test has four phases:
 
+    \begin{tcolorbox}
     \begin{enumerate}
       \item Test Average() functionality
       \item Test there are no duplicate samples
       \item Test sampling with uniform probabilities
       \item Test sampling with non-uniform probabilities
     \end{enumerate}
+    \end{tcolorbox}
 
     The testing of the Average() function's behavior includes simply adding all
     zeros, all ones, and monotonically increasing integers in the range
@@ -1084,6 +1127,7 @@ random selection.
   throughput, disk queue length, and many other pieces of information. I wrote
   a Python script to parse and derive the following information for each node:
 
+  \begin{tcolorbox}
   \begin{enumerate}
     \item SSD tier usage
     \item SSD tier availability
@@ -1091,6 +1135,7 @@ random selection.
     \item Read/Write counts for each disk
     \item Queue lengths for each disk
   \end{enumerate}
+  \end{tcolorbox}
 
   The script will filter out all disks in the HDD tier and only pull the
   statistics for the SSD tier. Upon each invocation of the script, information
@@ -1217,7 +1262,7 @@ random selection.
   callback to each query to be executed when a response is received. Disk usage
   and performance lookups each have their own callback functions:
 
-  \begin{table}
+  \begin{table}[h]
     \caption{Disk usage and performance lookup callback functions.}
     \begin{center}
     \begin{tabular}{ | p{0.5\linewidth} | p{0.5\linewidth} | }
@@ -1302,6 +1347,10 @@ random selection.
    \bibitem{gfs} Ghemawat, S., Gobioff, H., and Leung, S. T. (2003, October). The Google file system. In ACM SIGOPS operating systems review (Vol. 37, No.  5, pp. 29-43). ACM.
 
    \bibitem{ceph} Weil, S. A., Brandt, S. A., Miller, E. L., Long, D. D., and Maltzahn, C. (2006, November). Ceph: A scalable, high-performance distributed file system. In Proceedings of the 7th symposium on Operating systems design and implementation (pp. 307-320). USENIX Association.
+
+   \bibitem{raid} Patterson, D. A., Gibson, G., and Katz, R. H. (1988). A case for redundant arrays of inexpensive disks (RAID) (Vol. 17, No. 3, pp.  109-116). ACM.
+
+   \bibitem{raid2} Chen, P. M., Lee, E. K., Gibson, G. A., Katz, R. H., and Patterson, D. A. (1994). RAID: High-performance, reliable secondary storage. ACM Computing Surveys (CSUR), 26(2), 145-185.
 
  \end{thebibliography}
 
