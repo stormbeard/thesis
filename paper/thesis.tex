@@ -172,7 +172,7 @@ of this without her.
   \subsection{Nutanix and the Acropolis Base System} \label{sssec:abs}
 
   The work in this thesis was performed in the context of a distributed
-  filesystem designed by Nutanix for enterprise clusters. In this section I'll
+  file system designed by Nutanix for enterprise clusters. In this section I'll
   provide an overview of the key features provided by the storage system to
   provide the necessary background for understanding the changes performed to
   the data replica placement.
@@ -194,7 +194,7 @@ of this without her.
     hosted by one of the hypervisors previously mentioned. These VMs will have
     their storage requests forwarded to the local CVM hosted on the same node,
     or another CVM in the cluster in the event that the local CVM is down. This
-    fault tolerance is one of the advantages to using a clustered filesystem
+    fault tolerance is one of the advantages to using a clustered file system
     such as Nutanix as opposed to a monolithic storage array.
     
     \begin{figure}[h]
@@ -345,55 +345,83 @@ of this without her.
 \newpage
 \section{Prior Work}
 
-Xie et. al. \cite{xie2010} showed that data placement schemes based on the
-computing capacities of nodes in the Hadoop Distributed File System (HDFS)
-significantly improved workload performance. These computing capacities are
-determined for each node in the cluster by profiling a target application
-leveraging the HDFS. Their MapReduced wordcount and grep results showed up to a
-33.1\% reduction in response time. Similarly, Perez et. al. \cite{perez2003}
-applied adaptive data placement features to the Expand parallel file system
-based on available free space. Though effective in their given contexts, the
-main drawback to this work is that it assumes the specific application is
-working without interference and does not account for other workloads on the
-system.
+  \subsection{Clustered Storage Systems}
 
-One adaptive data placement approach that can account for other workloads on
-the system was introduced by Jin et. al. \cite{adapt2012} in their work on
-ADAPT . The work predicts how failure-prone a node in a MapReduce cluster is
-and advises their availability-aware data placement algorithm to avoid those
-nodes. This proves useful for performance by avoiding faulty nodes that could
-fail mid-task and cause data transfers and re-calculation of data.
+  Among the contemporary distributed storage systems, Apache's Hadoop
+  Distributed File System (HDFS) \cite{hadoop} is one of the most well known.
+  HDFS is an open source distributed file system written as a userspace library
+  in Java that is used by Hadoop clusters for storing large volumes of data. An
+  HDFS cluster is comprised of a single NameNode and multiple DataNodes which
+  respectively manage cluster metadata and store the data. HDFS stores files as
+  a sequence of same-size 128MB blocks that are replicated across DataNodes to
+  provide fault tolerance in the event of node failures. Decisions regarding
+  the replication and placement of blocks of data are made by the NameNode.
+  Since large HDFS clusters will span multiple racks, replica placement within
+  HDFS is made in a rack-aware manner to improve data reliability and network
+  utilization.
 
-Work by Suresh et. al. \cite{suresh2015} approaches adaptive replica selection
-in much the same way proposed in this paper, though their work was mainly
-focused on decreasing tail latencies for Cassandra reads. Their load balancing
-algorithm, C3, incorporates the concept of a value calculated from request
-feedback from their servers that allows for decisions to be made on server
-selection. In addition to the ranking function in C3, they implemented a
-distributed rate control mechanism to prevent scenarios where many individual
-clients can bombard a single highly desirable server with requests. Many of the
-same problems that the work in this proposal seeks to remedy are also addressed
-by the C3 algorithm; however, given the Nutanix file system's architecture,
-some C3 solutions are not feasible.
+  While HDFS is an open source distributed file system that is part of the
+  greater Apache Hadoop ecosystem, the Google File System (GFS) \cite{gfs} is a
+  proprietary distributed file system developed by Google that inspired HDFS. A
+  GFS cluster is comprised of a single Master node and multiple Chunkservers
+  that store 64MB "chunks," or blocks, of data. Each file in the GFS is divided
+  into the 64MB chunks and each chunk is replicated by the Chunkservers
+  multiple times throughout the GFS cluster. Master nodes store the metadata
+  associated with the chunks such as chunk location or which processes are
+  operating on a chunk.
 
-The C3 algorithm takes into account the request queue length of certain servers
-similar to the way I will use disk queue lengths. In addition Suresh et. al.
-factor in the service latencies of each server so that they may consider a
-different ideal queue length for each server. With this approach, longer
-service times will warrant a lower queue length and vice versa. This is
-beneficial for scenarios where there are multiple underlying storage
-technologies such as NVMe drives, SSDs, and HDDs under consideration, but the
-Nutanix file system's architecture does not allow for multiple replicas to span
-storage tiers. This forces the ideal queue lengths for each selection pool to
-be the same. Therefore, my work does not incorporate service latencies in the
-fitness value calculations.
+  \subsection{Data Placement Schemes in Clustered Storage Systems}
 
-Herding of requests to a single highly suitable server is a problem that arises
-in any replica ranking algorithm. C3 mitigates this issue by rate limiting
-client requests to each server via a decentralized calculation using a
-configured time interval and local sending rate information. I've opted to use
-a simpler probabilistic spreading of client requests via selecting remote nodes
-using a weighted random selection tied to the calculated fitness values.
+  Xie et. al. \cite{xie2010} showed that data placement schemes based on the
+  computing capacities of nodes in the HDFS significantly improved workload
+  performance. These computing capacities are determined for each node in the
+  cluster by profiling a target application leveraging the HDFS. Their
+  MapReduced wordcount and grep results showed up to a 33.1\% reduction in
+  response time. Similarly, Perez et. al. \cite{perez2003} applied adaptive
+  data placement features to the Expand parallel file system based on available
+  free space. Though effective in their given contexts, the main drawback to
+  this work is that it assumes the specific application is working without
+  interference and does not account for other workloads on the system.
+
+  One adaptive data placement approach that can account for other workloads on
+  the system was introduced by Jin et. al. \cite{adapt2012} in their work on
+  ADAPT . The work predicts how failure-prone a node in a MapReduce cluster is
+  and advises their availability-aware data placement algorithm to avoid those
+  nodes. This proves useful for performance by avoiding faulty nodes that could
+  fail mid-task and cause data transfers and re-calculation of data.
+
+  Work by Suresh et. al. \cite{suresh2015} approaches adaptive replica
+  selection in much the same way proposed in this paper, though their work was
+  mainly focused on decreasing tail latencies for Cassandra \cite{cassandra}
+  reads. Their load balancing algorithm, C3, incorporates the concept of a
+  value calculated from request feedback from their servers that allows for
+  decisions to be made on server selection. In addition to the ranking function
+  in C3, they implemented a distributed rate control mechanism to prevent
+  scenarios where many individual clients can bombard a single highly desirable
+  server with requests. Many of the same problems that the work in this
+  proposal seeks to remedy are also addressed by the C3 algorithm; however,
+  given the Nutanix file system's architecture, some C3 solutions are not
+  feasible.
+
+  The C3 algorithm takes into account the request queue length of certain
+  servers similar to the way I will use disk queue lengths. In addition Suresh
+  et. al.  factor in the service latencies of each server so that they may
+  consider a different ideal queue length for each server. With this approach,
+  longer service times will warrant a lower queue length and vice versa. This
+  is beneficial for scenarios where there are multiple underlying storage
+  technologies such as NVMe drives, SSDs, and HDDs under consideration, but the
+  Nutanix file system's architecture does not allow for multiple replicas to
+  span storage tiers. This forces the ideal queue lengths for each selection
+  pool to be the same. Therefore, my work does not incorporate service
+  latencies in the fitness value calculations.
+
+  Herding of requests to a single highly suitable server is a problem that
+  arises in any replica ranking algorithm. C3 mitigates this issue by rate
+  limiting client requests to each server via a decentralized calculation using
+  a configured time interval and local sending rate information. I've opted to
+  use a simpler probabilistic spreading of client requests via selecting remote
+  nodes using a weighted random selection tied to the calculated fitness
+  values.
 
 % Non-distributed FS replication. Other replicating file systems.
 
@@ -1270,6 +1298,10 @@ random selection.
    \bibitem{python} Van Rossum, G., and Drake, F. L. (2003). Python language reference manual (p. 144). Network Theory.
 
    \bibitem{stl} Plauger, P. J., Lee, M., Musser, D., and Stepanov, A. A. (2000). C++ Standard Template Library. Prentice Hall PTR.
+
+   \bibitem{gfs} Ghemawat, S., Gobioff, H., and Leung, S. T. (2003, October). The Google file system. In ACM SIGOPS operating systems review (Vol. 37, No.  5, pp. 29-43). ACM.
+
+   \bibitem{ceph} Weil, S. A., Brandt, S. A., Miller, E. L., Long, D. D., and Maltzahn, C. (2006, November). Ceph: A scalable, high-performance distributed file system. In Proceedings of the 7th symposium on Operating systems design and implementation (pp. 307-320). USENIX Association.
 
  \end{thebibliography}
 
