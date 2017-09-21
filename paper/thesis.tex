@@ -425,15 +425,18 @@ of this without her.
   Nutanix file system's architecture does not allow for multiple replicas to
   span storage tiers. This forces the ideal queue lengths for each selection
   pool to be the same. Therefore, my work does not incorporate service
-  latencies in the fitness value calculations.
+  latencies in the fitness value calculations discussed in section
+  \ref{section-fitness}.
 
   Herding of requests to a single highly suitable server is a problem that
   arises in any replica ranking algorithm. C3 mitigates this issue by rate
   limiting client requests to each server via a decentralized calculation using
   a configured time interval and local sending rate information. I've opted to
   use a simpler probabilistic spreading of client requests via selecting remote
-  nodes using a weighted random selection tied to the calculated fitness
-  values.
+  nodes using weighted random selection based on the calculated fitness values.
+  This fitness value approach was inspired by Cisco's Enhanced Interior Gateway
+  Routing Protocol (EIGRP) \cite{eigrp} and its composite routing metric
+  calculations discussed further in section \ref{eigrp-motivation}.
 
   \subsection{Non-clustered Data Replication via RAID}
 
@@ -448,9 +451,9 @@ of this without her.
     \caption{Common RAID levels and their descriptions.}
     \label{tbl:raid-levels}
     \begin{center}
-    \begin{tabular}{ | l | r | }
+    \begin{tabular}{ | l | l | }
       \hline
-      RAID Level & Description \\ \hline
+      \textbf{RAID Level} & \textbf{Description} \\ \hline
       RAID 0 & Disk striping with no replication. \\ \hline
       RAID 1 & Disk mirroring. \\ \hline
       RAID 5 & Block-level striping with distributed parity. \\ \hline
@@ -466,7 +469,36 @@ of this without her.
   drives is known as the RAID level. Table \ref{tbl:raid-levels} shows some of
   the standard RAID levels.
 
-% Non-distributed FS replication. Other replicating file systems.
+  \subsection{EIGRP and the Inspiration for Fitness Values}
+  \label{eigrp-motivation}
+
+  EIGRP \cite{eigrp} is Cisco's proprietary routing protocol and enhancement to
+  their Interior Gateway Routing Protocol (IGRP). In the protocol, each router
+  keeps information about its adjacent neighbors containing the address and
+  interface of the connected neighbor. This information is needed because of
+  the Topology Table (also referred to as the Distance Table) which contains
+  the distance, bundled with an associated metric, to all destinations
+  advertised by the adjacent neighbors. The metrics across all paths to the
+  destination are stored in the distance table and are used to calculate the
+  minimum cost path to a particular destination.
+
+  \begin{equation}
+    Term_{1} = K_{1} * \frac{K_{2} * Bandwidth}{Bandwidth + 256 - Load} + K_{3} * Delay
+  \end{equation}
+
+  \begin{equation} \label{eigrp-metric-eq}
+    Metric = 256 * Term_{1} * \frac{K_{5}}{K_{4} + Reliability}
+  \end{equation}
+
+  Equation \ref{eigrp-metric-eq} shows the formula used by Cisco routers to
+  calculate the distance metric. Note that as bandwidth increases, the metric
+  is increased; however, as load increases on the links the metric decreases.
+  There are constant values, also known as K-values, that allow network
+  engineers to modify the behavior of the network based on their preferences.
+  This idea of taking desirable traits and using them to calculate a metric, or
+  desirability value, can be applied to the problem of choosing the best disk
+  for data replica placement and will be explored further in the following
+  sections in the context of the Nutanix Distributed Storage Fabric.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -474,17 +506,15 @@ of this without her.
 \FloatBarrier
 \section{Implementation}
 
-  \subsection{Fitness Values and Functions}
+  \subsection{Fitness Values and Functions} \label{section-fitness}
 
   To calculate a value to represent the desirability of a disk for replica
   placement, we'll use a function, $f_{fitness}$ that takes as its argument
   disk stats and returns a positive number we will call a fitness value.
-
-  % TODO: EIGRP and motivation for using fitness values.
   
   A low fitness value indicates a poor placement candidacy for a disk and a
   high fitness value will indicate a highly desirable disk for replica
-  placement. In this thesis, I evaluate two fitness functions that are
+  placement. In this work, I evaluate two fitness functions that are
   comprised of terms that utilize a disk's average queue length over some
   stretch of time, $t_{q}$, and a disk's percentage utilization, $t_{u}$.
 
@@ -508,7 +538,7 @@ of this without her.
   compared with disks that are slightly more utilized.
 
   These terms are used in two different fitness functions evaluated in this
-  thesis:
+  document:
 
   \begin{equation}
     f_{add} = t_{u} + t_{q}
@@ -761,8 +791,7 @@ of this without her.
   for their corresponding fitness values. The objects and their corresponding
   fitness values share an index into their respective internal vectors.
 
-  \begin{table}[htbp]
-    \label{tab:wvpub}
+  \begin{table}[htbp] \label{tab:wvpub}
     \caption{WeightedVector public interface.}
     \begin{tabular}{ | p{1.0\linewidth} | }
       \hline
@@ -1369,6 +1398,10 @@ random selection.
    \bibitem{raid2} Chen, P. M., Lee, E. K., Gibson, G. A., Katz, R. H., and Patterson, D. A. (1994). RAID: High-performance, reliable secondary storage. ACM Computing Surveys (CSUR), 26(2), 145-185.
 
    \bibitem{eigrp} Albrightson, R., Garcia-Luna-Aceves, J. J., and Boyle, J.  (1994). EIGRP--A fast routing protocol based on distance vectors. Interop 94.
+
+   \bibitem{igrp} Rutgers, C. L. H. (1991). “An introduction to igrp. The State University of New Jersey, Center for Computers and Information Services, Laboratory for Computer Science Research.
+
+   \bibitem{distance-vector-1} McQuillan, J. M., Richer, I., Rosen, E. C., and Bertsekas, D. P. (1978). Arpanet routing algorithm improvements (No. BBN-3940). BOLT BERANEK AND NEWMAN INC CAMBRIDGE MA.
 
  \end{thebibliography}
 
