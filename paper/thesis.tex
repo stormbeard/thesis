@@ -8,7 +8,7 @@
 
 \documentclass[12pt]{article}
 \usepackage[pdftex]{graphicx}
-\usepackage{setspace,caption,url,tcolorbox,float,placeins}
+\usepackage{setspace,caption,url,tcolorbox,float,placeins,appendix}
 \doublespacing
 \pagenumbering{gobble}
 
@@ -103,6 +103,7 @@ of this without her.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\FloatBarrier
 \section{Introduction}
 
   \subsection{Motivation}
@@ -353,6 +354,7 @@ of this without her.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\FloatBarrier
 \section{Prior Work}
 
   \subsection{Clustered Storage Systems}
@@ -469,6 +471,7 @@ of this without her.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newpage
+\FloatBarrier
 \section{Implementation}
 
   \subsection{Stargate Disk Stats Collection}
@@ -950,6 +953,7 @@ of this without her.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newpage
+\FloatBarrier
 \section{Evaluation and Results}
 
 The experiments below seek to measure the effect of the additive and
@@ -1120,6 +1124,7 @@ random selection.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\FloatBarrier
 \section{User Guide}
 
   \subsection{Scraping Data From the Nutanix Cluster}
@@ -1195,6 +1200,7 @@ random selection.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\FloatBarrier
 \section{Future Work}
 
   \subsection{Real-time Fitness Feedback}
@@ -1226,6 +1232,9 @@ random selection.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\FloatBarrier
+\begin{appendices}
+\appendix
 \section{Appendix}
 
   \subsection{Herding Behavior Due to Implementation Bug}
@@ -1295,6 +1304,7 @@ random selection.
 
   This problem was fixed by simply serializing our usage and performance stats
   lookups.
+\end{appendices}
 
  \begin{thebibliography}{99}
 
