@@ -474,30 +474,19 @@ of this without her.
 \FloatBarrier
 \section{Implementation}
 
-  \subsection{Stargate Disk Stats Collection}
-
-  Prior to this work, Stargate's periodic disk stats collection was limited to
-  caching solely disk usage stats for all disks in the cluster.  This has been
-  expanded to now include disk performance stats for use in disk fitness
-  values.
-
-  Stargate maintains a mapping, henceforth referred to as the $disk\_map\_$,
-  from cluster disk ID to a disk state structure. The $disk\_map\_$'s state
-  structure contains disk usage and performance information that has been
-  published to Arithmos by other Stargates in the cluster. Upon gathering fresh
-  stats from Arithmos, the information is used to create a disk fitness value
-  for each disk in the cluster.
-
   \subsection{Fitness Values and Functions}
 
   To calculate a value to represent the desirability of a disk for replica
   placement, we'll use a function, $f_{fitness}$ that takes as its argument
-  disk stats and returns a positive number we will call a fitness value. A low
-  fitness value indicates a poor placement candidacy for a disk and a high
-  fitness value will indicate a highly desirable disk for replica placement. In
-  this thesis, I evaluate two fitness functions that are comprised of terms
-  that utilize a disk's average queue length over some stretch of time,
-  $t_{q}$, and a disk's percentage utilization, $t_{u}$.
+  disk stats and returns a positive number we will call a fitness value.
+
+  % TODO: EIGRP and motivation for using fitness values.
+  
+  A low fitness value indicates a poor placement candidacy for a disk and a
+  high fitness value will indicate a highly desirable disk for replica
+  placement. In this thesis, I evaluate two fitness functions that are
+  comprised of terms that utilize a disk's average queue length over some
+  stretch of time, $t_{q}$, and a disk's percentage utilization, $t_{u}$.
 
   \begin{equation}
     t_{q} = 1 - \frac{q}{q_{ceil}}
@@ -529,6 +518,20 @@ of this without her.
     f_{mult} = t_{u}t_{q}
   \end{equation}
 
+
+  \subsection{Stargate Disk Stats Collection}
+
+  Prior to this work, Stargate's periodic disk stats collection was limited to
+  caching solely disk usage stats for all disks in the cluster. This has been
+  expanded to now include disk performance stats for use in disk fitness
+  values.
+
+  Stargate maintains a mapping, henceforth referred to as the $disk\_map\_$,
+  from cluster disk ID to a disk state structure. The $disk\_map\_$'s state
+  structure contains disk usage and performance information that has been
+  published to Arithmos by other Stargates in the cluster. Upon gathering fresh
+  stats from Arithmos, the information is used to create a disk fitness value
+  for each disk in the cluster.
 
   \subsection{Weighted Random Selection Algorithms}
 
@@ -1364,6 +1367,8 @@ random selection.
    \bibitem{raid} Patterson, D. A., Gibson, G., and Katz, R. H. (1988). A case for redundant arrays of inexpensive disks (RAID) (Vol. 17, No. 3, pp.  109-116). ACM.
 
    \bibitem{raid2} Chen, P. M., Lee, E. K., Gibson, G. A., Katz, R. H., and Patterson, D. A. (1994). RAID: High-performance, reliable secondary storage. ACM Computing Surveys (CSUR), 26(2), 145-185.
+
+   \bibitem{eigrp} Albrightson, R., Garcia-Luna-Aceves, J. J., and Boyle, J.  (1994). EIGRP--A fast routing protocol based on distance vectors. Interop 94.
 
  \end{thebibliography}
 
