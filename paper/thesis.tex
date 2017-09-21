@@ -1188,7 +1188,7 @@ random selection.
   \end{tcolorbox}
   \doublespace
 
-  The \verb|iodepth| variable is modified depending on the number of
+  The \texttt{iodepth} variable is modified depending on the number of
   outstanding I/Os needed.
 
   When resetting the cluster for a new test, on the CVM I run
@@ -1264,7 +1264,7 @@ random selection.
   function.
 
   Within Stargate, we keep a mapping from disk ID to a DiskState object (called
-  \verb|disk_map_|) containing information and cached statistics related to the
+  \texttt{disk\_map\_}) containing information and cached statistics related to the
   disk. The disk performance and disk usage stats are two separate elements
   within the DiskState structure.
 
@@ -1281,14 +1281,15 @@ random selection.
       \textbf{Function Name} & \textbf{Description} \\ \hline
       \verb|UsageStatLookupCallback| & Decrement the outstanding stats lookup
                                        counter, acquire lock and populate
-                                       performance stats in \verb|disk_map_|,
-                                       and leave performance stats untouched.
+                                       performance stats in
+                                       \texttt{disk\_map\_}, and leave
+                                       performance stats untouched.
                                        \\ \hline
 
       \verb|PerformanceStatLookupCallback| & Decrement outstanding stats
                                              lookup counter, lock and
                                              populate performance stats in
-                                             \verb|disk_map_|, and leave
+                                             \texttt{disk\_map\_}, and leave
                                              usage stats untouched. \\ \hline
 
       \hline
@@ -1296,8 +1297,8 @@ random selection.
     \end{center}
   \end{table}
 
-  The two callbacks introduce a race condition regarding \verb|disk_map_| even
-  though the structure is locked. Any time PerformanceStatLookupCallback
+  The two callbacks introduce a race condition regarding \texttt{disk\_map\_}
+  even though the structure is locked. Any time PerformanceStatLookupCallback
   returns before the callback for usage stats, all performance stats will be
   cleared and cause the fitness function to assume worst-case values for the
   queue length term.
