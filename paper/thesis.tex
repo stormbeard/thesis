@@ -629,12 +629,12 @@ of this without her.
     skew in weights and makes the high-weight object a target for herding
     behavior. Given this sampling set, weighted random selections were
     performed and a histogram was kept that tracked the number of selections
-    for each object. $10^3$, $10^4$, and $10^5$ iterations were performed to observe any
-    changes in herding behavior at larger time scales. In addition to the
-    high-skew sampling sets, low-skew sets of 100 objects were also simulated.
-    These low-skew sets were identical to the high-skew sets, except there was
-    not a single object with an exaggerated weight of 1000. All element weights
-    were their array indices.
+    for each object. $10^3$, $10^4$, and $10^5$ iterations were performed to
+    observe any changes in herding behavior at larger time scales. In addition
+    to the high-skew sampling sets, low-skew sets of 100 objects were also
+    simulated.  These low-skew sets were identical to the high-skew sets,
+    except there was not a single object with an exaggerated weight of 1000.
+    All element weights were their array indices.
 
     \subsubsection{Stochastic Universal Sampling (SUS) Simulations}
     SUS is another sampling technique first introduced by Baker in 1987
@@ -791,8 +791,9 @@ of this without her.
   for their corresponding fitness values. The objects and their corresponding
   fitness values share an index into their respective internal vectors.
 
-  \begin{table}[htbp] \label{tab:wvpub}
+  \begin{table}[htbp]
     \caption{WeightedVector public interface.}
+    \label{tab:wvpub}
     \begin{tabular}{ | p{1.0\linewidth} | }
       \hline
       \verb|WeightedVector(const std::function<double(const T)>)| \\ \hline
@@ -1006,6 +1007,10 @@ random selection.
     \item Two worker VMs on separate nodes with running a
           workload with high outstanding ops.
   \end{enumerate}
+
+  The worker VMs are manually deployed to their respective host hypervisors and
+  used to perform the experiments described in sections
+  \ref{experiments-tier-util} and \ref{experiments-qlen}.
  
   \subsection{Fio and Write Patterns}
 
@@ -1019,7 +1024,7 @@ random selection.
   purposes of replica placement, the Nutanix file system does not distinguish
   targets based on the write pattern that generatred an extent group.
 
-  \subsection{Tier Utilization Experiments}
+  \subsection{Tier Utilization Experiments} \label{experiments-tier-util}
 
   The tier utilization experiments define the hot-tier deviation,
   $d_{hot tier}$, as the average SSD utilization percentage of the nodes
@@ -1042,9 +1047,6 @@ random selection.
   expect a more sophisticated replica selection scheme to minimize
   $d_{hot\ tier}$ by biasing secondary replicas towards the idle node and
   limiting the skew.
-
-  % TODO: should I include fio scripts here, in some appendix, or in the user
-  % guide?
 
     \subsubsection{Low Outstanding Operation Results}
 
@@ -1125,7 +1127,7 @@ random selection.
     scaling the fitness value by the value of both the fullness and queue
     length terms, rather than weights.
   
-  \subsection{Disk Queue Length Experiments}
+  \subsection{Disk Queue Length Experiments} \label{experiments-qlen}
 
   Since a low outstanding operation workload would not give useful
   information for measuring the effects of fitness-based replica selection on
