@@ -15,6 +15,8 @@
 % Default margins are too wide all the way around. I reset them here
 \usepackage[left=1.5in,right=1in,top=1in,bottom=1in,includefoot,nohead]{geometry}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{document}
 \begin{center}
 
@@ -106,91 +108,34 @@ of this without her.
 \FloatBarrier
 \section{Introduction}
 
-  \subsection{Motivation}
-
-  A number of scenarios arise in heterogeneous Nutanix clusters that can
-  degrade performance for an entire cluster. The currently replica disk
-  selection logic in Stargate uses does not take into account a number of
-  variables such as disparities in tier size, CPU power, workloads, and disk
-  health among other things.
-
-  Given that a write is not complete until all replicas are written, the
-  write's performance is at the mercy of the slowest disk and node. There are
-  several scenarios, both pathological and daily occurences, where a more
-  robust replica placement heuristic is required. For the work in this thesis,
-  I will focus on two orthogonal cases described in the next section.
-
-    \subsubsection{Interfering Workloads}
-
-    An example of interfering workloads can take the form of a 3-node
-    homogeneous cluster with only 2 nodes hosting active workloads as shown in
-    Figure \ref{fig:workload_disparity}. In the current random selection scheme
-    in use by Nutanix clusters, writes are equally likely to place their
-    replica on the other node with an active workload as they would be to place
-    it on the idle node. This can impact performance on both the local and
-    remote workloads as secondary writes will be slower on nodes whose
-    resources are being utilized by their primary workloads. An adaptive
-    replica placement scheme is needed to avoid the busy node and bias
-    secondary replica placement on an idle node. 
-
-    \begin{figure}[htbp]
-      \centering
-      \includegraphics[scale=0.45]{images/homogeneous_workload_disparity.pdf} 
-      \caption{A cluster with identical nodes running a heterogeneous workload.}
-      \label{fig:workload_disparity}
-    \end{figure}
-
-    \subsubsection{Nodes with Tier Size Disparities}
-
-    A cluster containing nodes with a tier size disparity are susceptible to a
-    skew in node fullness, even if the workload on each node is identical. This
-    can be illustrated via Figure \ref{fig:tier_size_disparity} where we have a
-    3-node heterogeneous cluster with 2 high-end nodes and a single weak node.
-    Suppose these high-end nodes have 500GB of SSD tier and 6TB of HDD tier and
-    the single weak node has only 128GB of SSD tier and 1TB of HDD tier. If 3
-    simultaneous workloads were to generate data such that the working sets of
-    the workloads are 50\% of the local SSD tier, the weaker node is at a
-    significant disadvantage. Given the replica selection algorithm in Nutanix
-    cluster versions prior to 5.0, we can expect 500GB of replica traffic to
-    flood the weak node and fill up its SSD tier well before the workload is
-    finished.  This results in an inability for the workload on the smaller
-    node to place its primary replicas locally and forces the workload to rely
-    on remote CVMs, increasing latency. An adaptive replica placement heuristic
-    would mitigate this issue by taking disk usages into consideration during
-    the placement of secondary replicas and biasing placement of secondary
-    replicas on the nodes with more free capacity.
-
-    \begin{figure}[htbp]
-      \centering
-      \includegraphics[scale=0.45]{images/homogeneous_tier_disparity.pdf} 
-      \caption{A cluster with nodes of varying resource capacity.}
-      \label{fig:tier_size_disparity}
-    \end{figure}
-
-    To create a context for the work in this thesis, it's necessary to delve
-    deeper into what a Nutanix cluster is and give a brief overview of the
-    I/O path. Section \ref{sssec:abs} will be devoted to this overview.
+  The work in this thesis was performed in the context of a distributed file
+  system designed by Nutanix for enterprise clusters. Given that a write
+  operation that results in the creation of new data in this file system is not
+  complete until all replicas of the data are written to disk, a write's
+  performance is at the mercy of the slowest disk in the set chosen to host
+  replicas and all entities those disks are dependent on. These entities could
+  include variables such as the server's average CPU utilization and the number
+  of operations already in flight on a chosen disk. To mitigate the negative
+  impact these variables could have on a write, the file system should take
+  into account how these variables will affect a disk's performance before
+  choosing to target it for a write operation. This results in biasing toward
+  disks that will give better performance overall.
 
   \subsection{Nutanix and the Acropolis Base System} \label{sssec:abs}
-
-  The work in this thesis was performed in the context of a distributed
-  file system designed by Nutanix for enterprise clusters. In this section I'll
-  provide an overview of the key features provided by the storage system to
-  provide the necessary background for understanding the changes performed to
-  the data replica placement.
 
     \subsubsection{Architecture}
 
     A Nutanix cluster is facilitated by a clustering of controller virtual
-    machines (CVMs) which reside, one per node, on each server in the cluster.
-    CVMs work together to form a distributed system that provides an NFS (for
-    VMWare's ESXi \cite{esxi2008}), SMB (for Microsoft's Hyper-V
-    \cite{hyperv2009}), or iSCSI (for Nutanix's AHV \cite{bible}) interface to
-    each hypervisor that they reside on. For example, the interface provided by
-    the CVMs to VMware's ESXi hypervisor will be interfaced with as a
-    datastore. The virtual machines' virtual disk files will reside on the
+    machines (CVMs) which reside, one per node, on each server in the cluster
+    as shown in Figure \ref{fig:adsf-architecture}. CVMs work together to form
+    a distributed system that provides an NFS (for VMWare's ESXi
+    \cite{esxi2008}), SMB (for Microsoft's Hyper-V \cite{hyperv2009}), or iSCSI
+    (for Nutanix's AHV \cite{bible}) interface to each hypervisor that they
+    reside on. For example, the interface provided by the CVMs to VMware's ESXi
+    hypervisor will be interfaced as a storage target, or in ESXi terminology,
+    a datastore. The virtual machines' virtual disk files will reside on the
     Nutanix datastore and be accessed via NFS through the CVM sharing a host
-    with the user VM.
+    with the other hosted VMs.
 
     Users of a Nutanix cluster will typically have virtual machines (VMs)
     hosted by one of the hypervisors previously mentioned. These VMs will have
@@ -204,15 +149,14 @@ of this without her.
       \includegraphics[scale=1.0]{images/converged_platform.png} 
       \caption{Nutanix node architecture diagram from the Nutanix
                Bible\cite{bible}.}
-      \label{fig:adsf_architecture}
+      \label{fig:adsf-architecture}
     \end{figure}
 
     The CVMs expose some number of block devices, known as vDisks, that are
     used by the VMs hosted by the hypervisor. Within each CVM exists an
     ecosystem of processes responsible for the services provided by the Nutanix
-    cluster. The work in this thesis is scoped specifically to the I/O manager
-    in the CVM ecosystem, Stargate, which is discussed in the following
-    section.
+    cluster. The work in this thesis is scoped specifically to the process that
+    is directly responsible for disk I/O in the CVM ecosystem, Stargate.
 
     \subsubsection{Stargate} \label{section-stargate}
 
@@ -221,24 +165,29 @@ of this without her.
     CVM are consumed and acted upon by Stargate. All file allocations and data
     replica placement decisions are made by this process.
 
-    As the Stargate process facilitates reads and writes to physical disks, it
+    As the Stargate process facilitates read/write I/O to physical disks, it
     gathers statistics for each disk such as the number of operations currently
     in flight on the disk (queue length), how much data in bytes currently
-    resides on the disk, and average time to complete an operation on the disk.
-    These statistics are only gathered on the local disks; however, they are
-    then stored in a distributed database provided by another service on the
-    CVM, known internally as Arithmos, along with the statistics gathered by
-    every other Stargate in the cluster. These disk statistics stored in the
-    database and are pulled periodically and are then used to make decisions on
-    data placement when performing writes.
+    resides on the disk, and the average time to complete an operation on the
+    disk. These statistics are only gathered on the local disks; however, they
+    are then stored in a distributed database via another service, Arithmos.
+    Along with the statistics gathered by every other Stargate in the cluster,
+    these disk statistics stored in the database and are pulled periodically
+    and are then used to make decisions on whether a disk has enough space
+    available to make it a write target. The work in this thesis uses other
+    available statistics to make better placement decisions when performing
+    writes.
 
     \subsubsection{Cassandra}
 
     Cassandra stores and manages all cluster metadata in a distributed manner.
-    The version of Cassandra running in NDFS is a heavily modified Apache
-    Cassandra \cite{cassandra}. One of the main differences between Nutanix
-    Cassandra and Apache Cassandra is that Nutanix has implemented the Paxos
-    \cite{paxos2005} protocol to enforce strict consistency.
+    It is also the distributed database used by Arithmos to store cluster
+    statistics. The version of Cassandra running in NDFS is a heavily modified
+    Apache Cassandra \cite{cassandra}. One of the main differences between
+    Nutanix Cassandra and Apache Cassandra is that Nutanix has implemented
+    strict consistency via Lamport's Paxos \cite{paxos2005} protocol.
+
+    % TODO: elaborate on Paxos?
 
     \subsubsection{The Extent Store}
 
@@ -249,7 +198,7 @@ of this without her.
     times dependent on the cluster replication factor and each replica is
     placed on a different CVM except for a single replica that resides on the
     local node. The current replica selection algorithm will be explained in
-    further detail in the "Replica Selection" section.
+    further detail in section \ref{sec:replica-selection}.
 
     \subsubsection{Storage Tiering and Data Replication}
 
@@ -266,7 +215,7 @@ of this without her.
     example of a fault domain can be a node (single CVM) or a block (a rackable
     unit of hardware containing multiple nodes). 
 
-    \subsubsection{Replica Selection}
+    \subsubsection{Replica Selection} \label{sec:replica-selection}
 
     Stargate is inherently limited in its choices of disk to service reads
     since it must select a disk that contains the desired data. If the data is
@@ -276,9 +225,9 @@ of this without her.
     whether to perform an in-place overwrite for writes over existing ranges of
     data or whether to generate new data. In-place overwrites are similar to
     reads in that the choice of target disk is limited by where the relevant
-    data resides. In-place overwrites are ruled out in the case of deduplicated
+    data resides. In-place overwrites are ruled out in the case of de-duplicated
     data, since multiple ranges within a vDisk point to the same physical data.
-    In the case of deduplicated data and all other scenarios where data is
+    In the case of de-duplicated data and all other scenarios where data is
     being created for the first time, Stargate has the freedom to choose any
     disk in the cluster.
 
@@ -301,15 +250,15 @@ of this without her.
  
         \verb|storage_pool_vec| & The collection of all disks in the cluster.  \\ \hline
 
-        \verb|preferred_node_vec| & Nodes we prefer to choose disks from. This
-                                    means we will consider disks from these
+        \verb|preferred_node_vec| & Nodes Stargate prefers to choose disks from. This
+                                    means it will consider disks from these
                                     nodes first and only consider other disks
                                     if the ones belonging to these nodes are
                                     not suitable. \\ \hline
 
         \verb|predicate_func| & A function that accepts a disk ID and returns a
-                                boolean. If this function evaluates to false
-                                for any disk, it is not considered for
+                                boolean. If this function returns false
+                                for any disk ID, it is not considered for
                                 selection. \\ \hline
 
         \verb|exclude_replica_vec| & Disk IDs that will be excluded from
@@ -325,7 +274,7 @@ of this without her.
       \end{tabular}
     \end{table}
 
-    Upon calling DetermineNewReplicas, we first attempt to select replicas from
+    Upon calling DetermineNewReplicas, Stargate first attempts to select replicas from
     the preferred nodes. This involves finding the set of disks that belong to
     each node on the specified tier, shuffling the disks, and sequentially
     evaluating each disk until a suitable one is found (the evaluation step).
@@ -345,12 +294,77 @@ of this without her.
     \end{enumerate}
     \end{tcolorbox}
 
-    If a disk does not meet the criteria above, we simply continue searching
+    If a disk does not meet the criteria above, Stargate simply continues searching
     the shuffled set of disks belonging to the specified tier. If a disk is
-    found to be suitable, we must add the disk to the replic\_vec and add the
-    node that the disk belongs to in the exclude\_nod\_vec. This prevents us
-    from considering other disks on that node to maintain a node fault
+    found to be suitable, Stargate must add the disk to the replic\_vec and add
+    the node that the disk belongs to in the exclude\_nod\_vec. This prevents
+    it from considering other disks on that node to maintain a node fault
     tolerance guaranteed by the cluster's replication factor.
+
+  \subsection{Motivation}
+
+  The current replica disk selection logic in Stargate uses does not take into
+  account a number of variables such as disparities in tier size, CPU power,
+  workloads, and disk health among other things. There are several scenarios,
+  both pathological and daily occurences, where a more robust replica placement
+  heuristic is required. For the work in this thesis, I will focus on two
+  orthogonal cases described in the next section.
+
+    \subsubsection{Interfering Workloads}
+
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[scale=0.45]{images/homogeneous_workload_disparity.pdf} 
+      \caption{A cluster with identical nodes running a heterogeneous workload.}
+      \label{fig:workload_disparity}
+    \end{figure}
+
+    As shown in Figure \ref{fig:workload_disparity}, interfering workloads can
+    take the form of a homogeneous cluster of 3 servers in a full mesh network
+    (also referred to as a 3 node cluster) with only 2 nodes hosting active
+    workloads. In the current random selection scheme used by Nutanix
+    clusters, writes in this example are equally likely to place their replica
+    on the remote node with an active workload as they would be to place it on
+    the remote node that is idle.  This can impact performance on both the
+    local and remote workloads as secondary writes will be slower on nodes
+    whose resources are being utilized by their primary workloads. A data replica
+    placement scheme is needed that adapts its behavior based on how busy the
+    target nodes are. This would result in a bias towards nodes that are more
+    idle.
+
+    \subsubsection{Nodes with Tier Size Disparities}
+
+    A cluster containing nodes with a tier size disparity are susceptible to a
+    large skew in fullness between the nodes, even if the workload on each node
+    is identical. This can be illustrated via Figure
+    \ref{fig:tier_size_disparity} which shows a 3-node heterogeneous cluster
+    with 2 high-capacity nodes and a single low-capacity node.  Suppose these
+    high-capacity nodes have 500GB of SSD tier, 6TB of HDD tier and the single
+    weak node has only 128GB of SSD tier and 1TB of HDD tier. If 3 simultaneous
+    workloads were to generate data such that the working sets of these
+    workloads are 50\% of the local SSD tier, the weaker node is at a
+    significant disadvantage. Given the replica selection algorithm in Nutanix
+    cluster versions prior to 5.0, one can expect 500GB of replica traffic to
+    flood the weak node and fill up its SSD tier well before the workload is
+    able to write its data to the local disks.  Since this results in an
+    inability for the workload on the smaller node to place its primary
+    replicas locally and forces the workload to rely on remote CVMs, latency is
+    increased due to the network traversal to reach the remote nodes. An
+    adaptive replica placement heuristic would mitigate this issue by taking
+    disk usages into consideration during the placement of secondary replicas
+    and bias placement of secondary replicas toward the nodes with more free
+    capacity.
+
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[scale=0.45]{images/homogeneous_tier_disparity.pdf} 
+      \caption{A cluster with nodes of varying resource capacity.}
+      \label{fig:tier_size_disparity}
+    \end{figure}
+
+    To create a context for the work in this thesis, it's necessary to delve
+    deeper into what a Nutanix cluster is and give a brief overview of the
+    I/O path. Section \ref{sssec:abs} will be devoted to this overview.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
@@ -509,8 +523,8 @@ of this without her.
   \subsection{Fitness Values and Functions} \label{section-fitness}
 
   To calculate a value to represent the desirability of a disk for replica
-  placement, we'll use a function, $f_{fitness}$ that takes as its argument
-  disk stats and returns a positive number we will call a fitness value.
+  placement, a function is used, $f_{fitness}$ that takes as its argument disk
+  stats and returns a positive number henceforth known as a fitness value.
   
   A low fitness value indicates a poor placement candidacy for a disk and a
   high fitness value will indicate a highly desirable disk for replica
@@ -616,12 +630,12 @@ of this without her.
     cause a disproportionate amount of selections to target those objects. In
     the case of replica disk selections in a Nutanix cluster, this can cause
     too many operations to target an especially suitable disk, resulting in
-    poor performance. We can simulate an exaggerated scenario in which the
-    susceptibility to herding behavior can be observed by having a single
-    object with a weight that is multiple orders of magnitude heavier than the
-    next highest object in the sampling set. It is also necessary to observe
-    any herding behavior for a sampling set with low weight skew. This section
-    describes the simulation methodology for each.
+    poor performance. It is possible to simulate an exaggerated scenario in
+    which the susceptibility to herding behavior can be observed by having a
+    single object with a weight that is multiple orders of magnitude heavier
+    than the next highest object in the sampling set. It is also necessary to
+    observe any herding behavior for a sampling set with low weight skew. This
+    section describes the simulation methodology for each.
 
     High-skew sampling sets of 11 objects were generated such that the array
     index of the first 10 objects was assigned as the object weight, and the
@@ -667,12 +681,12 @@ of this without her.
 
     Figure \ref{fig:herding_roullette} shows the evolution of the
     distribution of selection frequencies for SUS as the number of samples
-    increases. We can see that the selection frequency is proportional to the
+    increases. It is evident that the selection frequency is proportional to the
     object weight. This can prove problematic for outlier objects with weights
     that are much larger than the other objects in the set as shown in Figure
-    \ref{fig:pathological_roullette}. We can see that the high weight object's
-    selection frequency eclipses all other objects in the selection pool which
-    can lead to extreme herding behaviors.
+    \ref{fig:pathological_roullette}. The high weight object's selection
+    frequency eclipses all other objects in the selection pool which can lead
+    to extreme herding behaviors.
 
     \subsubsection{Tructation Selection Simulations}
     Truncation selection \cite{truncation1973} does not consider any objects
@@ -707,8 +721,8 @@ of this without her.
     way similar to SUS. While an object with a higher weight is more likely to
     be selected, it is not selected with a probability proportional to its
     fitness value. This makes the algorithm resistant to any herding behaviors,
-    but will not be a good candidate if we desire the WeightedVector to select
-    objects with probability proportional to its weight.
+    but will not be a good candidate if it's desired for the WeightedVector to
+    select objects with probability proportional to its weight.
 
     \begin{figure}[htbp]
       \centering
@@ -750,9 +764,9 @@ of this without her.
       \label{fig:pathological_random}
     \end{figure}
 
-    Figure \ref{fig:pathological_truncation} shows that we can expect uniform
-    selection probabilities and Figure \ref{fig:pathological_random} confirms
-    that we can expect no herding behavior with a uniform random selection
+    Figure \ref{fig:pathological_truncation} shows that uniform selection
+    probabilities can be expected and Figure \ref{fig:pathological_random}
+    confirms there is no herding behavior with a uniform random selection
     scheme.
 
     \subsubsection{Weighted Random Algorithm Scalability Simulations}
@@ -864,8 +878,8 @@ of this without her.
     $O(1)$, since a weight of 0 gives a probability of 0 for sampling using
     Stochastic Universal Sampling as shown in the example below.
 
-    Before sampling, we have identical weights\_ and sampling\_weights\_
-    accompanying an inner\_vector\_ of objects:
+    Before sampling, there are identical weights\_ and sampling\_weights\_
+    vectors accompanying an inner\_vector\_ of objects:
 
     \begin{table}[htbp]
       \caption{Inner vector example part 1.}
@@ -880,7 +894,7 @@ of this without her.
       \end{center}
     \end{table}
 
-    Suppose we then call Sample() on the WeightedVector and it returns $D$. The
+    Suppose that a call to Sample() on the WeightedVector returns $D$. The
     probability of this event is 0.5, so to maintain sampling state within the
     WeightedVector, the weight associated with object $D$ is set to zero:
 
@@ -897,7 +911,7 @@ of this without her.
       \end{center}
     \end{table}
 
-    If we call Sample() again, it is not possible to return $D$ since its
+    If Sample() is called again, it is not possible to return $D$ since its
     sampling weight is now zero. The probabilities of returning $A$, $B$, or
     $C$ in subsequent calls to Sample() are $\frac{1}{7}$, $\frac{3}{7}$, and
     $\frac{3}{7}$ respectively. Suppose two more calls to Sample() lead to the
@@ -916,7 +930,7 @@ of this without her.
       \end{center}
     \end{table}
 
-    We may only call Sample() one more time without triggering an assertion
+    There can only be one more call to Sample() without triggering an assertion
     failure and the WeightedVector is obligated to return $D$. The only way to
     restore sampling state is to call Reset(). A Reset call simply copies
     weights\_ into sampling\_weights\_ and all objects are eligible for
@@ -951,8 +965,8 @@ of this without her.
 
     The testing of the Average() function's behavior includes simply adding all
     zeros, all ones, and monotonically increasing integers in the range
-    $[0,N]$. For each phase, we verify that the reported average is 0, 1, and
-    $\frac{N(N-1)}{2N}$ respectively.  
+    $[0,N]$. For each phase, it can be verified that the reported average is 0,
+    1, and $\frac{N(N-1)}{2N}$ respectively.  
 
     Verification that there are no duplicate samples involves adding
     monotonically increasing integers in the range $[0,N]$, inserting all
@@ -966,11 +980,11 @@ of this without her.
     Elements are then sampled and Reset() is called for a number of times
     several orders of magnitude larger than the number of elements. Each
     sampled element's number of times being selected is tracked in a test-local
-    hash map. We then calculate the actual selection probability of each
-    element in the WeightedVector with the expected value and verify the
-    difference is within an acceptable tolerance. For the uniform test, we
-    expect all integers to be sampled roughly the same amount and for the
-    non-uniform test, we expect larger integers to be sampled an amount of
+    hash map. The actual selection probability is calculated for each element
+    in the WeightedVector with the expected value and the difference is
+    verified to be within an acceptable tolerance. For the uniform test, all
+    integers are expected to be sampled roughly the same amount and for the
+    non-uniform test, larger integers are expected to be sampled an amount of
     times proportional to their value.
 
   \subsection{Replica Selection Changes}
@@ -978,8 +992,8 @@ of this without her.
   Stargate was modified to store disk IDs in a WeightedVector rather than a
   \texttt{std::vector}. When considering a disk for candidacy, rather than
   shuffling the \texttt{std::vector} and iterating through each disk until
-  enough replica targets are found, we call \\
-  \texttt{WeightedVector::Sample()} until enough replica targets are
+  enough replica targets are found, calls to \\
+  \texttt{WeightedVector::Sample()} must occur until enough replica targets are
   found. All of Stargate's replica placement logic is untouched and I've simply
   modified the order in which candidate disks are considered.
       
@@ -1039,14 +1053,14 @@ random selection.
   the running workloads. However, uniform random selection causes only 50\% of
   secondary replicas to go to the idle node even though it can potentially
   handle more work due to the fact that it does not have to service a local
-  workload. In a uniform random replica selection scheme, we expect the
-  nodes running a workload have to bear 100\% of their own primary replicas and
-  50\% of secondary replicas from the other worker node. This causes total SSD
-  utilization to be skewed towards the worker nodes and for this skew to grow
-  as the tests run. This is indicated by higher $d_{hot\ tier}$ values. We
-  expect a more sophisticated replica selection scheme to minimize
-  $d_{hot\ tier}$ by biasing secondary replicas towards the idle node and
-  limiting the skew.
+  workload. In a uniform random replica selection scheme, it is expected that
+  the nodes running a workload have to bear 100\% of their own primary replicas
+  and 50\% of secondary replicas from the other worker node. This causes total
+  SSD utilization to be skewed towards the worker nodes and for this skew to
+  grow as the tests run. This is indicated by higher $d_{hot\ tier}$ values.  A
+  more sophisticated replica selection scheme is expected to minimize $d_{hot\
+  tier}$ by biasing secondary replicas towards the idle node and limiting the
+  skew.
 
     \subsubsection{Low Outstanding Operation Results}
 
@@ -1063,7 +1077,7 @@ random selection.
     length reported by Stargate to be at most 1, resulting in the fitness
     function's queue length term to be roughly constant and approximately 1.
     
-    We can see that the additive fitness function does not minimize the
+    It is evident that the additive fitness function does not minimize the
     hot-tier deviation as well as the multiplicative. This is because an
     additive fitness function's behavior varies depending on the weight chosen
     for the queue length term. By default, the linear fitness function
@@ -1073,11 +1087,11 @@ random selection.
     reduce skew by very much while giving no weight to the queue length term
     keeps all nodes' usages within 10\% of each other. This is because the
     queue length term is contributing the maximum amount possible to the
-    fitness value due to the consistently low queue length values. We can
-    illustrate this by defining a disk selection bias, $b_r$, as the
+    fitness value due to the consistently low queue length values. This can be
+    illustrated by defining a disk selection bias, $b_r$, as the
     probability some disk, $d$, will be selected when compared with another
     disk, $d'$ whose utilization is 10\% higher and queue length value is
-    identical. Given a fitness function, $f$, we can calculate $b_r$ as
+    identical. Given a fitness function, $f$, $b_r$ can be calculated as
     follows:
 
     \begin{equation}
@@ -1102,12 +1116,11 @@ random selection.
       \label{fig:bias_min_qlen}
     \end{figure}
 
-    We can see that for an additive fitness function, the bias towards a less
-    utilized disk decreases as the disk fullness percentages for $d$ and $d'$
-    increase, even though they still only differ by 10\% in the figure above.
-    This is because the entire linear fitness function does not scale with each
-    term, so we can conclude that the multiplicative fitness function is
-    superior.
+    For an additive fitness function, the bias towards a less utilized disk
+    decreases as the disk fullness percentages for $d$ and $d'$ increase, even
+    though they still only differ by 10\% in the figure above.  The entire
+    linear fitness function does not scale with each term, so the
+    multiplicative fitness function is superior.
 
     \subsubsection{High Outstanding Operation Results}
 
@@ -1120,12 +1133,12 @@ random selection.
     \end{figure}
 
 
-    In Figure \ref{fig:high_outstanding_tier_disparity}, we can see that both
-    additive and multiplicative fitness functions reduce the disk fullness skew
-    from 30\% to less than 10\%. Multiplicative fitness performs slightly
-    better at minimizing $d_{hot\ tier}$ than additive fitness, possibly due to
-    scaling the fitness value by the value of both the fullness and queue
-    length terms, rather than weights.
+    Figure \ref{fig:high_outstanding_tier_disparity} shows that both additive
+    and multiplicative fitness functions reduce the disk fullness skew from
+    30\% to less than 10\%. Multiplicative fitness performs slightly better at
+    minimizing $d_{hot\ tier}$ than additive fitness, possibly due to scaling
+    the fitness value by the value of both the fullness and queue length terms,
+    rather than weights.
   
   \subsection{Disk Queue Length Experiments} \label{experiments-qlen}
 
@@ -1235,34 +1248,102 @@ random selection.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \FloatBarrier
-\section{Future Work}
+\section{Summary and Conclusions}
 
-  \subsection{Real-time Fitness Feedback}
+  % How did this fix the heterogeneous cluster/workload problem. Restate it
+  % here.
 
-  The replica placement scheme shown in this work relies on periodic stats
-  updates, so the system is always working with older stats for data placement
-  decisions. One change that can be made to this system is to track the time to
-  completion of various ops that place data on each disk and bias the replica
-  placements towards the faster disks. This would require Stargate to keep
-  historical latency data and would remove the dependence on a centralized
-  stats repository.
+  % What did I write and why does it matter.
+  \subsection{Limitations}
 
-  \subsection{Read Replica Selection}
+  % Shit sucks yo.
+  % Shortfalls that still exist and in the experiments. What did this work not
+  % cover.
 
-  When choosing which replicas to read from, we always select local disks
-  form the SSD tier and sometimes select remote HDDs at random. This process
-  does not take the new disk fitness information that is available and would
-  benefit from adapting read replica selection decisions based on the disk
-  fitness values.
 
-  \subsection{More Fitness Function Variables}
+  \subsection{Future Work}
 
-  The disk fitness values do not need to be limited to derivation from disk
-  queue length and fullness percentage. The cluster tracks many other variables
-  such as average node CPU utilization, number of Stargate failures in a
-  specified time window, number of active user VMs, and data access patterns
-  among other pieces of information. More investigation should occur to see how
-  this data can be used to make better data placement decisions.
+    \subsubsection{Real-time Fitness Feedback}
+
+    The replica placement scheme shown in this work relies on periodic stats
+    updates, so the system is always working with older stats for data placement
+    decisions. One change that can be made to this system is to track the time to
+    completion of various ops that place data on each disk and bias the replica
+    placements towards the faster disks. This would require Stargate to keep
+    historical latency data and would remove the dependence on a centralized
+    stats repository.
+
+    \subsubsection{Read Replica Selection}
+
+    When choosing which replicas to read from, Stargate always selects local disks
+    from the SSD tier and sometimes select remote HDDs at random. This process
+    does not take the new disk fitness information that is available and would
+    benefit from adapting read replica selection decisions based on the disk
+    fitness values.
+
+    \subsubsection{More Fitness Function Variables}
+
+    The disk fitness values do not need to be limited to derivation from disk
+    queue length and fullness percentage. The cluster tracks many other variables
+    such as average node CPU utilization, number of Stargate failures in a
+    specified time window, number of active hosted VMs, and data access patterns
+    among other pieces of information. More investigation should occur to see how
+    this data can be used to make better data placement decisions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GLOSSARY
+
+\section*{Glossary}
+\thispagestyle{empty}
+
+\begin{tabular}{l l}
+\texttt{first row}
+  & blerg \\
+\texttt{second row}
+  & blerg \\
+\texttt{and}
+  & so \\
+\end{tabular}
+\FloatBarrier
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\FloatBarrier
+ \begin{thebibliography}{99}
+
+  \bibitem{eigrp} Albrightson, R., Garcia-Luna-Aceves, J. J., and Boyle, J.  (1994). EIGRP--A fast routing protocol based on distance vectors. Interop 94.
+  \bibitem{baker1987} Baker, J. E. (1987, July). Reducing bias and inefficiency in the selection algorithm. In Proceedings of the second international conference on genetic algorithms (pp. 14-21).
+  \bibitem{hdfs2008} Borthakur, D. (2008). HDFS architecture guide. HADOOP APACHE PROJECT http://hadoop. apache. org/common/docs/current/hdfs design. pdf, 39.
+  \bibitem{chao1982} Chao, M. T. (1982). A general purpose unequal probability sampling plan.  Biometrika, 69(3), 653-656.
+  \bibitem{esxi2008} Chaubal, C. (2008). The architecture of vmware esxi. VMware White Paper, 1(7).
+  \bibitem{raid2} Chen, P. M., Lee, E. K., Gibson, G. A., Katz, R. H., and Patterson, D. A. (1994). RAID: High-performance, reliable secondary storage. ACM Computing Surveys (CSUR), 26(2), 145-185.
+  \bibitem{truncation1973} Crow, J. F., and Kimura, M. (1979). Efficiency of truncation selection. Proceedings of the National Academy of Sciences of the United States of America, 76(1), 396–399.
+  \bibitem{mapreduce} Dean, J., and Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. Communications of the ACM, 51(1), 107-113.
+  \bibitem{reservoir2006} Efraimidis, P. S., and Spirakis, P. G. (2006). Weighted random sampling with a reservoir. Information Processing Letters, 97(5), 181-185.
+  \bibitem{gfs} Ghemawat, S., Gobioff, H., and Leung, S. T. (2003, October). The Google file system. In ACM SIGOPS operating systems review (Vol. 37, No.  5, pp. 29-43). ACM.
+  \bibitem{hadoop} Hadoop, A. (2009). Hadoop. 2009-03-06].  \url{http://hadoop.apache.org}.
+  \bibitem{matplotlib} Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. Computing In Science and Engineering, 9(3), 90-95.
+  \bibitem{adapt2012} Jin, H., Yang, X., Sun, X. H., and Raicu, I. (2012, June). Adapt: Availability-aware mapreduce data placement for non-dedicated distributed computing. In Distributed Computing Systems (ICDCS), 2012 IEEE 32nd International Conference on (pp. 516-525). IEEE.
+  \bibitem{cassandra} Lakshman, A., and Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from \url{https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/}
+  \bibitem{paxos2005} Lamport, L. (2005). Generalized consensus and Paxos. Technical Report MSR-TR-2005-33, Microsoft Research.s
+  \bibitem{distance-vector-1} McQuillan, J. M., Richer, I., Rosen, E. C., and Bertsekas, D. P. (1978). Arpanet routing algorithm improvements (No. BBN-3940). BOLT BERANEK AND NEWMAN INC CAMBRIDGE MA.
+  \bibitem{2choice} Mitzenmacher, M. (2001). The power of two choices in randomized load balancing. IEEE Transactions on Parallel and Distributed Systems, 12(10), 1094-1104.
+  \bibitem{raid} Patterson, D. A., Gibson, G., and Katz, R. H. (1988). A case for redundant arrays of inexpensive disks (RAID) (Vol. 17, No. 3, pp.  109-116). ACM.
+  \bibitem{perez2003} Perez, J. M., Garcia, F., Carretero, J., Calderon, A., and Sanchez, L. M. (2003, May). Data allocation and load balancing for heterogeneous cluster storage systems. In Cluster Computing and the Grid, 2003. Proceedings. CCGrid 2003. 3rd IEEE/ACM International Symposium on (pp. 718-723). IEEE.
+  \bibitem{stl} Plauger, P. J., Lee, M., Musser, D., and Stepanov, A. A. (2000). C++ Standard Template Library. Prentice Hall PTR.
+  \bibitem{bible} Poitras, S. (n.d.) The Nutanix Bible. Retrieved August 09, 2017, from \url{http://www.nutanixbible.com/}
+  \bibitem{igrp} Rutgers, C. L. H. (1991). “An introduction to igrp. The State University of New Jersey, Center for Computers and Information Services, Laboratory for Computer Science Research.
+  \bibitem{breeder1993} Schlierkamp-Voosen, D., and Mühlenbein, H. (1993). Predictive models for the breeder genetic algorithm. Evolutionary Computation, 1(1), 25-49.
+  \bibitem{suresh2015} Suresh, L., Canini, M., Schmid, S., and Feldmann, A. (2015). C3: Cutting tail latency in cloud data stores via adaptive replica selection. In 12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15) (pp. 513-527).
+  \bibitem{python} Van Rossum, G., and Drake, F. L. (2003). Python language reference manual (p. 144). Network Theory.
+  \bibitem{hyperv2009} Velte, A., and Velte, T. (2009). Microsoft virtualization with Hyper-V. McGraw-Hill, Inc..
+  \bibitem{vitter1985} Vitter, J. S. (1985). Random sampling with a reservoir. ACM Transactions on Mathematical Software (TOMS), 11(1), 37-57.
+  \bibitem{xie2010} Xie, J., Yin, S., Ruan, X., Ding, Z., Tian, Y., Majors, J., ... and Qin, X. (2010, April). Improving mapreduce performance through data placement in heterogeneous hadoop clusters. In Parallel and Distributed Processing, Workshops and Phd Forum (IPDPSW), 2010 IEEE International Symposium on (pp. 1-9). IEEE.
+  \bibitem{azar1994} Y. Azar, A. Broder, A. Karlin, and E. Upfal. Balanced allocations. In Proceedings of the 26th ACM Symposium on the Theory of Computing, pages 593\{602, 1994.
+  \bibitem{zaharia2008} Zaharia, M., Konwinski, A., Joseph, A. D., Katz, R.  H., and Stoica, I. (2008, December). Improving MapReduce Performance in Heterogeneous Environments. In OSDI (Vol. 8, No. 4, p. 7).
+
+
+ \end{thebibliography}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
@@ -1297,9 +1378,9 @@ random selection.
   affected by this bug due to the attenuated effect of each term in the fitness
   function.
 
-  Within Stargate, we keep a mapping from disk ID to a DiskState object (called
-  \texttt{disk\_map\_}) containing information and cached statistics related to the
-  disk. The disk performance and disk usage stats are two separate elements
+  Within Stargate, a mapping is kept from disk ID to a DiskState object (called
+  \texttt{disk\_map\_}) containing information and cached statistics related to
+  the disk. The disk performance and disk usage stats are two separate elements
   within the DiskState structure.
 
   Every 10 seconds, an alarm handler will execute and iterate through each
@@ -1339,72 +1420,7 @@ random selection.
 
   This problem was fixed by simply serializing our usage and performance stats
   lookups.
+
 \end{appendices}
-
- \begin{thebibliography}{99}
-
-   \bibitem{bible} Poitras, S. (n.d.) The Nutanix Bible. Retrieved August 09, 2017, from \url{http://www.nutanixbible.com/}
-
-   \bibitem{cassandra} Lakshman, A., and Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from \url{https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/}
-
-   \bibitem{mapreduce} Dean, J., and Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. Communications of the ACM, 51(1), 107-113.
-
-   \bibitem{hadoop} Hadoop, A. (2009). Hadoop. 2009-03-06].  \url{http://hadoop.apache.org}.
-
-   \bibitem{xie2010} Xie, J., Yin, S., Ruan, X., Ding, Z., Tian, Y., Majors, J., ... and Qin, X. (2010, April). Improving mapreduce performance through data placement in heterogeneous hadoop clusters. In Parallel and Distributed Processing, Workshops and Phd Forum (IPDPSW), 2010 IEEE International Symposium on (pp. 1-9). IEEE.
-
-   \bibitem{zaharia2008} Zaharia, M., Konwinski, A., Joseph, A. D., Katz, R.  H., and Stoica, I. (2008, December). Improving MapReduce Performance in Heterogeneous Environments. In OSDI (Vol. 8, No. 4, p. 7).
-
-   \bibitem{adapt2012} Jin, H., Yang, X., Sun, X. H., and Raicu, I. (2012, June). Adapt: Availability-aware mapreduce data placement for non-dedicated distributed computing. In Distributed Computing Systems (ICDCS), 2012 IEEE 32nd International Conference on (pp. 516-525). IEEE.
-
-   \bibitem{perez2003} Perez, J. M., Garcia, F., Carretero, J., Calderon, A., and Sanchez, L. M. (2003, May). Data allocation and load balancing for heterogeneous cluster storage systems. In Cluster Computing and the Grid, 2003. Proceedings. CCGrid 2003. 3rd IEEE/ACM International Symposium on (pp. 718-723). IEEE.
-
-   \bibitem{breeder1993} Schlierkamp-Voosen, D., and Mühlenbein, H. (1993). Predictive models for the breeder genetic algorithm. Evolutionary Computation, 1(1), 25-49.
-
-   \bibitem{baker1987} Baker, J. E. (1987, July). Reducing bias and inefficiency in the selection algorithm. In Proceedings of the second international conference on genetic algorithms (pp. 14-21).
-
-   \bibitem{vitter1985} Vitter, J. S. (1985). Random sampling with a reservoir. ACM Transactions on Mathematical Software (TOMS), 11(1), 37-57.
-
-   \bibitem{reservoir2006} Efraimidis, P. S., and Spirakis, P. G. (2006). Weighted random sampling with a reservoir. Information Processing Letters, 97(5), 181-185.
-
-   \bibitem{chao1982} Chao, M. T. (1982). A general purpose unequal probability sampling plan.  Biometrika, 69(3), 653-656.
-
-   \bibitem{esxi2008} Chaubal, C. (2008). The architecture of vmware esxi. VMware White Paper, 1(7).
-
-   \bibitem{hdfs2008} Borthakur, D. (2008). HDFS architecture guide. HADOOP APACHE PROJECT http://hadoop. apache. org/common/docs/current/hdfs design. pdf, 39.
-
-   \bibitem{suresh2015} Suresh, L., Canini, M., Schmid, S., and Feldmann, A. (2015). C3: Cutting tail latency in cloud data stores via adaptive replica selection. In 12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15) (pp. 513-527).
-
-   \bibitem{hyperv2009} Velte, A., and Velte, T. (2009). Microsoft virtualization with Hyper-V. McGraw-Hill, Inc..
-
-   \bibitem{paxos2005} Lamport, L. (2005). Generalized consensus and Paxos. Technical Report MSR-TR-2005-33, Microsoft Research.s
-
-   \bibitem{azar1994} Y. Azar, A. Broder, A. Karlin, and E. Upfal. Balanced allocations. In Proceedings of the 26th ACM Symposium on the Theory of Computing, pages 593\{602, 1994.
-
-   \bibitem{truncation1973} Crow, J. F., and Kimura, M. (1979). Efficiency of truncation selection. Proceedings of the National Academy of Sciences of the United States of America, 76(1), 396–399.
-
-   \bibitem{2choice} Mitzenmacher, M. (2001). The power of two choices in randomized load balancing. IEEE Transactions on Parallel and Distributed Systems, 12(10), 1094-1104.
-
-   \bibitem{matplotlib} Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. Computing In Science and Engineering, 9(3), 90-95.
-
-   \bibitem{python} Van Rossum, G., and Drake, F. L. (2003). Python language reference manual (p. 144). Network Theory.
-
-   \bibitem{stl} Plauger, P. J., Lee, M., Musser, D., and Stepanov, A. A. (2000). C++ Standard Template Library. Prentice Hall PTR.
-
-   \bibitem{gfs} Ghemawat, S., Gobioff, H., and Leung, S. T. (2003, October). The Google file system. In ACM SIGOPS operating systems review (Vol. 37, No.  5, pp. 29-43). ACM.
-
-   \bibitem{ceph} Weil, S. A., Brandt, S. A., Miller, E. L., Long, D. D., and Maltzahn, C. (2006, November). Ceph: A scalable, high-performance distributed file system. In Proceedings of the 7th symposium on Operating systems design and implementation (pp. 307-320). USENIX Association.
-
-   \bibitem{raid} Patterson, D. A., Gibson, G., and Katz, R. H. (1988). A case for redundant arrays of inexpensive disks (RAID) (Vol. 17, No. 3, pp.  109-116). ACM.
-
-   \bibitem{raid2} Chen, P. M., Lee, E. K., Gibson, G. A., Katz, R. H., and Patterson, D. A. (1994). RAID: High-performance, reliable secondary storage. ACM Computing Surveys (CSUR), 26(2), 145-185.
-
-   \bibitem{eigrp} Albrightson, R., Garcia-Luna-Aceves, J. J., and Boyle, J.  (1994). EIGRP--A fast routing protocol based on distance vectors. Interop 94.
-
-   \bibitem{igrp} Rutgers, C. L. H. (1991). “An introduction to igrp. The State University of New Jersey, Center for Computers and Information Services, Laboratory for Computer Science Research.
-
-   \bibitem{distance-vector-1} McQuillan, J. M., Richer, I., Rosen, E. C., and Bertsekas, D. P. (1978). Arpanet routing algorithm improvements (No. BBN-3940). BOLT BERANEK AND NEWMAN INC CAMBRIDGE MA.
-
- \end{thebibliography}
 
 \end{document}
