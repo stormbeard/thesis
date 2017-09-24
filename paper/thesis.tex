@@ -402,43 +402,44 @@ of this without her.
   computing capacities of nodes in the HDFS significantly improved workload
   performance. These computing capacities are determined for each node in the
   cluster by profiling a target application leveraging the HDFS. Their
-  MapReduced wordcount and grep results showed up to a 33.1\% reduction in
-  response time. Similarly, Perez et. al. \cite{perez2003} applied adaptive
-  data placement features to the Expand parallel file system based on available
-  free space. Though effective in their given contexts, the main drawback to
-  this work is that it assumes the specific application is working without
-  interference and does not account for other workloads on the system.
+  MapReduced \texttt{wordcount} and \texttt{grep} results showed up to a 33.1\%
+  reduction in response time. Similarly, Perez et. al. \cite{perez2003} used
+  adaptive data placement featurers that make use of data regarding the
+  available free space in their Expand parallel file system design.  Though
+  effective in their given contexts, the main drawback to this approach is that
+  it assumes the specific application is working without interference and does
+  not account for other workloads on the system.
 
   One adaptive data placement approach that can account for other workloads on
   the system was introduced by Jin et. al. \cite{adapt2012} in their work on
-  ADAPT . The work predicts how failure-prone a node in a MapReduce cluster is
+  ADAPT . The study predicts how failure-prone a node in a MapReduce cluster is
   and advises their availability-aware data placement algorithm to avoid those
   nodes. This proves useful for performance by avoiding faulty nodes that could
   fail mid-task and cause data transfers and re-calculation of data.
 
   Work by Suresh et. al. \cite{suresh2015} approaches adaptive replica
-  selection in much the same way proposed in this paper, though their work was
-  mainly focused on decreasing tail latencies for Cassandra \cite{cassandra}
-  reads. Their load balancing algorithm, C3, incorporates the concept of a
-  value calculated from request feedback from their servers that allows for
-  decisions to be made on server selection. In addition to the ranking function
-  in C3, they implemented a distributed rate control mechanism to prevent
-  scenarios where many individual clients can bombard a single highly desirable
-  server with requests. Many of the same problems that the work in this
-  proposal seeks to remedy are also addressed by the C3 algorithm; however,
-  given the Nutanix file system's architecture, some C3 solutions are not
-  feasible.
+  selection in much the same way as this thesis, though their work was
+  mainly focused on decreasing tail latencies for Apache Cassandra
+  \cite{cassandra} reads. Their load balancing algorithm, C3, incorporates the
+  concept of a value calculated from request feedback from their servers that
+  allows for decisions to be made on server selection. In addition to the
+  ranking function in C3, they implemented a distributed rate control mechanism
+  to prevent scenarios where many individual clients can bombard a single
+  highly desirable server with requests. Many of the same problems that the
+  work in this thesis seeks to remedy are addressed by the C3 algorithm;
+  however, given the Nutanix file system's architecture, some C3 solutions are
+  not feasible.
 
   The C3 algorithm takes into account the request queue length of certain
   servers similar to the way I will use disk queue lengths. In addition Suresh
-  et. al.  factor in the service latencies of each server so that they may
+  et. al. factor in the service latencies of each server so that they may
   consider a different ideal queue length for each server. With this approach,
   longer service times will warrant a lower queue length and vice versa. This
   is beneficial for scenarios where there are multiple underlying storage
   technologies such as NVMe drives, SSDs, and HDDs under consideration, but the
   Nutanix file system's architecture does not allow for multiple replicas to
   span storage tiers. This forces the ideal queue lengths for each selection
-  pool to be the same. Therefore, my work does not incorporate service
+  pool to be the same. Therefore, this thesis does not incorporate service
   latencies in the fitness value calculations discussed in section
   \ref{section-fitness}.
 
@@ -487,7 +488,7 @@ of this without her.
   \label{eigrp-motivation}
 
   EIGRP \cite{eigrp} is Cisco's proprietary routing protocol and enhancement to
-  their Interior Gateway Routing Protocol (IGRP). In the protocol, each router
+  their Interior Gateway Routing Protocol (IGRP). In EIGRP, each router
   keeps information about its adjacent neighbors containing the address and
   interface of the connected neighbor. This information is needed because of
   the Topology Table (also referred to as the Distance Table) which contains
@@ -511,8 +512,8 @@ of this without her.
   engineers to modify the behavior of the network based on their preferences.
   This idea of taking desirable traits and using them to calculate a metric, or
   desirability value, can be applied to the problem of choosing the best disk
-  for data replica placement and will be explored further in the following
-  sections in the context of the Nutanix Distributed Storage Fabric.
+  for data replica placement. This concept will be explored further in the
+  following sections within the context of the Nutanix distributed file system.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -523,8 +524,9 @@ of this without her.
   \subsection{Fitness Values and Functions} \label{section-fitness}
 
   To calculate a value to represent the desirability of a disk for replica
-  placement, a function is used, $f_{fitness}$ that takes as its argument disk
-  stats and returns a positive number henceforth known as a fitness value.
+  placement, a function, $f_{fitness}$, is defined. $f_{fitness}$ takes as its
+  argument, some number of variables that can affect disk performance and
+  returns a positive number henceforth referred to as a fitness value.
   
   A low fitness value indicates a poor placement candidacy for a disk and a
   high fitness value will indicate a highly desirable disk for replica
@@ -545,11 +547,11 @@ of this without her.
     t_{u} = \frac{1}{a^{u}}
   \end{equation}
 
-  $u$ is the disk utilization percentage and $a$ is an aggression variable used
-  to control the exponential decay of $t_{u}$. The larger $a$ is, the
-  more aggressively $t_{u}$ will decay as $u$ increases. An
-  aggressive decay results in more preference given to less utilized disks when
-  compared with disks that are slightly more utilized.
+  $u$ represents disk utilization percentage and $a$ is an aggression variable
+  used to control the exponential decay of $t_{u}$. The larger $a$ is, the more
+  aggressively $t_{u}$ will decay as $u$ increases. An aggressive decay results
+  in more preference given to less utilized disks when compared with disks that
+  are slightly more utilized.
 
   These terms are used in two different fitness functions evaluated in this
   document:
@@ -580,49 +582,55 @@ of this without her.
   \subsection{Weighted Random Selection Algorithms}
 
   After a weight is calculated for a disk in the cluster that will store a
-  replica, the WeightedVector class' Sample() calls will perform a weighted
-  random selection on the set of potential candidate disks. To determine the
-  best method of weighted random selection for Stargate's WeightedVector class,
-  an exploration of various weighted random selection algorithms was necessary.
-  Since the file system only supports replication factors of 2 or 3, the
-  investigation was limited to algorithms that allow for a weighted $N$ choose
-  $Y$, where $Y$ is the data replication factor.
-
-  This section provides an overview of the algorithms investigated via
-  simulations to compare each algorithm at different orders of magnitude.
+  replica, the \texttt{WeightedVector} class' \texttt{Sample()} calls will
+  perform a weighted random selection on the set of potential candidate disks.
+  To determine the best method of weighted random selection for Stargate's
+  \texttt{WeightedVector} class, an exploration of various weighted random
+  selection algorithms was necessary.  Since the file system only supports
+  replication factors of 2 or 3, the investigation was limited to algorithms
+  that allow for a weighted $N$ choose $Y$, where $Y$ is the data replication
+  factor.
 
     \subsubsection{Scalability Simulation Methodology}
      To test the scalability of the weighted random selection algorithms
      evaluated in the next section, a single-threaded Python \cite{python}
      script was written to to evaluate the change in run time as sample sets
-     increase. Each algorithm's time to select is calculated for each of a
-     fixed number of iterations for multiple sample sets. pseudo-code for the
-     simulations can be written as follows:
+     increase. Each algorithm's mean running time is calculated for multiple
+     sample sets. Code for the simulations is as follows:
 
      \singlespace
      \begin{tcolorbox}
      \begin{verbatim}
-     for each selection_algorithm in algorithm_list:
-         run_time_values = empty_list()
-         for each sample_set_size in all_sample_set_sizes:
-             sample_set = generate_sample_set(sample_set_size)
-             all_elapsed_times = empty_list()
-             for each iteration:
-                 start_time = time.now()
-                 selection_algorithm(sample_set)
-                 elapsed_time = time.now() - start_time
-                 all_elapsed_times.append(elapsed_time)
-             calculate_avg_elapsed_time(all_elapsed_times)
-             calculate_std_error(all_elapsed_times)
+       def gen_runtimes(selection_func, iteration_count):
+         runtimes = []
+         std_devs = []
+         # For each pool size.
+         for pool_size in num_disks_for_tests:
+             print("Measuring with pool size " + str(pool_size))
+             runtime_list = []
+             # Make a list of pool_size random numbers between 1 and 10.
+             lst = pool_size * [1]
+             # Time selections and get the average runimes.
+             for it in range(iteration_count):
+                 start_time = time.time()
+                 selection_func(lst)
+                 elapsed_time = time.time() - start_time
+                 runtime_list.append(elapsed_time)
+             avg_runtime = np.average(runtime_list)
+             std_dev = np.std(runtime_list)
+             runtimes.append(avg_runtime)
+             std_devs.append(std_dev)
+         return runtimes, std_devs
      \end{verbatim}
      \end{tcolorbox}
      \doublespace
         
     Object weights are constant throughout the simulation, so selection schemes
     that require some amount of preprocessing (such as the top T\% calculation
-    for truncation selection) are performing their preprocessing steps for each
-    selection. This gives information about the worst-case behavior for each
-    algorithm in comparison with others'.
+    for truncation selection) perform their preprocessing steps for each
+    weighted random selection. This gives information about the worst-case
+    run time behavior for each algorithm in comparison with the worst case
+    runtime of the others.
 
     \subsubsection{Herding Behavior Evaluation Methodology}
     Herding behaviors can be seen in some weighted random selection
@@ -721,8 +729,9 @@ of this without her.
     way similar to SUS. While an object with a higher weight is more likely to
     be selected, it is not selected with a probability proportional to its
     fitness value. This makes the algorithm resistant to any herding behaviors,
-    but will not be a good candidate if it's desired for the WeightedVector to
-    select objects with probability proportional to its weight.
+    but will not be a good candidate if it's desired for the
+    \texttt{WeightedVector} to select objects with probability proportional to
+    its weight.
 
     \begin{figure}[htbp]
       \centering
@@ -745,7 +754,7 @@ of this without her.
     \subsubsection{Uniform Random Selection Simulations}
     Uniform random selection is completely indifferent to object weights.
     Therefore, it exhibits no herding behavior and no usefulness for the
-    WeightedVector's sampling, but it is important to include its analysis for
+    \texttt{WeightedVector}'s sampling, but it is important to include its analysis for
     comparison with other selection algorithms.
 
     \begin{figure}[htbp]
@@ -790,20 +799,21 @@ of this without her.
 
   It's necessary to perform repeated weighted sampling of disk IDs, easily, and
   given their fitness values. An object container class is needed similar to a
-  C++ STL container \cite{stl} that can also access elements of arbitrary
-  types via arbitrary weighted random sampling methods. The WeightedVector
+  C++ STL container \cite{stl} that can also access elements of arbitrary types
+  via arbitrary weighted random sampling methods. The \texttt{WeightedVector}
   class was implemented to fulfill this requirement. 
 
-  Upon instantiation of the WeightedVector class, a fitness function is
-  provided to store the fitness values of all objects internally. The
-  WeightedVector class has implemented insertion, removal, and weighted random
-  sampling of objects of some arbitrary type, $T$, based on the object's
-  fitness value as a weight.
+  Upon instantiation of the \texttt{WeightedVector} class, a fitness function
+  is provided to store the fitness values of all objects internally. The
+  \texttt{WeightedVector} class has implemented insertion, removal, and
+  weighted random sampling of objects of some arbitrary type, $T$, based on the
+  object's fitness value as a weight.
 
-  The set of objects and their fitness values are stored in $std::vector$
-  objects , one for the object references stored in the WeightedVector and one
-  for their corresponding fitness values. The objects and their corresponding
-  fitness values share an index into their respective internal vectors.
+  The set of objects and their fitness values are stored in
+  \texttt{std::vector} objects , one for the object references stored in the
+  \texttt{WeightedVector} and one for their corresponding fitness values. The
+  objects and their corresponding fitness values share an index into their
+  respective internal vectors.
 
   \begin{table}[htbp]
     \caption{WeightedVector public interface.}
@@ -811,13 +821,13 @@ of this without her.
     \begin{tabular}{ | p{1.0\linewidth} | }
       \hline
       \verb|WeightedVector(const std::function<double(const T)>)| \\ \hline
-      The WeightedVector class is instantiated by providing a fitness function
+      The \texttt{WeightedVector} class is instantiated by providing a fitness function
       that accepts a reference to an object of type \emph{T} and returns a
       fitness value that is of type \emph{double}. The provided fitness function
       is used to create a mapping between inserted objects and their
       corresponding fitness values for sampling.
 
-      The WeightedVector class asserts that the fitness function returns positive
+      The \texttt{WeightedVector} class asserts that the fitness function returns positive
       values. \\ \hline
 
       \\ \hline
@@ -830,12 +840,12 @@ of this without her.
       \\ \hline
 
       \verb|bool Empty()| \\ \hline
-      Returns true if the WeightedVector is of size 0. \\  \hline
+      Returns true if the \texttt{WeightedVector} is of size 0. \\  \hline
 
       \\ \hline
 
       \verb|void Clear()| \\ \hline
-      Resets all state in the WeightedVector object, sets the size to 0, and
+      Resets all state in the \texttt{WeightedVector} object, sets the size to 0, and
       clears all internal vectors. \\ \hline
 
       \\ \hline
@@ -845,7 +855,7 @@ of this without her.
       Returns a reference to an object stored inside of the WeightedVector.
       Objects are sampled via weighted random selection and subsequent calls to
       Sample are guaranteed not to return the same object unless Reset is called
-      before sampling again. The WeightedVector class asserts that Sample is not
+      before sampling again. The \texttt{WeightedVector} class asserts that Sample is not
       called more times than the size of the WeightedVector.\\ \hline
 
       \\ \hline
@@ -863,11 +873,11 @@ of this without her.
     \end{tabular}
   \end{table}
 
-  Table \ref{tab:wvpub} shows the WeightedVector public interface.
+  Table \ref{tab:wvpub} shows the \texttt{WeightedVector} public interface.
 
     \subsubsection{Weighted Vector Internals}
 
-    Internally, the WeightedVector class keeps 3 different std:vector objects
+    Internally, the \texttt{WeightedVector} class keeps 3 different std:vector objects
     to keep track of sampling state and the object-to-fitness value mapping.
     There is the inner\_vector\_ variable which stores the objects
     inserted via EmplaceBack(), the weights\_ variable which stores the
@@ -894,7 +904,7 @@ of this without her.
       \end{center}
     \end{table}
 
-    Suppose that a call to Sample() on the WeightedVector returns $D$. The
+    Suppose that a call to Sample() on the \texttt{WeightedVector} returns $D$. The
     probability of this event is 0.5, so to maintain sampling state within the
     WeightedVector, the weight associated with object $D$ is set to zero:
 
@@ -931,7 +941,7 @@ of this without her.
     \end{table}
 
     There can only be one more call to Sample() without triggering an assertion
-    failure and the WeightedVector is obligated to return $D$. The only way to
+    failure and the \texttt{WeightedVector} is obligated to return $D$. The only way to
     restore sampling state is to call Reset(). A Reset call simply copies
     weights\_ into sampling\_weights\_ and all objects are eligible for
     sampling again:
@@ -952,7 +962,7 @@ of this without her.
 
     \subsubsection{Weighted Vector Unit Testing}
 
-    The WeightedVector class' unit test has four phases:
+    The \texttt{WeightedVector} class' unit test has four phases:
 
     \begin{tcolorbox}
     \begin{enumerate}
@@ -981,7 +991,7 @@ of this without her.
     several orders of magnitude larger than the number of elements. Each
     sampled element's number of times being selected is tracked in a test-local
     hash map. The actual selection probability is calculated for each element
-    in the WeightedVector with the expected value and the difference is
+    in the \texttt{WeightedVector} with the expected value and the difference is
     verified to be within an acceptable tolerance. For the uniform test, all
     integers are expected to be sampled roughly the same amount and for the
     non-uniform test, larger integers are expected to be sampled an amount of
@@ -989,7 +999,7 @@ of this without her.
 
   \subsection{Replica Selection Changes}
     
-  Stargate was modified to store disk IDs in a WeightedVector rather than a
+  Stargate was modified to store disk IDs in a \texttt{WeightedVector} rather than a
   \texttt{std::vector}. When considering a disk for candidacy, rather than
   shuffling the \texttt{std::vector} and iterating through each disk until
   enough replica targets are found, calls to \\
