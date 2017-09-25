@@ -59,8 +59,8 @@ reasons. As economics change for hardware, it is likely that a scalable cloud
 will have the requirement to mix node types, which will lead to higher
 performance and higher capacity nodes to be mixed with lower performance,
 lower capacity nodes. This thesis presents an adaptive data placement method
-in the Nutanix distributed file system which will attempt to remedy the common
-problems found in many heterogeneous clustered file systems.
+in the Nutanix distributed file system which will remedies some common problems
+found in many heterogeneous clustered file systems.
 
 \clearpage
 \newpage
@@ -241,7 +241,7 @@ of this without her.
       \begin{tabular}{ | p{0.4\linewidth} | p{0.6\linewidth} | }
         \hline
         \textbf{Argument Name} & \textbf{Description} \\ \hline
-        \verb|replica_vec| & A std::vector that is populated with the selected
+        \verb|replica_vec| & A \texttt{std::vector} that is populated with the selected
                              disk IDs. The number of selections made is the
                              size of this vector. \\ \hline
 
@@ -307,8 +307,8 @@ of this without her.
   account a number of variables such as disparities in tier size, CPU power,
   workloads, and disk health among other things. There are several scenarios,
   both pathological and daily occurences, where a more robust replica placement
-  heuristic is required. For the work in this thesis, I will focus on two
-  orthogonal cases described in the next section.
+  heuristic is required. The work in this thesis will focus on two orthogonal
+  cases described in the next section.
 
     \subsubsection{Interfering Workloads}
 
@@ -556,11 +556,11 @@ of this without her.
   These terms are used in two different fitness functions evaluated in this
   document:
 
-  \begin{equation}
+  \begin{equation} \label{eqn:additive-fitness}
     f_{add} = t_{u} + t_{q}
   \end{equation}
 
-  \begin{equation}
+  \begin{equation} \label{eqn:multiplicative-fitness}
     f_{mult} = t_{u}t_{q}
   \end{equation}
 
@@ -660,16 +660,15 @@ of this without her.
 
     \subsubsection{Stochastic Universal Sampling (SUS) Simulations}
     SUS is another sampling technique first introduced by Baker in 1987
-    \cite{baker1987}.
-    The algorithm can be understood as follows: On a standard roulette wheel
-    there's a single pointer that indicates the winner. The roulette wheel's
-    "bins" can all be the same size which would indicate a uniform probability
-    of selecting any bin and could also be unevenly sized which would indicate
-    a weighted probability. SUS uses this same concept except allows for N
-    evenly spaced pointers corresponding to the selection of N items. Key
-    things to note are that the set, or "bins" in my roulette analogy, must be
-    shuffled prior to selection. Also, there is a minimum spacing allowed for
-    the pointers to prevent selection of the same bin.
+    \cite{baker1987}. The algorithm can be understood as follows: On a
+    standard roulette wheel there's a single pointer that indicates the winner.
+    The roulette wheel's "bins" can all be the same size which would indicate a
+    uniform probability of selecting any bin and could also be unevenly sized
+    which would indicate a weighted probability. SUS uses this same concept
+    except allows for N evenly spaced pointers corresponding to the selection
+    of N items. Key things to note are that the set, or "bins" in my roulette
+    analogy, must be shuffled prior to selection. Also, there is a minimum
+    spacing allowed for the pointers to prevent selection of the same bin.
 
     \begin{figure}[htbp]
       \centering
@@ -697,14 +696,15 @@ of this without her.
     to extreme herding behaviors.
 
     \subsubsection{Tructation Selection Simulations}
-    Truncation selection \cite{truncation1973} does not consider any objects
-    for selection below some threshold, $T$. In figure
-    \ref{fig:herding_truncation}, only the top 10\% of objects ranked by weight
-    are considered for selection. Within this subset, weight has no meaning so
-    there is a uniform distribution of selections. However, this may not be
-    suitable for use cases where all objects must be candidates for selection.
-    Depending on the threshold chosen, this algorithm can be resistant to
-    herding behavior as shown in Figure \ref{fig:pathological_truncation}. 
+    Truncation selection \cite{truncation1973}, typically used in evolutionary
+    computing algorithms, does not consider any objects for selection below
+    some threshold, $T$. In Figure \ref{fig:herding_truncation}, only the top
+    10\% of objects ranked by weight are considered for selection. Within this
+    subset, weight has no meaning so there is a uniform distribution of
+    selections. However, this may not be suitable for use cases where all
+    objects must be candidates for selection.  Depending on the threshold
+    chosen, this algorithm can be resistant to herding behavior as shown in
+    Figure \ref{fig:pathological_truncation}. 
 
     \begin{figure}[htbp]
       \centering
@@ -778,15 +778,18 @@ of this without her.
     confirms there is no herding behavior with a uniform random selection
     scheme.
 
-    \subsubsection{Weighted Random Algorithm Scalability Simulations}
-    Even though both SUS and truncation selection have $O(N^2)$ time
-    complexity, truncation selection is slower than SUS by an order of
-    magnitude. This is mainly due to the need for the truncation selection
-    algorithm to calculate the top T\% of the set for every selection
-    performed. As expected, two-choice and random selections are observed to be
-    constant-time algorithms. Two-choice is slightly slower than random
-    selection due to the second selection and comparison operation that must
-    occur.
+    \subsubsection{Weighted Random Algorithm Scalability Analysis}
+    Even though both SUS and truncation selection have $O(N * D)$ time
+    complexity, where $D$ is the number of objects in the set and $N$ is the number of
+    selections required in one iteration, truncation selection is slower than
+    SUS by an order of magnitude. This is mainly due to the need for the
+    truncation selection algorithm to calculate the top T\% of the set for
+    every selection performed in the simulations, an $O(Dlog(D))$ operation. As
+    expected, two-choice and random selections are observed to be constant-time
+    algorithms due to its simplicity of two uniform random selections.
+    Two-choice is slightly slower than random selection due to the second
+    uniform random selection and comparison operation that must occur before
+    returning an object.
 
     \begin{figure}[htbp]
       \centering
@@ -795,13 +798,21 @@ of this without her.
       \label{fig:random_scalability}
     \end{figure}
 
+    Figure \ref{fig:random_scalability} shows the running times for each of
+    the weighted random selection algorithms discussed. It becomes clear that
+    weighted random selections for large sets of objects is most efficient
+    using a two-choice sampling technique.
+
   \subsection{WeightedVector Class}
 
-  It's necessary to perform repeated weighted sampling of disk IDs, easily, and
-  given their fitness values. An object container class is needed similar to a
-  C++ STL container \cite{stl} that can also access elements of arbitrary types
-  via arbitrary weighted random sampling methods. The \texttt{WeightedVector}
-  class was implemented to fulfill this requirement. 
+  It is cleaner to implement repeated weighted sampling of disk IDs in such a
+  way that we call a single function to return a disk ID from a sampling set
+  using a weighted random sampling algorithm that uses the disks' fitness
+  values. An object container class is needed similar to the data structures in
+  the C++ Standard Template Library \cite{stl}. A requirement for this object
+  is that must be able to access elements of arbitrary types via arbitrary
+  weighted random sampling methods. The \texttt{WeightedVector} class was
+  implemented to fulfill this requirement. 
 
   Upon instantiation of the \texttt{WeightedVector} class, a fitness function
   is provided to store the fitness values of all objects internally. The
@@ -810,7 +821,7 @@ of this without her.
   object's fitness value as a weight.
 
   The set of objects and their fitness values are stored in
-  \texttt{std::vector} objects , one for the object references stored in the
+  \texttt{std::vector} objects, one for the object references stored in the
   \texttt{WeightedVector} and one for their corresponding fitness values. The
   objects and their corresponding fitness values share an index into their
   respective internal vectors.
@@ -875,6 +886,8 @@ of this without her.
 
   Table \ref{tab:wvpub} shows the \texttt{WeightedVector} public interface.
 
+  \FloatBarrier
+
     \subsubsection{Weighted Vector Internals}
 
     Internally, the \texttt{WeightedVector} class keeps 3 different std:vector objects
@@ -889,10 +902,12 @@ of this without her.
     Stochastic Universal Sampling as shown in the example below.
 
     Before sampling, there are identical weights\_ and sampling\_weights\_
-    vectors accompanying an inner\_vector\_ of objects:
+    vectors accompanying an inner\_vector\_ of objects as shown in Table
+    \ref{tbl:inner-vec-1}.
 
     \begin{table}[htbp]
       \caption{Inner vector example part 1.}
+      \label{tbl:inner-vec-1}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
@@ -904,12 +919,16 @@ of this without her.
       \end{center}
     \end{table}
 
+    \FloatBarrier
+
     Suppose that a call to Sample() on the \texttt{WeightedVector} returns $D$. The
     probability of this event is 0.5, so to maintain sampling state within the
-    WeightedVector, the weight associated with object $D$ is set to zero:
+    WeightedVector, the weight associated with object $D$ is set to zero in
+    Table \ref{tbl:inner-vec-2}.
 
     \begin{table}[htbp]
       \caption{Inner vector example part 2.}
+      \label{tbl:inner-vec-2}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
@@ -921,14 +940,17 @@ of this without her.
       \end{center}
     \end{table}
 
-    If Sample() is called again, it is not possible to return $D$ since its
+    \FloatBarrier
+
+    If \texttt{Sample()} is called again, it is not possible to return $D$ since its
     sampling weight is now zero. The probabilities of returning $A$, $B$, or
-    $C$ in subsequent calls to Sample() are $\frac{1}{7}$, $\frac{3}{7}$, and
-    $\frac{3}{7}$ respectively. Suppose two more calls to Sample() lead to the
-    following state:
+    $C$ in subsequent calls to \texttt{Sample()} are $\frac{1}{7}$, $\frac{3}{7}$, and
+    $\frac{3}{7}$ respectively. Suppose two more calls to \texttt{Sample()} lead to the
+    state in Table \ref{tbl:inner-vec-3}.
 
     \begin{table}[htbp]
       \caption{Inner vector example part 3.}
+      \label{tbl:inner-vec-3}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
@@ -940,14 +962,19 @@ of this without her.
       \end{center}
     \end{table}
 
-    There can only be one more call to Sample() without triggering an assertion
-    failure and the \texttt{WeightedVector} is obligated to return $D$. The only way to
-    restore sampling state is to call Reset(). A Reset call simply copies
-    weights\_ into sampling\_weights\_ and all objects are eligible for
-    sampling again:
+    \FloatBarrier
+
+    There can only be one more call to \texttt{Sample()} without triggering an
+    assertion failure and the \texttt{WeightedVector} is obligated to return
+    $D$. The only way to restore sampling state is to call \texttt{Reset()}. A
+    \texttt{Reset()} call will simply copy the values from \texttt{weights\_}
+    into \texttt{sampling\_weights\_}, restoring all original weights and
+    making all objects eligible for sampling again as shown in Table
+    \ref{tbl:inner-vec-4}.
 
     \begin{table}[htbp]
       \caption{Inner vector example part 3.}
+      \label{tbl:inner-vec-4}
       \begin{center}
       \begin{tabular}{ | l | c | c | c | r | }
         \hline
@@ -959,6 +986,7 @@ of this without her.
       \end{center}
     \end{table}
 
+    \FloatBarrier
 
     \subsubsection{Weighted Vector Unit Testing}
 
@@ -999,13 +1027,18 @@ of this without her.
 
   \subsection{Replica Selection Changes}
     
-  Stargate was modified to store disk IDs in a \texttt{WeightedVector} rather than a
-  \texttt{std::vector}. When considering a disk for candidacy, rather than
-  shuffling the \texttt{std::vector} and iterating through each disk until
-  enough replica targets are found, calls to \\
-  \texttt{WeightedVector::Sample()} must occur until enough replica targets are
-  found. All of Stargate's replica placement logic is untouched and I've simply
-  modified the order in which candidate disks are considered.
+  Stargate was modified to store disk IDs in a \texttt{WeightedVector} rather
+  than a \texttt{std::vector}. When considering a disk for candidacy, rather
+  than shuffling the \texttt{std::vector} and sequentially evaluating each disk
+  until enough replica targets are found, calls to \\
+  \texttt{WeightedVector::Sample()} must occur to get the next disk ID so that
+  it may be evaluated. Calls to \texttt{WeightedVector::Sample()} will stop
+  when either enough target disks have been selected or when all candidate
+  disks in the set have been evaluated and found  unsuitable.  All of
+  Stargate's replica placement logic is unmodified and only the order in which
+  candidate disks are considered has been changed. This results in Stargate
+  tending to evaluate the higher fitness disks first and selecting those disks
+  for data placement if they are eligible.
       
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1013,17 +1046,18 @@ of this without her.
 \FloatBarrier
 \section{Evaluation and Results}
 
-The experiments below seek to measure the effect of the additive and
-multiplicative term fitness functions on both the tier utilization of each node
-and the queue lengths of disks residing on those nodes compared with uniform
-random selection.
+The experiments below seek to measure the effects of different ways of
+combining the tier utilization and queue length variables in the fitness
+functions. The two functions differ in their approach by either adding the
+terms together (Equation \ref{eqn:additive-fitness}) or multiplying the terms
+together (Equation \ref{eqn:multiplicative-fitness}).
 
   \subsection{Experimental Setup}
 
-  The replica selection schemes were evaluated using a NX-1350 for evaluating
-  the disk fullness and a NX-3-node cluster). Each node contains a single 300GB
-  SSD and 4 HDDs 1TB in size. When evaluating the new replica disk selection
-  framework, two heterogeneous workload scenarios are tested:
+  The replica selection schemes were evaluated using a 3-node NX-1350 cluster.
+  Each node contains a single 300GB SSD and 4 HDDs 1TB in size. When evaluating
+  the new replica disk selection framework, two heterogeneous workload
+  scenarios are tested:
  
   \begin{enumerate}
     \item Two worker VMs on separate nodes running a workload with low
@@ -1041,19 +1075,19 @@ random selection.
   When generating I/O in these experiments, Fio is used on the worker VMs. Fio,
   short for Flexible IO, is an I/O workload generator that can take
   configuration files to specify the parameters of a test. On each worker VM,
-  fio is used to generate a sequential write workload that completely fills the
-  cluster's hot-tier. I choose to use exclusively sequential writes for all
-  tests because they are the default for fio tests and the purpose of these
-  experiments is to generate new replicas in a consistent manner. For the
+  Fio is used to generate a sequential write workload that completely fills the
+  cluster's hot-tier. Sequential writes were chosen for all tests because they
+  are the default write pattern for Fio tests and the purpose of these
+  experiments is to generate new data replicas in a consistent manner. For the
   purposes of replica placement, the Nutanix file system does not distinguish
-  targets based on the write pattern that generatred an extent group.
+  targets based on the write pattern that generated an extent group.
 
   \subsection{Tier Utilization Experiments} \label{experiments-tier-util}
 
-  The tier utilization experiments define the hot-tier deviation,
-  $d_{hot tier}$, as the average SSD utilization percentage of the nodes
-  running a workload, $u_{w}$, subtracted by the SSD utilization percentage of
-  the node without a workload, $u_{o}$:
+  The tier utilization experiments define the hot-tier deviation, $d_{hot\
+  tier}$. $d_{hot\ tier}$ is represented as the average SSD utilization
+  percentage of the nodes running a workload, $u_{w}$, subtracted by the SSD
+  utilization percentage of the node without a workload, $u_{o}$:
   
   \begin{equation}
     d_{hot\ tier} = \frac{u_{w1} + u_{w2}}{u_{o}}
@@ -1065,10 +1099,12 @@ random selection.
   handle more work due to the fact that it does not have to service a local
   workload. In a uniform random replica selection scheme, it is expected that
   the nodes running a workload have to bear 100\% of their own primary replicas
-  and 50\% of secondary replicas from the other worker node. This causes total
-  SSD utilization to be skewed towards the worker nodes and for this skew to
-  grow as the tests run. This is indicated by higher $d_{hot\ tier}$ values.  A
-  more sophisticated replica selection scheme is expected to minimize $d_{hot\
+  and 50\% of secondary replicas from the other worker node. This causes the
+  SSD utilization for each node to be skewed. More specifically, the nodes with
+  a local workload will have higher SSD utilizations and these utilizations
+  will be expected to grow as the tests run. As the cluster SSD utilization
+  skew increases, higher $d_{hot\ tier}$ values will be observed.  A more
+  sophisticated replica selection scheme is expected to minimize $d_{hot\
   tier}$ by biasing secondary replicas towards the idle node and limiting the
   skew.
 
@@ -1087,22 +1123,24 @@ random selection.
     length reported by Stargate to be at most 1, resulting in the fitness
     function's queue length term to be roughly constant and approximately 1.
     
+    \FloatBarrier
+
     It is evident that the additive fitness function does not minimize the
-    hot-tier deviation as well as the multiplicative. This is because an
-    additive fitness function's behavior varies depending on the weight chosen
-    for the queue length term. By default, the linear fitness function
+    hot-tier deviation as well as the multiplicative since the additive fitness
+    function's behavior varies depending on the weight chosen for the queue
+    length term. By default, the linear fitness function
     gives equal weight to both the disk fullness and queue length terms;
     however, for one run of this experiment the queue length term was given no
     weight. Linear fitness that gives equal weight to both terms does not
-    reduce skew by very much while giving no weight to the queue length term
-    keeps all nodes' usages within 10\% of each other. This is because the
+    reduce skew by very much, while giving no weight to the queue length term
+    keeps all nodes' SSD usages within 10\% of each other. A linear fitness
+    function does a poor job of reducing $d_{hot\ tier}$ values because the
     queue length term is contributing the maximum amount possible to the
     fitness value due to the consistently low queue length values. This can be
-    illustrated by defining a disk selection bias, $b_r$, as the
-    probability some disk, $d$, will be selected when compared with another
-    disk, $d'$ whose utilization is 10\% higher and queue length value is
-    identical. Given a fitness function, $f$, $b_r$ can be calculated as
-    follows:
+    illustrated by defining a disk selection bias, $b_r$, as the probability
+    some disk, $d$, will be selected when compared with another disk, $d'$
+    whose utilization is 10\% higher and queue length value is identical. Given
+    a fitness function, $f$, $b_r$ can be calculated as follows:
 
     \begin{equation}
       b_r = \frac{f(d)}{f(d) + f(d')}
@@ -1128,11 +1166,12 @@ random selection.
 
     For an additive fitness function, the bias towards a less utilized disk
     decreases as the disk fullness percentages for $d$ and $d'$ increase, even
-    though they still only differ by 10\% in the figure above.  The entire
-    linear fitness function does not scale with each term, so the
-    multiplicative fitness function is superior.
+    though they still only differ by 10\% in Figures \ref{fig:bias_max_qlen}
+    and \ref{fig:bias_min_qlen}. The entire linear fitness function does not
+    scale with each term, so the multiplicative fitness function is superior.
 
     \subsubsection{High Outstanding Operation Results}
+    \label{sec:high-outstanding-ops}
 
     \begin{figure}[htbp]
       \centering
@@ -1152,14 +1191,15 @@ random selection.
   
   \subsection{Disk Queue Length Experiments} \label{experiments-qlen}
 
-  Since a low outstanding operation workload would not give useful
-  information for measuring the effects of fitness-based replica selection on
-  disk queue lengths, the high outstanding I/O operation experiment in the
-  previous section was re-run for all fitness function types and for fitness
-  function queue length term ceilings of 200 and 100. Figures
-  \ref{fig:qlen_100} and \ref{fig:qlen_200} show a reduction in
-  queue length quartiles when fitness-based selection is used for disks on
-  nodes that host local workloads. Lower queue length ceilings are
+  Due to the nature of low outstanding I/O workloads, disk queue length values
+  would remain very low for the duration of an experiment. This does not give
+  useful information for measuring the effects of fitness-based replica
+  selection on disk queue lengths. The experiments for high outstanding I/O
+  experiments in section \ref{sec:high-outstanding-ops} was re-run for all
+  fitness function types and for fitness function queue length term ceilings of
+  200 and 100. Figures \ref{fig:qlen_100} and \ref{fig:qlen_200} show a
+  reduction in queue length quartiles when fitness-based selection is used for
+  disks on nodes that host local workloads. Lower queue length ceilings are
   observed to provide better results in reducing the queue lengths for the
   worker nodes.
 
@@ -1186,10 +1226,11 @@ random selection.
 
   \subsection{Scraping Data From the Nutanix Cluster}
 
-  Stargate exposes a webserver on the CVM, listening on port 2009, that exposes
-  various real-time stats such as the number of operations in flight, disk
-  throughput, disk queue length, and many other pieces of information. I wrote
-  a Python script to parse and derive the following information for each node:
+  Stargate exposes a web server on the CVM, listening on port 2009, that
+  exposes various real-time stats such as the number of operations in flight,
+  disk throughput, disk queue length, and many other pieces of information. I
+  wrote a Python script to parse and derive the following information for each
+  node:
 
   \begin{tcolorbox}
   \begin{enumerate}
@@ -1211,18 +1252,18 @@ random selection.
   \subsection{Re-creating Experiments}
 
   An NX-1350 with VMware ESXi 5.5u2 hypervisor and a single 300GB SSD on each
-  node was used for all experiments in this thesis. This means that for an RF2
+  node was used for all experiments. This means that for an RF2
   cluster, there is less than 150GB of useable hot tier available since a small
   amount of space is reserved on each disk for other services on the CVM.
 
   A single CentOS 6.5 worker VM was manually created on a single node with 4GB
-  RAM, single 150GB disk, and installation of fio. The 150GB disk size ensures
+  RAM, single 150GB disk, and installation of Fio. The 150GB disk size ensures
   that the entire hot tier of each node will be fully utilized when the disk is
-  filled via workload generation on each node. Each other node then clones the
-  worker VM so that all nodes in the cluster have an identical VM and tier
-  utilization.
+  filled via workload generation on each node. Each of the other nodes then
+  clone the worker VM so that all nodes in the cluster have an identical VM and
+  tier utilization.
 
-  The fio script used to generate a sequential write workload on each node is
+  The Fio script used to generate a sequential write workload on each node is
   as follows:
   
   \singlespace
@@ -1248,49 +1289,68 @@ random selection.
   The \texttt{iodepth} variable is modified depending on the number of
   outstanding I/Os needed.
 
-  When resetting the cluster for a new test, on the CVM I run
-  \texttt{cluster stop ; cluster destroy} and swap out the Stargate binary in
-  the \texttt{/home/nutanix/bin/} directory with the binary required for the
-  next test. When ready, I recreate the Nutanix cluster via
-  \texttt{cluster -s <cvm IPs> create}. The process is then repeated for each
-  test.
+  When resetting the cluster for a new test, the commands \texttt{cluster stop
+  ; cluster destroy} were run on the CVM and the old Stargate binary was
+  swapped with the one required for the next tests in the
+  \texttt{/home/nutanix/bin/} directory.  When ready, it's necessary to
+  recreate the Nutanix cluster via \texttt{cluster -s <cvm IPs> create}. The
+  process is then repeated for each test.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \FloatBarrier
 \section{Summary and Conclusions}
 
-  % How did this fix the heterogeneous cluster/workload problem. Restate it
-  % here.
+  Prior to this work, the problem of selecting a location for the placement of
+  data replicas in a Nutanix cluster was solved by choosing disks in a uniform
+  random fashion. This method of data placement does not perform well in the
+  presence of heterogeneous workloads or tier size disparities. This work has
+  shown that candidate disks for data placement can be evaluated using a
+  function of observed queue length and fullness percentage values. The result
+  of this function, the fitness value, can be used to bias disk selections towards
+  disks that are less busy and less full. Biasing disk selections results in
+  an overall even utilization of individual disk space and shows potential for
+  a reduction of disk queue lengths for disks residing on busy nodes.
 
-  % What did I write and why does it matter.
   \subsection{Limitations}
 
-  % Shit sucks yo.
-  % Shortfalls that still exist and in the experiments. What did this work not
-  % cover.
+  The current weighted random selection approach, Stochastic Universal
+  Sampling, is optimized for clusters that do not contain extremely large
+  numbers of disks. While SUS allows disk selection probabilities to scale
+  proportional to the fitness values of the disks, it is not as scalable as the
+  two-choice method for weighted random selection.
 
+  In addition, each Stargate's freqency of stats updates will impact its view
+  of the world and can lead to herding behaviors if updates are not frequent
+  enough. In the absence of a Stargate's ability to update its view of the
+  world, it will be unable to adapt to changes in workload characteristics or
+  disk fullness, which defeats the purpose of using fitness-based disk
+  selections in the first place.
 
   \subsection{Future Work}
 
     \subsubsection{Real-time Fitness Feedback}
 
     The replica placement scheme shown in this work relies on periodic stats
-    updates, so the system is always working with older stats for data placement
+    updates, therefore the system is always working with older stats for data placement
     decisions. One change that can be made to this system is to track the time to
-    completion of various ops that place data on each disk and bias the replica
-    placements towards the faster disks. This would require Stargate to keep
-    historical latency data and would remove the dependence on a centralized
-    stats repository.
+    completion of various operations that place data on each disk and bias the replica
+    placements towards the faster disks. This would remove the dependence on a centralized
+    stats repository such as Arithmos and allow each Stargate to make data
+    placement decisions independent of reports from other nodes in the cluser.
+    Stargate would be required to keep a history latency data for each
+    operation on remote nodes.
 
     \subsubsection{Read Replica Selection}
 
-    When choosing which replicas to read from, Stargate always selects local disks
-    from the SSD tier and sometimes select remote HDDs at random. This process
-    does not take the new disk fitness information that is available and would
-    benefit from adapting read replica selection decisions based on the disk
-    fitness values.
-
+    When choosing which replicas to read from, Stargate always selects local
+    disks. However, if there were ever a scenario where a read from a remote
+    disk containing the desired data is faster than servicing the read from a
+    local disk, Stargate is not currently equipped to detect or act on this
+    scenario. Currently, disk fitnes values are not factored into the selection
+    of disks that will service a read operation. More work will be required to
+    add support for fitness-based read replica selection.
+    
     \subsubsection{More Fitness Function Variables}
 
     The disk fitness values do not need to be limited to derivation from disk
