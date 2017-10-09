@@ -8,7 +8,7 @@
 
 \documentclass[12pt]{article}
 \usepackage[pdftex]{graphicx}
-\usepackage{setspace,caption,url,tcolorbox,float,placeins,appendix}
+\usepackage{setspace,caption,url,tcolorbox,float,placeins,appendix,amsmath}
 \doublespacing
 \pagenumbering{gobble}
 
@@ -51,7 +51,7 @@
 With the advent of cloud computing, datacenters are making use of distributed
 applications more than ever. MapReduce is used to generate over 20 petabytes
 of data per day using very large numbers of commodity servers
-\cite{mapreduce}.  Many companies use large scale clusters to perform various
+\cite{mapreduce}. Many companies use large scale clusters to perform various
 computational tasks via the the open-source MapReduce implementation, Hadoop
 \cite{hadoop}, or they can possess a virtualized datacenter allowing them to
 migrate virtual machines between various machines for high-availability
@@ -59,7 +59,7 @@ reasons. As economics change for hardware, it is likely that a scalable cloud
 will have the requirement to mix node types, which will lead to higher
 performance and higher capacity nodes to be mixed with lower performance,
 lower capacity nodes. This thesis presents an adaptive data placement method
-in the Nutanix distributed file system which will remedies some common problems
+in the Nutanix distributed file system which will remedy some common problems
 found in many heterogeneous clustered file systems.
 
 \clearpage
@@ -69,18 +69,20 @@ found in many heterogeneous clustered file systems.
 \section*{Acknowledgements}
 \thispagestyle{empty}
 
-First off, I would like to thank my father, Dr. Cyril Allen, for sparking my
-initial interest in computing as a child and convincing me to pursue a graduate
-degree.
+First off, I would like to thank my thesis director, Prof. Jamie Frankel. It
+has been a truly amazing learning experience working with him.
 
-I also want to thank my mother, Dr. Hengameh Allen-Schaal, for her
+
+I doubt I would be writing this document if it were not for my father, Dr.
+Cyril Allen. Not only did he spark my initial interest in computing as a child,
+he convinced me to pursue a graduate degree! Thanks, Dada.
+
+Thanks are also due to my mother, Dr. Hengameh Allen-Schaal, for her
 unconditional love and support. She has always been there for me when I needed
 her, even when we began living in different states. I could not have done any
 of this without her.
 
-% Monique, my love, thank you for enriching my life.
-
-% Jamie, my advisor
+Monique Fahmy
 
 % Nutanix/Pete, for hardware and resources
 
@@ -120,6 +122,13 @@ of this without her.
   into account how these variables will affect a disk's performance before
   choosing to target it for a write operation. This results in biasing toward
   disks that will give better performance overall.
+
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.19]{images/network_diagram.png} 
+    \caption{Testing size.}
+    \label{fig:adsf-network}
+  \end{figure}
 
   \subsection{Nutanix and the Acropolis Base System} \label{sssec:abs}
 
@@ -193,8 +202,8 @@ of this without her.
 
     The Extent Store is a sub-component of Stargate that serves as the
     persistent bulk storage. Data stored within the Extent Store are referred
-    to as extent groups (also referred to as egroups), or 4MB pieces of
-    physically contiguous data. These extent groups are replicated a number of
+    to as extent groups (also abbreviated as egroups), or 4MB pieces of
+    physically contiguous data. An extent group is replicated a number of
     times dependent on the cluster replication factor and each replica is
     placed on a different CVM except for a single replica that resides on the
     local node. The current replica selection algorithm will be explained in
@@ -204,10 +213,13 @@ of this without her.
 
     Data in the system is physically stored on disks of varying type. Within a
     given cluster, one can find NVMe, PCIe SSD, SATA SSD, and HDD drive types.
-    These disks are separated out into groupings of similar drive types
-    referred to as storage tiers. Extent groups and their replicas are created
-    on a particular storage tier, but may be migrated between tiers depending
-    on data access patterns.
+    These disks are separated into groups of drives with similar performance
+    characteristics, referred to as storage tiers. For example, PCIe SSDs and
+    SATA SSDs might belong together in the same storage tier, but hard drives
+    would not be included due to their relatively poor random access
+    performance. Extent groups and their replicas are created on a particular
+    storage tier, but may be migrated between tiers depending on data access
+    patterns.
 
     Data replicas for each extent group are written on separate fault domains
     on the same tier to ensure that in the event a failure occurs and a
@@ -219,15 +231,16 @@ of this without her.
 
     Stargate is inherently limited in its choices of disk to service reads
     since it must select a disk that contains the desired data. If the data is
-    on a local disk, this disk is always selected due to the unnecessary
+    on a local disk, this disk is always selected to avoid the unnecessary
     overhead of data traversal over the network when selecting a remote disk.
     However, when selecting disks to service writes, Stargate must decide
     whether to perform an in-place overwrite for writes over existing ranges of
     data or whether to generate new data. In-place overwrites are similar to
     reads in that the choice of target disk is limited by where the relevant
-    data resides. In-place overwrites are ruled out in the case of de-duplicated
-    data, since multiple ranges within a vDisk point to the same physical data.
-    In the case of de-duplicated data and all other scenarios where data is
+    data resides. When enabling a common data reduction feature such as data
+    deduplication, in-place overwrites are not performed since the metadata for
+    multiple logical ranges of data point to the same physical data. In the
+    case of overwrites of deduplicated data and all scenarios where data is
     being created for the first time, Stargate has the freedom to choose any
     disk in the cluster.
 
@@ -328,15 +341,15 @@ of this without her.
     the remote node that is idle.  This can impact performance on both the
     local and remote workloads as secondary writes will be slower on nodes
     whose resources are being utilized by their primary workloads. A data replica
-    placement scheme is needed that adapts its behavior based on how busy the
-    target nodes are. This would result in a bias towards nodes that are more
-    idle.
+    placement scheme is needed that adapts its behavior based on how less busy
+    the target nodes are. This would result in a bias towards nodes that are
+    more idle.
 
     \subsubsection{Nodes with Tier Size Disparities}
 
     A cluster containing nodes with a tier size disparity are susceptible to a
-    large skew in fullness between the nodes, even if the workload on each node
-    is identical. This can be illustrated via Figure
+    large skew in space utilization on the node, even if the workload on each
+    node is identical. This can be illustrated via Figure
     \ref{fig:tier_size_disparity} which shows a 3-node heterogeneous cluster
     with 2 high-capacity nodes and a single low-capacity node.  Suppose these
     high-capacity nodes have 500GB of SSD tier, 6TB of HDD tier and the single
@@ -421,14 +434,15 @@ of this without her.
   selection in much the same way as this thesis, though their work was
   mainly focused on decreasing tail latencies for Apache Cassandra
   \cite{cassandra} reads. Their load balancing algorithm, C3, incorporates the
-  concept of a value calculated from request feedback from their servers that
-  allows for decisions to be made on server selection. In addition to the
-  ranking function in C3, they implemented a distributed rate control mechanism
-  to prevent scenarios where many individual clients can bombard a single
-  highly desirable server with requests. Many of the same problems that the
-  work in this thesis seeks to remedy are addressed by the C3 algorithm;
-  however, given the Nutanix file system's architecture, some C3 solutions are
-  not feasible.
+  concept of a value calculated from request feedback from their servers. The
+  value then guides decisions made regarding which servers to select for future
+  requests.  In addition to the ranking function in C3, they implemented a
+  distributed rate control mechanism to prevent scenarios where many individual
+  clients can bombard a single highly desirable server with requests. Many of
+  the same problems that the work in this thesis seeks to remedy are addressed
+  by the C3 algorithm, such as the reduction of I/O latency. However, the C3
+  algorithm is not a feasible solution when it comes to reducing each Nutanix
+  node's disk utilzation skew relative to the other nodes in the cluster.
 
   The C3 algorithm takes into account the request queue length of certain
   servers similar to the way I will use disk queue lengths. In addition Suresh
@@ -538,20 +552,19 @@ of this without her.
     t_{q} = 1 - \frac{q}{q_{ceil}}
   \end{equation}
 
-  $q_{ceiling}$ is defined as the maximum observed queue length such that
-  beyond this value, $t_{q}$ does not contribute to the fitness
-  value. This ensures that as the queue length grows, $t_{q}$
-  approaches zero. 
+  The variable $q_{ceiling}$ holds the maximum observed queue length.
+  Increasing $t_{q}$ beyond $q_{ceiling}$ does not contribute to the fitness
+  value. This ensures that as the queue length grows, $t_{q}$ approaches zero. 
 
   \begin{equation}
     t_{u} = \frac{1}{a^{u}}
   \end{equation}
 
-  $u$ represents disk utilization percentage and $a$ is an aggression variable
-  used to control the exponential decay of $t_{u}$. The larger $a$ is, the more
-  aggressively $t_{u}$ will decay as $u$ increases. An aggressive decay results
-  in more preference given to less utilized disks when compared with disks that
-  are slightly more utilized.
+  The variable $u$ represents disk utilization percentage and $a$ is an
+  aggression variable used to control the exponential decay of $t_{u}$. The
+  larger $a$ is, the more aggressively $t_{u}$ will decay as $u$ increases. An
+  aggressive decay results in more preference given to less utilized disks when
+  compared with disks that are slightly more utilized.
 
   These terms are used in two different fitness functions evaluated in this
   document:
@@ -588,7 +601,7 @@ of this without her.
   \texttt{WeightedVector} class, an exploration of various weighted random
   selection algorithms was necessary.  Since the file system only supports
   replication factors of 2 or 3, the investigation was limited to algorithms
-  that allow for a weighted $N$ choose $Y$, where $Y$ is the data replication
+  that allow for a weighted $\binom{N}{K}$, where $K$ is the data replication
   factor.
 
     \subsubsection{Scalability Simulation Methodology}
@@ -723,15 +736,16 @@ of this without her.
     \end{figure}
 
     \subsubsection{Two-choice Sampling Simulations}
-    Two-choice sampling \cite{2choice}, has proven to be extremely resilient to
-    herding behavior as shown in Figure \ref{fig:pathological_two_choice} and
-    selection frequencies for all objects are influenced by object weights in a
-    way similar to SUS. While an object with a higher weight is more likely to
-    be selected, it is not selected with a probability proportional to its
-    fitness value. This makes the algorithm resistant to any herding behaviors,
-    but will not be a good candidate if it's desired for the
-    \texttt{WeightedVector} to select objects with probability proportional to
-    its weight.
+    Two-choice sampling \cite{2choice} performs a uniform random selection
+    twice and returns the object with higher weight. This algorithm has shown
+    to be extremely resilient to herding behavior as shown in Figure
+    \ref{fig:pathological_two_choice} and selection frequencies for all objects
+    are influenced by object weights in a way similar to SUS. While an object
+    with a higher weight is more likely to be selected, it is not selected with
+    a probability proportional to its fitness value. This makes the algorithm
+    resistant to any herding behaviors, but will not be a good candidate if
+    it's desired for the \texttt{WeightedVector} to select objects with
+    probability proportional to its weight.
 
     \begin{figure}[htbp]
       \centering
@@ -806,13 +820,13 @@ of this without her.
   \subsection{WeightedVector Class}
 
   It is cleaner to implement repeated weighted sampling of disk IDs in such a
-  way that we call a single function to return a disk ID from a sampling set
-  using a weighted random sampling algorithm that uses the disks' fitness
-  values. An object container class is needed similar to the data structures in
-  the C++ Standard Template Library \cite{stl}. A requirement for this object
-  is that must be able to access elements of arbitrary types via arbitrary
-  weighted random sampling methods. The \texttt{WeightedVector} class was
-  implemented to fulfill this requirement. 
+  way that we call a single function to return a set of unique disk IDs from a
+  sampling set using a weighted random sampling algorithm that uses the disks'
+  fitness values. An object container class is needed similar to the data
+  structures in the C++ Standard Template Library \cite{stl}. A requirement for
+  this object is that must be able to access elements of arbitrary types via
+  arbitrary weighted random sampling methods. The \texttt{WeightedVector} class
+  was implemented to fulfill this requirement. 
 
   Upon instantiation of the \texttt{WeightedVector} class, a fitness function
   is provided to store the fitness values of all objects internally. The
@@ -890,19 +904,21 @@ of this without her.
 
     \subsubsection{Weighted Vector Internals}
 
-    Internally, the \texttt{WeightedVector} class keeps 3 different std:vector objects
-    to keep track of sampling state and the object-to-fitness value mapping.
-    There is the inner\_vector\_ variable which stores the objects
-    inserted via EmplaceBack(), the weights\_ variable which stores the
-    fitness values of all objects in the inner\_vector\_, and the
-    sampling\_weights\_ variable which is identical to weights\_
-    except that objects weights are set to 0 when sampled. This allows us to
-    exclude objects from being sampled multiple times with time complexity
+    Internally, the \texttt{WeightedVector} class keeps 3 different std:vector
+    objects to keep track of sampling state and the object-to-fitness value
+    mapping.  There is the \texttt{inner\_vector\_} variable which stores the
+    objects inserted via \texttt{EmplaceBack()}, the \texttt{weights\_}
+    variable which stores the fitness values of all objects in the
+    \texttt{inner\_vector\_}, and the \texttt{sampling\_weights\_} variable
+    which is identical to \texttt{weights\_} except that objects weights are
+    set to 0 when sampled. This allows us to exclude objects from being sampled
+    multiple times between calls to \texttt{Reset()} with time complexity
     $O(1)$, since a weight of 0 gives a probability of 0 for sampling using
     Stochastic Universal Sampling as shown in the example below.
 
-    Before sampling, there are identical weights\_ and sampling\_weights\_
-    vectors accompanying an inner\_vector\_ of objects as shown in Table
+    Before sampling, there are identical \texttt{weights\_} and
+    \texttt{sampling\_weights\_} vectors accompanying an
+    \texttt{inner\_vector\_} of objects as shown in Table
     \ref{tbl:inner-vec-1}.
 
     \begin{table}[htbp]
@@ -966,7 +982,7 @@ of this without her.
 
     There can only be one more call to \texttt{Sample()} without triggering an
     assertion failure and the \texttt{WeightedVector} is obligated to return
-    $D$. The only way to restore sampling state is to call \texttt{Reset()}. A
+    $B$. The only way to restore sampling state is to call \texttt{Reset()}. A
     \texttt{Reset()} call will simply copy the values from \texttt{weights\_}
     into \texttt{sampling\_weights\_}, restoring all original weights and
     making all objects eligible for sampling again as shown in Table
@@ -985,6 +1001,12 @@ of this without her.
       \end{tabular}
       \end{center}
     \end{table}
+
+    Note that the usage of \texttt{Sample()} and \texttt{Reset()} allows the
+    user to perform a weighted $\binom{N}{K}$ by simply making $K$ calls to
+    \texttt{Sample()} before resetting. This is required for the Stargate use
+    case of selecting multiple unique disks from a storage tier to host data
+    replicas.
 
     \FloatBarrier
 
@@ -1368,16 +1390,44 @@ together (Equation \ref{eqn:multiplicative-fitness}).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GLOSSARY
 
+\newpage
 \section*{Glossary}
 \thispagestyle{empty}
 
-\begin{tabular}{l l}
-\texttt{first row}
-  & blerg \\
-\texttt{second row}
-  & blerg \\
-\texttt{and}
-  & so \\
+\begin{tabular}{l}
+\texttt{CVM} \\
+Nutanix Controller Virtual Machine. \\
+
+\texttt{Data Deduplication} \\
+A data compression technique for removing multiple copies of the same data.
+
+\texttt{Fitness Value}\\
+A value representing the desirability of a disk for data placement.\\
+
+\texttt{HDD} \\
+Hard Disk Drive. \\
+
+\texttt{Hypervisor} \\
+Software that runs virtual machines. \\
+
+\texttt{iSCSI} \\
+An IP based storage networking standard.\\
+
+\texttt{NFS} \\
+A distributed file system protocol. \\
+
+\texttt{OVF} \\
+A standard for packaging software to run in virtual machines.\\
+
+\texttt{Secondary Replica} \\
+Refers to any replica of data written after the first copy. \\
+
+\texttt{SSD} \\
+Solid State Drive. \\
+
+\texttt{vDisk} \\
+A file abstraction in the Nutanix distributed file system. \\
+
 \end{tabular}
 \FloatBarrier
 
