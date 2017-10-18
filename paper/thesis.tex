@@ -110,22 +110,23 @@ Monique Fahmy
 \section{Introduction}
 
   The work in this thesis was performed in the context of a distributed file
-  system designed by Nutanix for enterprise clusters. Given that a write
-  operation that results in the creation of new data in this file system is not
-  complete until all replicas of the data are written to disk, a write's
-  performance is at the mercy of the slowest disk in the set chosen to host
-  replicas and all entities those disks are dependent on. These entities could
-  include variables such as the server's average CPU utilization and the number
-  of operations already in flight on a chosen disk. To mitigate the negative
-  impact these variables could have on a write, the file system should take
-  into account how these variables will affect a disk's performance before
-  choosing to target it for a write operation. This results in biasing toward
-  disks that will give better performance overall.
+  system designed by Nutanix for enterprise clusters. The file system is hosted
+  on some number of virtual machine hosts connected in a full mesh network as
+  shown in Figure \ref{fig:adsf-network}. Given that a write operation in the
+  Nutanix file system is not complete until all replicas of the data are
+  written to disk, a write's performance is at the mercy of the slowest disk in
+  the set chosen to host replicas. Variables affecting a disk's performance
+  could include variables such as the hosting server's average CPU utilization
+  and the number of operations already in flight on a chosen disk.  To mitigate
+  the negative impact these variables could have on a write, the file system
+  should take into account how these variables will affect a disk's performance
+  before choosing to target it for a write operation. This results in biasing
+  toward disks that will give better performance overall.
 
   \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.19]{images/network_diagram.png} 
-    \caption{Testing size.}
+    \caption{An example network for an 8-node Nutanix cluster.}
     \label{fig:adsf-network}
   \end{figure}
 
