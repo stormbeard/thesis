@@ -435,6 +435,7 @@ Monique Fahmy
   traversal necessary to access data.
 
   \subsection{Data Placement Schemes in Clustered Storage Systems}
+  \label{sec:priorwork}
 
   Xie et. al. \cite{xie2010} showed that data placement schemes based on the
   computing capacities of nodes in the HDFS significantly improved workload
@@ -1386,12 +1387,13 @@ together (Equation \ref{eqn:multiplicative-fitness}).
     The replica placement scheme shown in this work relies on periodic stats
     updates, therefore the system is always working with older stats for data placement
     decisions. One change that can be made to this system is to track the time to
-    completion of various operations that place data on each disk and bias the replica
-    placements towards the faster disks. This would remove the dependence on a centralized
-    stats repository such as Arithmos and allow each Stargate to make data
-    placement decisions independent of reports from other nodes in the cluser.
-    Stargate would be required to keep a history latency data for each
-    operation on remote nodes.
+    completion of the last $N$ operations that place data on a disk. This data
+    can be used similar to the C3 algorithm discussed in section
+    \ref{sec:priorwork} to bias the replica placements towards the faster
+    disks. This would remove the dependence on a centralized stats repository
+    such as Arithmos and allow each Stargate to make data placement decisions
+    independent of reports from other nodes in the cluser. Stargate would be
+    required to keep a history latency data for each operation on remote nodes.
 
     \subsubsection{Read Replica Selection}
 
@@ -1399,9 +1401,13 @@ together (Equation \ref{eqn:multiplicative-fitness}).
     disks. However, if there were ever a scenario where a read from a remote
     disk containing the desired data is faster than servicing the read from a
     local disk, Stargate is not currently equipped to detect or act on this
-    scenario. Currently, disk fitnes values are not factored into the selection
-    of disks that will service a read operation. More work will be required to
-    add support for fitness-based read replica selection.
+    scenario. Currently, disk fitness values are not factored into the selection
+    of disks that will service a read operation. A fitness function for read
+    replica selection would still consider disk queue length, but disk fullness
+    is not a helpful metric to determine the suitability of a read replica
+    target. More experiments will be required to discover variables that would
+    distinguish the read performance of disks holding data replicas before
+    adding support for fitness-based read replica selection.
     
     \subsubsection{More Fitness Function Variables}
 
@@ -1409,8 +1415,21 @@ together (Equation \ref{eqn:multiplicative-fitness}).
     queue length and fullness percentage. The cluster tracks many other variables
     such as average node CPU utilization, number of Stargate failures in a
     specified time window, number of active hosted VMs, and data access patterns
-    among other pieces of information. More investigation should occur to see how
-    this data can be used to make better data placement decisions.
+    among other pieces of information. More experiments should occur to see how
+    this data can affect placement decisions and whether the result is
+    beneficial to overall system performance.
+    
+    \subsubsection{Additional Testing}
+
+    The experiments and testing in this work was performed on a 3-node,
+    homogeneous hardware, Nutanix cluster, which is unsuitable for testing at
+    large scale. Additional performance testing work on larger scale (~64 node)
+    clusters would be desirable to measure the impact of this work in larger
+    datacenters. In addition to scale testing, heterogeneous hardware
+    configurations in the form of hybrid (mixed SSD/HDD nodes) and all-flash
+    nodes in the same cluster would provide interesting results for analysis.
+    This work focused mainly on heterogeneous workloads on homogeneous hardware
+    to simulate the effects of realistic workloads on heterogeneous clusters.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GLOSSARY
