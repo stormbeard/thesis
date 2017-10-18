@@ -72,12 +72,11 @@ found in many heterogeneous clustered file systems.
 First off, I would like to thank my thesis director, Prof. Jamie Frankel. It
 has been a truly amazing learning experience working with him.
 
-
 I doubt I would be writing this document if it were not for my father, Dr.
 Cyril Allen. Not only did he spark my initial interest in computing as a child,
 he convinced me to pursue a graduate degree! Thanks, Dada.
 
-Thanks are also due to my mother, Dr. Hengameh Allen-Schaal, for her
+Thanks are also due to my amazing mother, Dr. Hengameh Allen-Schaal, for her
 unconditional love and support. She has always been there for me when I needed
 her, even when we began living in different states. I could not have done any
 of this without her.
@@ -401,13 +400,39 @@ Monique Fahmy
 
   While HDFS is an open source distributed file system that is part of the
   greater Apache Hadoop ecosystem, the Google File System (GFS) \cite{gfs} is a
-  proprietary distributed file system developed by Google that inspired HDFS. A
-  GFS cluster is comprised of a single Master node and multiple Chunkservers
+  proprietary distributed file system developed by Google that inspired HDFS.
+  Google's goal was to build a very large storage network from inexpensive
+  commodity hardware \cite{gfs-interview}, so scalability, fault tolerance, and
+  error detection were top-of-mind when designing the GFS.
+
+  A GFS cluster is comprised of a single Master node and multiple Chunkservers
   that store 64MB "chunks," or blocks, of data. Each file in the GFS is divided
   into the 64MB chunks and each chunk is replicated by the Chunkservers
   multiple times throughout the GFS cluster. Master nodes store the metadata
   associated with the chunks such as chunk location or which processes are
-  operating on a chunk.
+  operating on a chunk. While the initial decision by the Google GFS team to
+  have a single master node introduces a single point of failure, this did not
+  pose a problem at the time of initial implementation. The GFS was initially
+  meant to handle data on the order of a few hundred Terabytes from the early
+  web crawler.
+
+  As Google's data grew to the order of tens of Petabytes, the single master
+  node became a bottleneck. The master node task fo scanning metadata during
+  chunk recovery scaled linearly with the amount of data and each GFS client
+  spoke to the master when performing a file open operation. Ultimately, Google
+  took a "multi-cell" approach with GFS which allowed for multiple GFS masters
+  for a pool of chunk servers. Each GFS client application was then able to
+  shard data across multiple cells, creating their own master node fault
+  domains.
+
+  Both the HDFS and GFS architectures prioritize high sustained bandwidth over
+  low I/O latency. One source of latencies in these architectures comes from
+  the network partition between file system clients and the servers hosting the
+  file system services. The Nutanix storage system differs from the HDFS and
+  GFS in that the clients are hosted on the same servers as the file system
+  services and data since the client VMs and CVM always share physical
+  hardware. For client read requests, this means that there is no network
+  traversal necessary to access data.
 
   \subsection{Data Placement Schemes in Clustered Storage Systems}
 
@@ -1452,6 +1477,7 @@ A file abstraction in the Nutanix distributed file system. \\
   \bibitem{cassandra} Lakshman, A., and Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from \url{https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/}
   \bibitem{paxos2005} Lamport, L. (2005). Generalized consensus and Paxos. Technical Report MSR-TR-2005-33, Microsoft Research.s
   \bibitem{distance-vector-1} McQuillan, J. M., Richer, I., Rosen, E. C., and Bertsekas, D. P. (1978). Arpanet routing algorithm improvements (No. BBN-3940). BOLT BERANEK AND NEWMAN INC CAMBRIDGE MA.
+  \bibitem{gfs-interview} McKusick, K., and Quinlan, S. (2010). GFS: evolution on fast-forward. Communications of the ACM, 53(3), 42-49.
   \bibitem{2choice} Mitzenmacher, M. (2001). The power of two choices in randomized load balancing. IEEE Transactions on Parallel and Distributed Systems, 12(10), 1094-1104.
   \bibitem{raid} Patterson, D. A., Gibson, G., and Katz, R. H. (1988). A case for redundant arrays of inexpensive disks (RAID) (Vol. 17, No. 3, pp.  109-116). ACM.
   \bibitem{perez2003} Perez, J. M., Garcia, F., Carretero, J., Calderon, A., and Sanchez, L. M. (2003, May). Data allocation and load balancing for heterogeneous cluster storage systems. In Cluster Computing and the Grid, 2003. Proceedings. CCGrid 2003. 3rd IEEE/ACM International Symposium on (pp. 718-723). IEEE.
