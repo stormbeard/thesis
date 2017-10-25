@@ -69,23 +69,22 @@ found in many heterogeneous clustered file systems.
 \section*{Acknowledgements}
 \thispagestyle{empty}
 
-First off, I would like to thank my thesis director, Prof. Jamie Frankel. It
-has been a truly amazing learning experience working with him.
-
 I doubt I would be writing this document if it were not for my father, Dr.
-Cyril Allen. Not only did he spark my initial interest in computing as a child,
-he convinced me to pursue a graduate degree! Thanks, Dada.
+Cyril Allen. Not only did he spark my initial interest in computing when I was
+a child, he convinced me to pursue a graduate degree.
 
 Thanks are also due to my amazing mother, Dr. Hengameh Allen-Schaal, for her
 unconditional love and support. She has always been there for me when I needed
 her, even when we began living in different states. I could not have done any
 of this without her.
 
-Monique Fahmy
+I would like to thank my thesis director, Prof. Jamie Frankel, for
+his patience and guidance through multiple drafts of this document. It has been
+a truly amazing learning experience working with him. 
 
-% Nutanix/Pete, for hardware and resources
-
-% Harvard? eh..
+None of the work in this thesis would have been possible without my employer,
+Nutanix. They have helped me so much by providing hardware resources and
+the chance to work on interesting problems.
 
 \clearpage
 \newpage
@@ -298,8 +297,8 @@ Monique Fahmy
 
     A suitable disk is one that:
 
-    \begin{tcolorbox}
 
+    \begin{tcolorbox}
     \begin{enumerate}
       \item Contains enough space to accept new data. This is less than 95\% by
             default for Nutanix clusters.  \item Returns "true" when evaluated by the
@@ -377,30 +376,26 @@ Monique Fahmy
       \caption{A cluster with nodes of varying resource capacity.}
       \label{fig:tier_size_disparity}
     \end{figure}
-
-    To create a context for the work in this thesis, it's necessary to delve
-    deeper into what a Nutanix cluster is and give a brief overview of the
-    I/O path. Section \ref{sssec:abs} will be devoted to this overview.
+\FloatBarrier
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\FloatBarrier
 \section{Prior Work}
 
   \subsection{Clustered Storage Systems}
 
   Among the contemporary distributed storage systems, Apache's Hadoop
-  Distributed File System (HDFS) \cite{hadoop} is one of the most well known.
-  HDFS is an open source distributed file system written as a userspace library
-  in Java that is used by Hadoop clusters for storing large volumes of data. An
-  HDFS cluster is comprised of a single NameNode and multiple DataNodes which
-  respectively manage cluster metadata and store the data. HDFS stores files as
-  a sequence of same-size 128MB blocks that are replicated across DataNodes to
-  provide fault tolerance in the event of node failures. Decisions regarding
-  the replication and placement of blocks of data are made by the NameNode.
-  Since large HDFS clusters will span multiple racks, replica placement within
-  HDFS is made in a rack-aware manner to improve data reliability and network
-  utilization.
+  Distributed File System (HDFS) \cite{hadoop} \cite{hdfs2008} is one of the
+  most well known. HDFS is an open source distributed file system written as a
+  userspace library in Java that is used by Hadoop clusters for storing large
+  volumes of data. An HDFS cluster is comprised of a single NameNode and
+  multiple DataNodes which respectively manage cluster metadata and store the
+  data. HDFS stores files as a sequence of same-size 128MB blocks that are
+  replicated across DataNodes to provide fault tolerance in the event of node
+  failures. Decisions regarding the replication and placement of blocks of data
+  are made by the NameNode.  Since large HDFS clusters will span multiple
+  racks, replica placement within HDFS is made in a rack-aware manner to
+  improve data reliability and network utilization.
 
   While HDFS is an open source distributed file system that is part of the
   greater Apache Hadoop ecosystem, the Google File System (GFS) \cite{gfs} is a
@@ -455,10 +450,14 @@ Monique Fahmy
 
   One adaptive data placement approach that can account for other workloads on
   the system was introduced by Jin et. al. \cite{adapt2012} in their work on
-  ADAPT . The study predicts how failure-prone a node in a MapReduce cluster is
-  and advises their availability-aware data placement algorithm to avoid those
-  nodes. This proves useful for performance by avoiding faulty nodes that could
-  fail mid-task and cause data transfers and re-calculation of data.
+  ADAPT. The study predicts how failure-prone a node in a MapReduce cluster is
+  and advises their availability-aware data placement algorithm to avoid
+  scheduling work for those nodes. This proves useful for performance by
+  avoiding faulty nodes that could fail mid-task and cause data transfers and
+  re-calculation of data. Zaharia et. al. \cite{zaharia2008} perform similar
+  predictive scheduling in their LATE scheduler for Hadoop, except they
+  estimate the finish time of tasks and schedule the longest-lived work first
+  in the pool of available nodes.
 
   Work by Suresh et. al. \cite{suresh2015} approaches adaptive replica
   selection in much the same way as this thesis, though their work was
@@ -531,15 +530,16 @@ Monique Fahmy
   \subsection{EIGRP and the Inspiration for Fitness Values}
   \label{eigrp-motivation}
 
-  EIGRP \cite{eigrp} is Cisco's proprietary routing protocol and enhancement to
-  their Interior Gateway Routing Protocol (IGRP). In EIGRP, each router
-  keeps information about its adjacent neighbors containing the address and
-  interface of the connected neighbor. This information is needed because of
-  the Topology Table (also referred to as the Distance Table) which contains
-  the distance, bundled with an associated metric, to all destinations
-  advertised by the adjacent neighbors. The metrics across all paths to the
-  destination are stored in the distance table and are used to calculate the
-  minimum cost path to a particular destination.
+  EIGRP \cite{eigrp} is Cisco's proprietary distance vector
+  \cite{distance-vector-1} routing protocol and enhancement to their Interior
+  Gateway Routing Protocol (IGRP) \cite{igrp}. In EIGRP, each router keeps
+  information about its adjacent neighbors containing the address and interface
+  of the connected neighbor. This information is needed because of the Topology
+  Table (also referred to as the Distance Table) which contains the distance,
+  bundled with an associated metric, to all destinations advertised by the
+  adjacent neighbors. The metrics across all paths to the destination are
+  stored in the distance table and are used to calculate the minimum cost path
+  to a particular destination.
 
   \begin{equation}
     Term_{1} = K_{1} * \frac{K_{2} * Bandwidth}{Bandwidth + 256 - Load} + K_{3} * Delay
@@ -608,18 +608,18 @@ Monique Fahmy
   \end{equation}
 
 
-  \subsection{Stargate Disk Stats Collection}
+  \subsection{Collection of Stargate Disk Statistics }
 
-  Prior to this work, Stargate's periodic disk stats collection was limited to
-  caching solely disk usage stats for all disks in the cluster. This has been
-  expanded to now include disk performance stats for use in disk fitness
+  Prior to this work, Stargate's periodic disk statistics collection was limited to
+  caching solely disk usage statistics for all disks in the cluster. This has been
+  expanded to now include disk performance statistics for use in disk fitness
   values.
 
   Stargate maintains a mapping, henceforth referred to as the $disk\_map\_$,
   from cluster disk ID to a disk state structure. The $disk\_map\_$'s state
   structure contains disk usage and performance information that has been
   published to Arithmos by other Stargates in the cluster. Upon gathering fresh
-  stats from Arithmos, the information is used to create a disk fitness value
+  statistics from Arithmos, the information is used to create a disk fitness value
   for each disk in the cluster.
 
   \subsection{Weighted Random Selection Algorithms}
@@ -738,7 +738,7 @@ Monique Fahmy
     frequency eclipses all other objects in the selection pool which can lead
     to extreme herding behaviors.
 
-    \subsubsection{Tructation Selection Simulations}
+    \subsubsection{Truncation Selection Simulations}
     Truncation selection \cite{truncation1973}, typically used in evolutionary
     computing algorithms, does not consider any objects for selection below
     some threshold, $T$. In Figure \ref{fig:herding_truncation}, only the top
@@ -766,16 +766,16 @@ Monique Fahmy
     \end{figure}
 
     \subsubsection{Two-choice Sampling Simulations}
-    Two-choice sampling \cite{2choice} performs a uniform random selection
-    twice and returns the object with higher weight. This algorithm has shown
-    to be extremely resilient to herding behavior as shown in Figure
-    \ref{fig:pathological_two_choice} and selection frequencies for all objects
-    are influenced by object weights in a way similar to SUS. While an object
-    with a higher weight is more likely to be selected, it is not selected with
-    a probability proportional to its fitness value. This makes the algorithm
-    resistant to any herding behaviors, but will not be a good candidate if
-    it's desired for the \texttt{WeightedVector} to select objects with
-    probability proportional to its weight.
+    Two-choice sampling \cite{azar1994} \cite{2choice} performs a uniform
+    random selection twice and returns the object with higher weight. This
+    algorithm has shown to be extremely resilient to herding behavior as shown
+    in Figure \ref{fig:pathological_two_choice} and selection frequencies for
+    all objects are influenced by object weights in a way similar to SUS. While
+    an object with a higher weight is more likely to be selected, it is not
+    selected with a probability proportional to its fitness value. This makes
+    the algorithm resistant to any herding behaviors, but will not be a good
+    candidate if it's desired for the \texttt{WeightedVector} to select objects
+    with probability proportional to its weight.
 
     \begin{figure}[htbp]
       \centering
@@ -842,10 +842,10 @@ Monique Fahmy
       \label{fig:random_scalability}
     \end{figure}
 
-    Figure \ref{fig:random_scalability} shows the running times for each of
-    the weighted random selection algorithms discussed. It becomes clear that
-    weighted random selections for large sets of objects is most efficient
-    using a two-choice sampling technique.
+    Figure \ref{fig:random_scalability} shows the running times on an
+    exponential scale for each of the weighted random selection algorithms
+    discussed. It becomes clear that weighted random selections for large sets
+    of objects is most efficient using a two-choice sampling technique.
 
   \subsection{WeightedVector Class}
 
@@ -1247,7 +1247,7 @@ together (Equation \ref{eqn:multiplicative-fitness}).
   would remain very low for the duration of an experiment. This does not give
   useful information for measuring the effects of fitness-based replica
   selection on disk queue lengths. The experiments for high outstanding I/O
-  experiments in section \ref{sec:high-outstanding-ops} was re-run for all
+  experiments in section \ref{sec:high-outstanding-ops} were re-run for all
   fitness function types and for fitness function queue length term ceilings of
   200 and 100. Figures \ref{fig:qlen_100} and \ref{fig:qlen_200} show a
   reduction in queue length quartiles when fitness-based selection is used for
@@ -1279,7 +1279,7 @@ together (Equation \ref{eqn:multiplicative-fitness}).
   \subsection{Scraping Data From the Nutanix Cluster}
 
   Stargate exposes a web server on the CVM, listening on port 2009, that
-  exposes various real-time stats such as the number of operations in flight,
+  exposes various real-time statistics such as the number of operations in flight,
   disk throughput, disk queue length, and many other pieces of information. I
   wrote a Python script to parse and derive the following information for each
   node:
@@ -1377,7 +1377,7 @@ together (Equation \ref{eqn:multiplicative-fitness}).
   proportional to the fitness values of the disks, it is not as scalable as the
   two-choice method for weighted random selection.
 
-  In addition, each Stargate's freqency of stats updates will impact its view
+  In addition, each Stargate's freqency of statistics updates will impact its view
   of the world and can lead to herding behaviors if updates are not frequent
   enough. In the absence of a Stargate's ability to update its view of the
   world, it will be unable to adapt to changes in workload characteristics or
@@ -1388,16 +1388,17 @@ together (Equation \ref{eqn:multiplicative-fitness}).
 
     \subsubsection{Real-time Fitness Feedback}
 
-    The replica placement scheme shown in this work relies on periodic stats
-    updates, therefore the system is always working with older stats for data placement
-    decisions. One change that can be made to this system is to track the time to
-    completion of the last $N$ operations that place data on a disk. This data
-    can be used similar to the C3 algorithm discussed in section
-    \ref{sec:priorwork} to bias the replica placements towards the faster
-    disks. This would remove the dependence on a centralized stats repository
-    such as Arithmos and allow each Stargate to make data placement decisions
-    independent of reports from other nodes in the cluser. Stargate would be
-    required to keep a history latency data for each operation on remote nodes.
+    The replica placement scheme shown in this work relies on periodic updates
+    of usage statistics, therefore the system is always working with older
+    statistics for data placement decisions. One change that can be made to this
+    system is to track the time to completion of the last $N$ operations that
+    place data on a disk. This data can be used similar to the C3 algorithm
+    discussed in section \ref{sec:priorwork} to bias the replica placements
+    towards the faster disks. This would remove the dependence on a centralized
+    statistics repository such as Arithmos and allow each Stargate to make data
+    placement decisions independent of reports from other nodes in the cluser.
+    Stargate would be required to keep a history latency data for each
+    operation on remote nodes.
 
     \subsubsection{Read Replica Selection}
 
@@ -1432,8 +1433,11 @@ together (Equation \ref{eqn:multiplicative-fitness}).
     datacenters. In addition to scale testing, heterogeneous hardware
     configurations in the form of hybrid (mixed SSD/HDD nodes) and all-flash
     nodes in the same cluster would provide interesting results for analysis.
-    This work focused mainly on heterogeneous workloads on homogeneous hardware
-    to simulate the effects of realistic workloads on heterogeneous clusters.
+    This work focused mainly on heterogeneous synthetic workloads on
+    homogeneous hardware to simulate the effects of realistic workloads on
+    heterogeneous clusters. However, observing replica placement behavior on
+    live clusters would provide additional insight into common replica
+    placement behavior in the majority of Nutanix cluster installations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GLOSSARY
@@ -1447,7 +1451,7 @@ together (Equation \ref{eqn:multiplicative-fitness}).
 Nutanix Controller Virtual Machine. \\
 
 \texttt{Data Deduplication} \\
-A data compression technique for removing multiple copies of the same data.
+A data compression technique for removing multiple copies of the same data. \\
 
 \texttt{Fitness Value}\\
 A value representing the desirability of a disk for data placement.\\
@@ -1485,14 +1489,13 @@ A file abstraction in the Nutanix distributed file system. \\
  \begin{thebibliography}{99}
 
   \bibitem{eigrp} Albrightson, R., Garcia-Luna-Aceves, J. J., and Boyle, J.  (1994). EIGRP--A fast routing protocol based on distance vectors. Interop 94.
+  \bibitem{azar1994} Azar, Y., Broder, A., Karlin, A., and Upfal, E. Balanced allocations. In Proceedings of the 26th ACM Symposium on the Theory of Computing, pages 593\{602, 1994.
   \bibitem{baker1987} Baker, J. E. (1987, July). Reducing bias and inefficiency in the selection algorithm. In Proceedings of the second international conference on genetic algorithms (pp. 14-21).
   \bibitem{hdfs2008} Borthakur, D. (2008). HDFS architecture guide. HADOOP APACHE PROJECT http://hadoop. apache. org/common/docs/current/hdfs design. pdf, 39.
-  \bibitem{chao1982} Chao, M. T. (1982). A general purpose unequal probability sampling plan.  Biometrika, 69(3), 653-656.
   \bibitem{esxi2008} Chaubal, C. (2008). The architecture of vmware esxi. VMware White Paper, 1(7).
   \bibitem{raid2} Chen, P. M., Lee, E. K., Gibson, G. A., Katz, R. H., and Patterson, D. A. (1994). RAID: High-performance, reliable secondary storage. ACM Computing Surveys (CSUR), 26(2), 145-185.
   \bibitem{truncation1973} Crow, J. F., and Kimura, M. (1979). Efficiency of truncation selection. Proceedings of the National Academy of Sciences of the United States of America, 76(1), 396–399.
   \bibitem{mapreduce} Dean, J., and Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. Communications of the ACM, 51(1), 107-113.
-  \bibitem{reservoir2006} Efraimidis, P. S., and Spirakis, P. G. (2006). Weighted random sampling with a reservoir. Information Processing Letters, 97(5), 181-185.
   \bibitem{gfs} Ghemawat, S., Gobioff, H., and Leung, S. T. (2003, October). The Google file system. In ACM SIGOPS operating systems review (Vol. 37, No.  5, pp. 29-43). ACM.
   \bibitem{hadoop} Hadoop, A. (2009). Hadoop. 2009-03-06].  \url{http://hadoop.apache.org}.
   \bibitem{matplotlib} Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. Computing In Science and Engineering, 9(3), 90-95.
@@ -1511,9 +1514,7 @@ A file abstraction in the Nutanix distributed file system. \\
   \bibitem{suresh2015} Suresh, L., Canini, M., Schmid, S., and Feldmann, A. (2015). C3: Cutting tail latency in cloud data stores via adaptive replica selection. In 12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15) (pp. 513-527).
   \bibitem{python} Van Rossum, G., and Drake, F. L. (2003). Python language reference manual (p. 144). Network Theory.
   \bibitem{hyperv2009} Velte, A., and Velte, T. (2009). Microsoft virtualization with Hyper-V. McGraw-Hill, Inc..
-  \bibitem{vitter1985} Vitter, J. S. (1985). Random sampling with a reservoir. ACM Transactions on Mathematical Software (TOMS), 11(1), 37-57.
-  \bibitem{xie2010} Xie, J., Yin, S., Ruan, X., Ding, Z., Tian, Y., Majors, J., ... and Qin, X. (2010, April). Improving mapreduce performance through data placement in heterogeneous hadoop clusters. In Parallel and Distributed Processing, Workshops and Phd Forum (IPDPSW), 2010 IEEE International Symposium on (pp. 1-9). IEEE.
-  \bibitem{azar1994} Y. Azar, A. Broder, A. Karlin, and E. Upfal. Balanced allocations. In Proceedings of the 26th ACM Symposium on the Theory of Computing, pages 593\{602, 1994.
+  \bibitem{xie2010} Xie, J., Yin, S., Ruan, X., Ding, Z., Tian, Y., Majors, J., Manzanares, A., and Qin, X. (2010, April). Improving mapreduce performance through data placement in heterogeneous hadoop clusters. In Parallel and Distributed Processing, Workshops and Phd Forum (IPDPSW), 2010 IEEE International Symposium on (pp. 1-9). IEEE.
   \bibitem{zaharia2008} Zaharia, M., Konwinski, A., Joseph, A. D., Katz, R.  H., and Stoica, I. (2008, December). Improving MapReduce Performance in Heterogeneous Environments. In OSDI (Vol. 8, No. 4, p. 7).
 
 
@@ -1531,7 +1532,7 @@ A file abstraction in the Nutanix distributed file system. \\
   During the 128 outstanding op experiments, herding behavior
   was observed unexpectedly after implementing fitness based replica placement
   as shown in Figure \ref{fig:herding_bug}. By default, disk usage and
-  performance stats are supposed to be refreshed every 10 seconds. This is
+  performance statistics are supposed to be refreshed every 10 seconds. This is
   frequent enough to avoid herding behavior, but the 128 outstanding op
   experiments exhibited herding.
 
@@ -1539,7 +1540,7 @@ A file abstraction in the Nutanix distributed file system. \\
     \centering
     \includegraphics[scale=0.30]{images/buggy.png} 
     \caption{$d_{hot\ tier}$ values over time for low outstanding I/O
-             operations. This set of experiments contains the stats update bug.}
+             operations. This set of experiments contains the disk usage statistics update bug.}
     \label{fig:herding_bug}
   \end{figure}
 
@@ -1554,11 +1555,11 @@ A file abstraction in the Nutanix distributed file system. \\
 
   Within Stargate, a mapping is kept from disk ID to a DiskState object (called
   \texttt{disk\_map\_}) containing information and cached statistics related to
-  the disk. The disk performance and disk usage stats are two separate elements
-  within the DiskState structure.
+  the disk. The disk performance and disk usage statistics are two separate
+  elements within the DiskState structure.
 
   Every 10 seconds, an alarm handler will execute and iterate through each
-  active disk in the cluster and asynchronously query disk stats and bind a
+  active disk in the cluster and asynchronously query disk statistics and bind a
   callback to each query to be executed when a response is received. Disk usage
   and performance lookups each have their own callback functions:
 
@@ -1568,18 +1569,18 @@ A file abstraction in the Nutanix distributed file system. \\
     \begin{tabular}{ | p{0.5\linewidth} | p{0.5\linewidth} | }
       \hline
       \textbf{Function Name} & \textbf{Description} \\ \hline
-      \verb|UsageStatLookupCallback| & Decrement the outstanding stats lookup
+      \verb|UsageStatLookupCallback| & Decrement the outstanding statistics lookup
                                        counter, acquire lock and populate
-                                       performance stats in
+                                       performance statistics in
                                        \texttt{disk\_map\_}, and leave
-                                       performance stats untouched.
+                                       performance statistics untouched.
                                        \\ \hline
 
-      \verb|PerformanceStatLookupCallback| & Decrement outstanding stats
+      \verb|PerformanceStatLookupCallback| & Decrement outstandingstatistics 
                                              lookup counter, lock and
-                                             populate performance stats in
+                                             populate performance statistics in
                                              \texttt{disk\_map\_}, and leave
-                                             usage stats untouched. \\ \hline
+                                             usage statistics untouched. \\ \hline
 
       \hline
     \end{tabular}
@@ -1588,11 +1589,12 @@ A file abstraction in the Nutanix distributed file system. \\
 
   The two callbacks introduce a race condition regarding \texttt{disk\_map\_}
   even though the structure is locked. Any time PerformanceStatLookupCallback
-  returns before the callback for usage stats, all performance stats will be
+  returns before the callback for usagestatistics , all performance statistics will be
   cleared and cause the fitness function to assume worst-case values for the
   queue length term.
 
-  This problem was fixed by simply serializing our usage and performance stats
+  This problem was fixed by simply serializing our usage and
+  performancestatistics 
   lookups.
 
 \end{appendices}
