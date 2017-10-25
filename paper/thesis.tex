@@ -137,7 +137,7 @@ Monique Fahmy
     A Nutanix cluster is facilitated by a clustering of controller virtual
     machines (CVMs) which reside, one per node, on each server in the cluster
     as shown in Figure \ref{fig:adsf-architecture}. CVMs work together to form
-    a distributed system that provides an NFS (for VMWare's ESXi
+    a distributed system that provides an NFS (for VMware's ESXi
     \cite{esxi2008}), SMB (for Microsoft's Hyper-V \cite{hyperv2009}), or iSCSI
     (for Nutanix's AHV \cite{bible}) interface to each hypervisor that they
     reside on. For example, the interface provided by the CVMs to VMware's ESXi
@@ -164,8 +164,8 @@ Monique Fahmy
     The CVMs expose some number of block devices, known as vDisks, that are
     used by the VMs hosted by the hypervisor. Within each CVM exists an
     ecosystem of processes responsible for the services provided by the Nutanix
-    cluster. The work in this thesis is scoped specifically to the process that
-    is directly responsible for disk I/O in the CVM ecosystem, Stargate.
+    cluster. The work in this thesis is performed on the process directly
+    responsible for disk I/O in the CVM ecosystem, Stargate.
 
     \subsubsection{Stargate} \label{section-stargate}
 
@@ -179,13 +179,12 @@ Monique Fahmy
     in flight on the disk (queue length), how much data in bytes currently
     resides on the disk, and the average time to complete an operation on the
     disk. These statistics are only gathered on the local disks; however, they
-    are then stored in a distributed database via another service, Arithmos.
-    Along with the statistics gathered by every other Stargate in the cluster,
-    these disk statistics stored in the database and are pulled periodically
+    are then stored in the Cassandra database backing another service,
+    Arithmos.  The disk statistics stored in Arithmos are pulled periodically
     and are then used to make decisions on whether a disk has enough space
     available to make it a write target. The work in this thesis uses other
-    available statistics to make better placement decisions when performing
-    writes.
+    available statistics to make better data replica placement decisions when
+    performing file system writes.
 
     \subsubsection{Cassandra}
 
@@ -237,20 +236,21 @@ Monique Fahmy
     whether to perform an in-place overwrite for writes over existing ranges of
     data or whether to generate new data. In-place overwrites are similar to
     reads in that the choice of target disk is limited by where the relevant
-    data resides. When enabling a common data reduction feature such as data
+    data resides. When enabling a common data compression feature such as data
     deduplication, in-place overwrites are not performed since the metadata for
     multiple logical ranges of data point to the same physical data. In the
     case of overwrites of deduplicated data and all scenarios where data is
     being created for the first time, Stargate has the freedom to choose any
     disk in the cluster.
 
-    When a Stargate write operation wants to select disks for data placement
-    upon entrance into the Extent Store, it is done on a per-tier basis. The
-    interface for a replica selection function call, DetermineNewReplicas,
-    takes the following arguments:
+    When a Stargate write operation selects appropriate disks for data
+    placement upon entrance into the Extent Store, it is done on a per-tier
+    basis. Table \ref{tbl:determinenewreplicas} shows the interface for a
+    replica selection function call via the DetermineNewReplicas function.
 
     \begin{table}[htbp]
       \caption{Argument descriptions for DetermineNewReplicas.}
+      \label{tbl:determinenewreplicas}
       \begin{tabular}{ | p{0.4\linewidth} | p{0.6\linewidth} | }
         \hline
         \textbf{Argument Name} & \textbf{Description} \\ \hline
@@ -287,17 +287,19 @@ Monique Fahmy
       \end{tabular}
     \end{table}
 
-    Upon calling DetermineNewReplicas, Stargate first attempts to select replicas from
-    the preferred nodes. This involves finding the set of disks that belong to
-    each node on the specified tier, shuffling the disks, and sequentially
-    evaluating each disk until a suitable one is found (the evaluation step).
-    If a suitable disk is not found on a preferred node, all other disks
-    belonging to the specified tier are shuffled and considered sequentially
-    until enough disks are found to satisfy the requirement set by replica\_vec.
+    Upon calling DetermineNewReplicas, Stargate first attempts to select
+    replicas from the preferred nodes. This involves finding the set of disks
+    that belong to each node on the specified tier, performing a pseudorandom
+    reordering of the candidate disk vector, and sequentially evaluating each
+    disk until a suitable one is found (the evaluation step). If a suitable
+    disk is not found on a preferred node, all other disks belonging to the
+    specified tier are shuffled and considered sequentially until enough disks
+    are found to satisfy the requirement set by replica\_vec.
 
     A suitable disk is one that:
 
     \begin{tcolorbox}
+
     \begin{enumerate}
       \item Contains enough space to accept new data. This is less than 95\% by
             default for Nutanix clusters.  \item Returns "true" when evaluated by the
@@ -306,6 +308,7 @@ Monique Fahmy
             and exclude\_rackable\_unit\_vec.
     \end{enumerate}
     \end{tcolorbox}
+    \FloatBarrier
 
     If a disk does not meet the criteria above, Stargate simply continues searching
     the shuffled set of disks belonging to the specified tier. If a disk is
