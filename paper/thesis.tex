@@ -10,7 +10,6 @@
 \usepackage[pdftex]{graphicx}
 \usepackage{setspace,caption,url,tcolorbox,float,placeins,appendix,amsmath}
 \doublespacing
-\pagenumbering{gobble}
 
 % Default margins are too wide all the way around. I reset them here
 \usepackage[left=1.5in,right=1in,top=1in,bottom=1in,includefoot,nohead]{geometry}
@@ -18,7 +17,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
+\pagenumbering{roman}
 \begin{center}
+  \thispagestyle{empty}
 
   % Title  Two inches from the top of the page
   \vspace*{0.6in}
@@ -40,10 +41,11 @@
 \end{center}
 
 \newpage
+\thispagestyle{empty}
 \null
 
 \newpage
-
+\thispagestyle{empty}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Abstract}
 \thispagestyle{empty}
@@ -90,7 +92,6 @@ the chance to work on interesting problems.
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\pagenumbering{roman}
 
 \tableofcontents
 \newpage
@@ -110,17 +111,26 @@ the chance to work on interesting problems.
 
   The work in this thesis was performed in the context of a distributed file
   system designed by Nutanix for enterprise clusters. The file system is hosted
-  on some number of virtual machine hosts connected in a full mesh network as
-  shown in Figure \ref{fig:adsf-network}. Given that a write operation in the
-  Nutanix file system is not complete until all replicas of the data are
-  written to disk, a write's performance is at the mercy of the slowest disk in
-  the set chosen to host replicas. Variables affecting a disk's performance
-  could include variables such as the hosting server's average CPU utilization
-  and the number of operations already in flight on a chosen disk.  To mitigate
-  the negative impact these variables could have on a write, the file system
-  should take into account how these variables will affect a disk's performance
-  before choosing to target it for a write operation. This results in biasing
-  toward disks that will give better performance overall.
+  on some number of virtual machine hosts (commonly referred to as hypervisors)
+  connected in a full mesh network. An example full mesh network topology is
+  shown in Figure \ref{fig:adsf-network}. This full mesh configuration allows
+  for the clustering of virtual machines (VMs) that provide file system
+  services by allowing each VM to send messages to each other VM.
+  
+  The basic purpose of a file system is to store and retrieve data. Storage and
+  retrieval of data is performed via write and read operations on the file
+  system. A write operation in the Nutanix file system requires multiple
+  copies, or replicas, of data to be written to disk on multiple physical
+  servers distributed across a network partition. Given this, a write operation
+  is not complete until all replicas of the data are written to disk. A write
+  operation's performance is at the mercy of the slowest disk in the set chosen
+  to host replicas. Variables that affect a disk's performance could include
+  the hosting server's average CPU utilization and the number of operations
+  already in flight on a chosen disk.  To mitigate the negative impact these
+  variables could have on a write, the file system should take into account how
+  these variables will affect a disk's performance before choosing to target it
+  for a write operation. This results in biasing toward disks that will give
+  better performance overall.
 
   \begin{figure}[htbp]
     \centering
@@ -140,8 +150,8 @@ the chance to work on interesting problems.
     \cite{esxi2008}), SMB (for Microsoft's Hyper-V \cite{hyperv2009}), or iSCSI
     (for Nutanix's AHV \cite{bible}) interface to each hypervisor that they
     reside on. For example, the interface provided by the CVMs to VMware's ESXi
-    hypervisor will be interfaced as a storage target, or in ESXi terminology,
-    a datastore. The virtual machines' virtual disk files will reside on the
+    hypervisor will be interfaced as an NFS mount, or in ESXi terminology,
+    an NFS datastore. The virtual machines' virtual disk files will reside on the
     Nutanix datastore and be accessed via NFS through the CVM sharing a host
     with the other hosted VMs.
 
@@ -178,21 +188,24 @@ the chance to work on interesting problems.
     in flight on the disk (queue length), how much data in bytes currently
     resides on the disk, and the average time to complete an operation on the
     disk. These statistics are only gathered on the local disks; however, they
-    are then stored in the Cassandra database backing another service,
-    Arithmos.  The disk statistics stored in Arithmos are pulled periodically
-    and are then used to make decisions on whether a disk has enough space
-    available to make it a write target. The work in this thesis uses other
-    available statistics to make better data replica placement decisions when
-    performing file system writes.
+    are then stored via the cluster's Cassandra database service as a separate
+    table. The Cassandra table that stores the statistics backs another
+    service, Arithmos. The disk statistics stored in Arithmos are pulled
+    periodically and are then used to make decisions on whether a disk has
+    enough space available to make it a write target. The work in this thesis
+    uses other available statistics to make better data replica placement
+    decisions when performing file system writes.
 
     \subsubsection{Cassandra}
 
-    Cassandra stores and manages all cluster metadata in a distributed manner.
-    It is also the distributed database used by Arithmos to store cluster
-    statistics. The version of Cassandra running in NDFS is a heavily modified
-    Apache Cassandra \cite{cassandra}. One of the main differences between
-    Nutanix Cassandra and Apache Cassandra is that Nutanix has implemented
-    strict consistency via Lamport's Paxos \cite{paxos2005} protocol.
+    The Cassandra process stores and manages all cluster metadata in a
+    distributed manner. It is also the distributed database used by Arithmos
+    to store cluster statistics. The version of Cassandra running in NDFS is a
+    heavily modified Apache Cassandra \cite{cassandra}. One of the main
+    differences between Nutanix Cassandra and Apache Cassandra is that Nutanix
+    has implemented strict consistency via the Paxos \cite{paxos2005} family of
+    protocols, which provide consensus in an unreliable network of compute
+    nodes.
 
     % TODO: elaborate on Paxos?
 
@@ -233,7 +246,7 @@ the chance to work on interesting problems.
     overhead of data traversal over the network when selecting a remote disk.
     However, when selecting disks to service writes, Stargate must decide
     whether to perform an in-place overwrite for writes over existing ranges of
-    data or whether to generate new data. In-place overwrites are similar to
+    data or whether to write the data to a new extent group. In-place overwrites are similar to
     reads in that the choice of target disk is limited by where the relevant
     data resides. When enabling a common data compression feature such as data
     deduplication, in-place overwrites are not performed since the metadata for
@@ -287,20 +300,24 @@ the chance to work on interesting problems.
     \end{table}
 
     Upon calling DetermineNewReplicas, Stargate first attempts to select
-    replicas from the preferred nodes. This involves finding the set of disks
-    that belong to each node on the specified tier, performing a pseudorandom
-    reordering of the candidate disk vector, and sequentially evaluating each
-    disk until a suitable one is found (the evaluation step). If a suitable
-    disk is not found on a preferred node, all other disks belonging to the
-    specified tier are shuffled and considered sequentially until enough disks
-    are found to satisfy the requirement set by replica\_vec.
+    replicas from the preferred nodes. Since replicas must reside on the same
+    tier, Stargate must first find the set of disks that belong to each node on
+    the specified tier so that it may select a disk from that set. This is
+    followed by a pseudorandom reordering of the recently found candidate disk
+    vector, to prevent over-selection of the same set of disks, and
+    sequentially evaluating each disk until a suitable one is found (the
+    evaluation step). If a suitable disk is not found on a preferred node, all
+    other disks belonging to the specified tier are shuffled and considered
+    sequentially until enough disks are found to satisfy the requirement set by
+    replica\_vec.
 
     A suitable disk is one that:
 
 
     \begin{tcolorbox}
     \begin{enumerate}
-      \item Contains enough space to accept new data. This is less than 95\% by
+      \item Contains enough space to accept new data. This is less than 95\%
+            full by
             default for Nutanix clusters.  \item Returns "true" when evaluated by the
             predicate\_func.
       \item Is not included in the exclude\_replic\_vec, exclude\_node\_vec,
@@ -340,10 +357,11 @@ the chance to work on interesting problems.
     workloads. In the current random selection scheme used by Nutanix
     clusters, writes in this example are equally likely to place their replica
     on the remote node with an active workload as they would be to place it on
-    the remote node that is idle.  This can impact performance on both the
+    the remote node that is idle.  This can impact performance via reduction of
+    throughput or increasing latency on both the
     local and remote workloads as secondary writes will be slower on nodes
     whose resources are being utilized by their primary workloads. A data replica
-    placement scheme is needed that adapts its behavior based on how less busy
+    placement scheme is needed that adapts its behavior based on how idle
     the target nodes are. This would result in a bias towards nodes that are
     more idle.
 
@@ -416,7 +434,7 @@ the chance to work on interesting problems.
   web crawler.
 
   As Google's data grew to the order of tens of Petabytes, the single master
-  node became a bottleneck. The master node task fo scanning metadata during
+  node became a bottleneck. The master node task of scanning metadata during
   chunk recovery scaled linearly with the amount of data and each GFS client
   spoke to the master when performing a file open operation. Ultimately, Google
   took a "multi-cell" approach with GFS which allowed for multiple GFS masters
@@ -456,8 +474,8 @@ the chance to work on interesting problems.
   avoiding faulty nodes that could fail mid-task and cause data transfers and
   re-calculation of data. Zaharia et. al. \cite{zaharia2008} perform similar
   predictive scheduling in their LATE scheduler for Hadoop, except they
-  estimate the finish time of tasks and schedule the longest-lived work first
-  in the pool of available nodes.
+  estimate the finish time of tasks and schedule the work that is expected to
+  take the longest to complete first in the pool of available nodes.
 
   Work by Suresh et. al. \cite{suresh2015} approaches adaptive replica
   selection in much the same way as this thesis, though their work was
@@ -568,23 +586,26 @@ the chance to work on interesting problems.
   \subsection{Fitness Values and Functions} \label{section-fitness}
 
   To calculate a value to represent the desirability of a disk for replica
-  placement, a function, $f_{fitness}$, is defined. $f_{fitness}$ takes as its
-  argument, some number of variables that can affect disk performance and
-  returns a positive number henceforth referred to as a fitness value.
+  placement, a function, $f_{fitness}$, is defined. The function $f_{fitness}$
+  takes as its argument some number of variables that can affect disk
+  performance and returns a positive number henceforth referred to as a fitness
+  value.
   
   A low fitness value indicates a poor placement candidacy for a disk and a
   high fitness value will indicate a highly desirable disk for replica
-  placement. In this work, I evaluate two fitness functions that are
-  comprised of terms that utilize a disk's average queue length over some
-  stretch of time, $t_{q}$, and a disk's percentage utilization, $t_{u}$.
+  placement. In this work, I evaluate one fitness function of a disk's average
+  queue length over some stretch of time, $t_{q}$, and one fitness function of
+  a disk's percentage utilization, $t_{u}$.
 
   \begin{equation}
     t_{q} = 1 - \frac{q}{q_{ceil}}
   \end{equation}
 
   The variable $q_{ceiling}$ holds the maximum observed queue length.
-  Increasing $t_{q}$ beyond $q_{ceiling}$ does not contribute to the fitness
-  value. This ensures that as the queue length grows, $t_{q}$ approaches zero. 
+  Increasing $t_{q}$ from 0 towards $q_{ceiling}$ decreases the fitness value,
+  but increasing $t_{q}$ beyond $q_{ceiling}$ does not continue to modify the
+  fitness value to drop below 0. This ensures that as the queue length grows,
+  $t_{q}$ approaches zero. 
 
   \begin{equation}
     t_{u} = \frac{1}{a^{u}}
@@ -615,7 +636,7 @@ the chance to work on interesting problems.
   expanded to now include disk performance statistics for use in disk fitness
   values.
 
-  Stargate maintains a mapping, henceforth referred to as the $disk\_map\_$,
+  Stargate maintains a mapping, the $disk\_map\_$,
   from cluster disk ID to a disk state structure. The $disk\_map\_$'s state
   structure contains disk usage and performance information that has been
   published to Arithmos by other Stargates in the cluster. Upon gathering fresh
@@ -697,9 +718,8 @@ the chance to work on interesting problems.
     for each object. $10^3$, $10^4$, and $10^5$ iterations were performed to
     observe any changes in herding behavior at larger time scales. In addition
     to the high-skew sampling sets, low-skew sets of 100 objects were also
-    simulated.  These low-skew sets were identical to the high-skew sets,
-    except there was not a single object with an exaggerated weight of 1000.
-    All element weights were their array indices.
+    simulated.  These low-skew sets were generated such that the array
+    index of the first 10 objects was assigned as the object weight.
 
     \subsubsection{Stochastic Universal Sampling (SUS) Simulations}
     SUS is another sampling technique first introduced by Baker in 1987
@@ -841,6 +861,8 @@ the chance to work on interesting problems.
       \caption{Running times of various weight random selection algorithms.}
       \label{fig:random_scalability}
     \end{figure}
+
+    \FloatBarrier
 
     Figure \ref{fig:random_scalability} shows the running times on an
     exponential scale for each of the weighted random selection algorithms
@@ -1137,9 +1159,10 @@ together (Equation \ref{eqn:multiplicative-fitness}).
   \subsection{Tier Utilization Experiments} \label{experiments-tier-util}
 
   The tier utilization experiments define the hot-tier deviation, $d_{hot\
-  tier}$. $d_{hot\ tier}$ is represented as the average SSD utilization
-  percentage of the nodes running a workload, $u_{w}$, subtracted by the SSD
-  utilization percentage of the node without a workload, $u_{o}$:
+  tier}$. The hot-tier deviation, $d_{hot\ tier}$, is represented as the
+  average SSD utilization percentage of the nodes running a workload, $u_{w}$,
+  subtracted by the SSD utilization percentage of the node without a workload,
+  $u_{o}$:
   
   \begin{equation}
     d_{hot\ tier} = \frac{u_{w1} + u_{w2}}{u_{o}}
@@ -1170,13 +1193,13 @@ together (Equation \ref{eqn:multiplicative-fitness}).
       \label{fig:low_outstanding_tier_disparity}
     \end{figure}
 
+    \FloatBarrier
+
     Figure \ref{fig:low_outstanding_tier_disparity} shows the results of a
     workload with only a single outstanding operation. This causes the queue
     length reported by Stargate to be at most 1, resulting in the fitness
     function's queue length term to be roughly constant and approximately 1.
     
-    \FloatBarrier
-
     It is evident that the additive fitness function does not minimize the
     hot-tier deviation as well as the multiplicative since the additive fitness
     function's behavior varies depending on the weight chosen for the queue
@@ -1509,7 +1532,7 @@ A file abstraction in the Nutanix distributed file system. \\
   \bibitem{perez2003} Perez, J. M., Garcia, F., Carretero, J., Calderon, A., and Sanchez, L. M. (2003, May). Data allocation and load balancing for heterogeneous cluster storage systems. In Cluster Computing and the Grid, 2003. Proceedings. CCGrid 2003. 3rd IEEE/ACM International Symposium on (pp. 718-723). IEEE.
   \bibitem{stl} Plauger, P. J., Lee, M., Musser, D., and Stepanov, A. A. (2000). C++ Standard Template Library. Prentice Hall PTR.
   \bibitem{bible} Poitras, S. (n.d.) The Nutanix Bible. Retrieved August 09, 2017, from \url{http://www.nutanixbible.com/}
-  \bibitem{igrp} Rutgers, C. L. H. (1991). “An introduction to igrp. The State University of New Jersey, Center for Computers and Information Services, Laboratory for Computer Science Research.
+  \bibitem{igrp} Hedrick, C., and Bosack, L. (1991). An introduction to IGRP. Rutgers-The State University of New Jersey Technical Publication, Laboratory for Computer Science.
   \bibitem{breeder1993} Schlierkamp-Voosen, D., and Mühlenbein, H. (1993). Predictive models for the breeder genetic algorithm. Evolutionary Computation, 1(1), 25-49.
   \bibitem{suresh2015} Suresh, L., Canini, M., Schmid, S., and Feldmann, A. (2015). C3: Cutting tail latency in cloud data stores via adaptive replica selection. In 12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15) (pp. 513-527).
   \bibitem{python} Van Rossum, G., and Drake, F. L. (2003). Python language reference manual (p. 144). Network Theory.
@@ -1589,13 +1612,13 @@ A file abstraction in the Nutanix distributed file system. \\
 
   The two callbacks introduce a race condition regarding \texttt{disk\_map\_}
   even though the structure is locked. Any time PerformanceStatLookupCallback
-  returns before the callback for usagestatistics , all performance statistics will be
-  cleared and cause the fitness function to assume worst-case values for the
-  queue length term.
+  returns before the callback for usage statistics , all performance statistics
+  will be cleared and cause the fitness function to assume worst-case values
+  for the queue length term.
 
-  This problem was fixed by simply serializing our usage and
-  performancestatistics 
-  lookups.
+  This problem was fixed by simply serializing our usage and performance
+  statistics lookups by triggering the performance statistics lookup from
+  inside UsageStatLookupCallback.
 
 \end{appendices}
 
