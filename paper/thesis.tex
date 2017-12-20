@@ -9,6 +9,7 @@
 \documentclass[12pt]{article}
 \usepackage[pdftex]{graphicx}
 \usepackage{setspace,caption,url,tcolorbox,float,placeins,appendix,amsmath}
+\usepackage{apacite}
 \doublespacing
 
 % Default margins are too wide all the way around. I reset them here
@@ -51,18 +52,18 @@
 \thispagestyle{empty}
 
 With the advent of cloud computing, datacenters are using distributed
-applications more than ever. MapReduce is used to generate over 20 petabytes
-of data per day by using prodigious numbers of commodity servers
-\cite{mapreduce}. Many companies use large scale clusters to perform various
-computational tasks via the open-source MapReduce implementation, Hadoop
-\cite{hadoop}, or they can possess a virtualized datacenter, allowing them to
-migrate virtual machines between various machines for high-availability
-reasons. As economics change for hardware, it is likely that a scalable cloud
-will have the requirement to mix node types, which will lead to higher
-performance and higher capacity nodes to be mixed with lower performance,
-lower capacity nodes. This thesis presents an adaptive data placement method
-in the Nutanix distributed file system which will remedy some common problems
-found in many heterogeneous clustered file systems.
+applications more than ever. MapReduce is used to generate over 20 petabytes of
+data per day by using prodigious numbers of commodity servers \cite{mapreduce}.
+Many companies use large scale clusters to perform various computational tasks
+via the open-source MapReduce implementation, Hadoop \cite{hadoop}, or they can
+possess a virtualized datacenter, allowing them to migrate virtual machines
+between various machines for high-availability reasons. As economics change for
+hardware, it is likely that a scalable cloud will have the requirement to mix
+node types, which will lead to higher performance and higher capacity nodes to
+be mixed with lower performance, lower capacity nodes. This thesis presents an
+adaptive data placement method in the Nutanix distributed file system which
+will remedy some common problems found in many heterogeneous clustered file
+systems.
 
 \clearpage
 \newpage
@@ -1514,39 +1515,9 @@ A file abstraction in the Nutanix distributed file system. \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \FloatBarrier
- \begin{thebibliography}{99}
 
-  \bibitem{eigrp} Albrightson, R., Garcia-Luna-Aceves, J. J., and Boyle, J.  (1994). EIGRP--A fast routing protocol based on distance vectors. Interop 94.
-  \bibitem{azar1994} Azar, Y., Broder, A., Karlin, A., and Upfal, E. Balanced allocations. In Proceedings of the 26th ACM Symposium on the Theory of Computing, pages 593\{602, 1994.
-  \bibitem{baker1987} Baker, J. E. (1987, July). Reducing bias and inefficiency in the selection algorithm. In Proceedings of the second international conference on genetic algorithms (pp. 14-21).
-  \bibitem{hdfs2008} Borthakur, D. (2008). HDFS architecture guide. HADOOP APACHE PROJECT http://hadoop. apache. org/common/docs/current/hdfs design. pdf, 39.
-  \bibitem{esxi2008} Chaubal, C. (2008). The architecture of vmware esxi. VMware White Paper, 1(7).
-  \bibitem{raid2} Chen, P. M., Lee, E. K., Gibson, G. A., Katz, R. H., and Patterson, D. A. (1994). RAID: High-performance, reliable secondary storage. ACM Computing Surveys (CSUR), 26(2), 145-185.
-  \bibitem{truncation1973} Crow, J. F., and Kimura, M. (1979). Efficiency of truncation selection. Proceedings of the National Academy of Sciences of the United States of America, 76(1), 396–399.
-  \bibitem{mapreduce} Dean, J., and Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. Communications of the ACM, 51(1), 107-113.
-  \bibitem{gfs} Ghemawat, S., Gobioff, H., and Leung, S. T. (2003, October). The Google file system. In ACM SIGOPS operating systems review (Vol. 37, No.  5, pp. 29-43). ACM.
-  \bibitem{hadoop} Hadoop, A. (2009). Hadoop. 2009-03-06].  \url{http://hadoop.apache.org}.
-  \bibitem{matplotlib} Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. Computing In Science and Engineering, 9(3), 90-95.
-  \bibitem{adapt2012} Jin, H., Yang, X., Sun, X. H., and Raicu, I. (2012, June). Adapt: Availability-aware mapreduce data placement for non-dedicated distributed computing. In Distributed Computing Systems (ICDCS), 2012 IEEE 32nd International Conference on (pp. 516-525). IEEE.
-  \bibitem{cassandra} Lakshman, A., and Malik, P. (2008, August 25). Cassandra – A structured storage system on a P2P Network. Retrieved February 15, 2016, from \url{https://www.facebook.com/notes/facebook-engineering/cassandra-a-structured-storage-system-on-a-p2p-network/24413138919/}
-  \bibitem{paxos2005} Lamport, L. (2005). Generalized consensus and Paxos. Technical Report MSR-TR-2005-33, Microsoft Research.s
-  \bibitem{distance-vector-1} McQuillan, J. M., Richer, I., Rosen, E. C., and Bertsekas, D. P. (1978). Arpanet routing algorithm improvements (No. BBN-3940). BOLT BERANEK AND NEWMAN INC CAMBRIDGE MA.
-  \bibitem{gfs-interview} McKusick, K., and Quinlan, S. (2010). GFS: evolution on fast-forward. Communications of the ACM, 53(3), 42-49.
-  \bibitem{2choice} Mitzenmacher, M. (2001). The power of two choices in randomized load balancing. IEEE Transactions on Parallel and Distributed Systems, 12(10), 1094-1104.
-  \bibitem{raid} Patterson, D. A., Gibson, G., and Katz, R. H. (1988). A case for redundant arrays of inexpensive disks (RAID) (Vol. 17, No. 3, pp.  109-116). ACM.
-  \bibitem{perez2003} Perez, J. M., Garcia, F., Carretero, J., Calderon, A., and Sanchez, L. M. (2003, May). Data allocation and load balancing for heterogeneous cluster storage systems. In Cluster Computing and the Grid, 2003. Proceedings. CCGrid 2003. 3rd IEEE/ACM International Symposium on (pp. 718-723). IEEE.
-  \bibitem{stl} Plauger, P. J., Lee, M., Musser, D., and Stepanov, A. A. (2000). C++ Standard Template Library. Prentice Hall PTR.
-  \bibitem{bible} Poitras, S. (n.d.) The Nutanix Bible. Retrieved August 09, 2017, from \url{http://www.nutanixbible.com/}
-  \bibitem{igrp} Hedrick, C., and Bosack, L. (1991). An introduction to IGRP. Rutgers-The State University of New Jersey Technical Publication, Laboratory for Computer Science.
-  \bibitem{breeder1993} Schlierkamp-Voosen, D., and Mühlenbein, H. (1993). Predictive models for the breeder genetic algorithm. Evolutionary Computation, 1(1), 25-49.
-  \bibitem{suresh2015} Suresh, L., Canini, M., Schmid, S., and Feldmann, A. (2015). C3: Cutting tail latency in cloud data stores via adaptive replica selection. In 12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15) (pp. 513-527).
-  \bibitem{python} Van Rossum, G., and Drake, F. L. (2003). Python language reference manual (p. 144). Network Theory.
-  \bibitem{hyperv2009} Velte, A., and Velte, T. (2009). Microsoft virtualization with Hyper-V. McGraw-Hill, Inc..
-  \bibitem{xie2010} Xie, J., Yin, S., Ruan, X., Ding, Z., Tian, Y., Majors, J., Manzanares, A., and Qin, X. (2010, April). Improving mapreduce performance through data placement in heterogeneous hadoop clusters. In Parallel and Distributed Processing, Workshops and Phd Forum (IPDPSW), 2010 IEEE International Symposium on (pp. 1-9). IEEE.
-  \bibitem{zaharia2008} Zaharia, M., Konwinski, A., Joseph, A. D., Katz, R.  H., and Stoica, I. (2008, December). Improving MapReduce Performance in Heterogeneous Environments. In OSDI (Vol. 8, No. 4, p. 7).
-
-
- \end{thebibliography}
+\bibliographystyle{apacite}
+\bibliography{mybib}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
