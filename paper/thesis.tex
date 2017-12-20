@@ -50,12 +50,12 @@
 \section*{Abstract}
 \thispagestyle{empty}
 
-With the advent of cloud computing, datacenters are making use of distributed
+With the advent of cloud computing, datacenters are using distributed
 applications more than ever. MapReduce is used to generate over 20 petabytes
-of data per day using very large numbers of commodity servers
+of data per day by using prodigious numbers of commodity servers
 \cite{mapreduce}. Many companies use large scale clusters to perform various
-computational tasks via the the open-source MapReduce implementation, Hadoop
-\cite{hadoop}, or they can possess a virtualized datacenter allowing them to
+computational tasks via the open-source MapReduce implementation, Hadoop
+\cite{hadoop}, or they can possess a virtualized datacenter, allowing them to
 migrate virtual machines between various machines for high-availability
 reasons. As economics change for hardware, it is likely that a scalable cloud
 will have the requirement to mix node types, which will lead to higher
@@ -71,22 +71,21 @@ found in many heterogeneous clustered file systems.
 \section*{Acknowledgements}
 \thispagestyle{empty}
 
-I doubt I would be writing this document if it were not for my father, Dr.
+I doubt that I would be writing this document were it not for my father, Dr.
 Cyril Allen. Not only did he spark my initial interest in computing when I was
-a child, he convinced me to pursue a graduate degree.
+a child, but also he convinced me to pursue a graduate degree.
 
 Thanks are also due to my amazing mother, Dr. Hengameh Allen-Schaal, for her
 unconditional love and support. She has always been there for me when I needed
-her, even when we began living in different states. I could not have done any
-of this without her.
+her. I could not have done any of this without her.
 
-I would like to thank my thesis director, Prof. Jamie Frankel, for
-his patience and guidance through multiple drafts of this document. It has been
-a truly amazing learning experience working with him. 
+I would like to thank my thesis director, Professor Jamie Frankel, for
+his patience and guidance through multiple drafts of this document. Working
+with him has been a remarkable learning experience.
 
 None of the work in this thesis would have been possible without my employer,
-Nutanix. They have helped me so much by providing hardware resources and
-the chance to work on interesting problems.
+Nutanix. They have helped me tremendously by providing hardware resources and
+the chance to work on thought-provoking problems.
 
 \clearpage
 \newpage
@@ -112,10 +111,10 @@ the chance to work on interesting problems.
   The work in this thesis was performed in the context of a distributed file
   system designed by Nutanix for enterprise clusters. The file system is hosted
   on some number of virtual machine hosts (commonly referred to as hypervisors)
-  connected in a full mesh network. An example full mesh network topology is
-  shown in Figure \ref{fig:adsf-network}. This full mesh configuration allows
-  for the clustering of virtual machines (VMs) that provide file system
-  services by allowing each VM to send messages to each other VM.
+  connected in a full mesh network. Figure \ref{fig:adsf-network} shows an
+  example full mesh network topology. This full mesh configuration allows for
+  the clustering of virtual machines (VMs) that provide file system services by
+  allowing each VM to send messages to any other VM.
   
   The basic purpose of a file system is to store and retrieve data. Storage and
   retrieval of data is performed via write and read operations on the file
@@ -127,7 +126,7 @@ the chance to work on interesting problems.
   to host replicas. Variables that affect a disk's performance could include
   the hosting server's average CPU utilization and the number of operations
   already in flight on a chosen disk.  To mitigate the negative impact these
-  variables could have on a write, the file system should take into account how
+  variables could have on a write, the file system should consider how
   these variables will affect a disk's performance before choosing to target it
   for a write operation. This results in biasing toward disks that will give
   better performance overall.
@@ -144,7 +143,7 @@ the chance to work on interesting problems.
     \subsubsection{Architecture}
 
     A Nutanix cluster is facilitated by a clustering of controller virtual
-    machines (CVMs) which reside, one per node, on each server in the cluster
+    machines (CVMs) that reside, one per node, on each server in the cluster,
     as shown in Figure \ref{fig:adsf-architecture}. CVMs work together to form
     a distributed system that provides an NFS (for VMware's ESXi
     \cite{esxi2008}), SMB (for Microsoft's Hyper-V \cite{hyperv2009}), or iSCSI
@@ -152,29 +151,29 @@ the chance to work on interesting problems.
     reside on. For example, the interface provided by the CVMs to VMware's ESXi
     hypervisor will be interfaced as an NFS mount, or in ESXi terminology,
     an NFS datastore. The virtual machines' virtual disk files will reside on the
-    Nutanix datastore and be accessed via NFS through the CVM sharing a host
+    Nutanix datastore and be accessed via NFS through the CVM, thus sharing a host
     with the other hosted VMs.
 
     Users of a Nutanix cluster will typically have virtual machines (VMs)
-    hosted by one of the hypervisors previously mentioned. These VMs will have
-    their storage requests forwarded to the local CVM hosted on the same node,
-    or another CVM in the cluster in the event that the local CVM is down. This
-    fault tolerance is one of the advantages to using a clustered file system
+    hosted by one of the previously mentioned hypervisors. These VMs will have
+    their storage requests forwarded to the local CVM that is hosted on the
+    same node, or another CVM in the cluster if the local CVM is down. This
+    fault tolerance is one of the advantages of using a clustered file system
     such as Nutanix as opposed to a monolithic storage array.
     
     \begin{figure}[htbp]
       \centering
       \includegraphics[scale=1.0]{images/converged_platform.png} 
       \caption{Nutanix node architecture diagram from the Nutanix
-               Bible\cite{bible}.}
+               Bible \cite{bible}.}
       \label{fig:adsf-architecture}
     \end{figure}
 
     The CVMs expose some number of block devices, known as vDisks, that are
     used by the VMs hosted by the hypervisor. Within each CVM exists an
-    ecosystem of processes responsible for the services provided by the Nutanix
-    cluster. The work in this thesis is performed on the process directly
-    responsible for disk I/O in the CVM ecosystem, Stargate.
+    ecosystem of processes that are responsible for the services provided by
+    the Nutanix cluster. The work in this thesis is performed on the process
+    that is directly responsible for disk I/O in the CVM ecosystem, Stargate.
 
     \subsubsection{Stargate} \label{section-stargate}
 
@@ -199,15 +198,13 @@ the chance to work on interesting problems.
     \subsubsection{Cassandra}
 
     The Cassandra process stores and manages all cluster metadata in a
-    distributed manner. It is also the distributed database used by Arithmos
-    to store cluster statistics. The version of Cassandra running in NDFS is a
-    heavily modified Apache Cassandra \cite{cassandra}. One of the main
+    distributed manner. It is also the distributed database used by Arithmos to
+    store cluster statistics. The version of Cassandra that is running in NDFS
+    is a heavily modified Apache Cassandra \cite{cassandra}. One of the main
     differences between Nutanix Cassandra and Apache Cassandra is that Nutanix
     has implemented strict consistency via the Paxos \cite{paxos2005} family of
     protocols, which provide consensus in an unreliable network of compute
     nodes.
-
-    % TODO: elaborate on Paxos?
 
     \subsubsection{The Extent Store}
 
@@ -215,10 +212,10 @@ the chance to work on interesting problems.
     persistent bulk storage. Data stored within the Extent Store are referred
     to as extent groups (also abbreviated as egroups), or 4MB pieces of
     physically contiguous data. An extent group is replicated a number of
-    times dependent on the cluster replication factor and each replica is
+    times dependent on the cluster replication factor, and each replica is
     placed on a different CVM except for a single replica that resides on the
-    local node. The current replica selection algorithm will be explained in
-    further detail in section \ref{sec:replica-selection}.
+    local node. The current replica selection algorithm will be explained
+    further in section \ref{sec:replica-selection}.
 
     \subsubsection{Storage Tiering and Data Replication}
 
@@ -229,11 +226,11 @@ the chance to work on interesting problems.
     SATA SSDs might belong together in the same storage tier, but hard drives
     would not be included due to their relatively poor random access
     performance. Extent groups and their replicas are created on a particular
-    storage tier, but may be migrated between tiers depending on data access
+    storage tier, but might be migrated between tiers depending on data access
     patterns.
 
     Data replicas for each extent group are written on separate fault domains
-    on the same tier to ensure that in the event a failure occurs and a
+    on the same tier to ensure that, in the event a failure occurs and a
     replica becomes unavailable, that piece of data can still be accessed. An
     example of a fault domain can be a node (single CVM) or a block (a rackable
     unit of hardware containing multiple nodes). 
@@ -241,19 +238,19 @@ the chance to work on interesting problems.
     \subsubsection{Replica Selection} \label{sec:replica-selection}
 
     Stargate is inherently limited in its choices of disk to service reads
-    since it must select a disk that contains the desired data. If the data is
-    on a local disk, this disk is always selected to avoid the unnecessary
-    overhead of data traversal over the network when selecting a remote disk.
-    However, when selecting disks to service writes, Stargate must decide
-    whether to perform an in-place overwrite for writes over existing ranges of
-    data or whether to write the data to a new extent group. In-place overwrites are similar to
-    reads in that the choice of target disk is limited by where the relevant
-    data resides. When enabling a common data compression feature such as data
-    deduplication, in-place overwrites are not performed since the metadata for
-    multiple logical ranges of data point to the same physical data. In the
-    case of overwrites of deduplicated data and all scenarios where data is
-    being created for the first time, Stargate has the freedom to choose any
-    disk in the cluster.
+    because it must select a disk that contains the desired data. If the data is
+    on a local disk, this disk is always selected by Stargate to avoid the
+    unnecessary overhead of data traversal over the network when selecting a
+    remote disk.  However, when selecting disks to service writes, Stargate
+    must decide whether to perform an in-place overwrite for writes over
+    existing ranges of data or to write the data to a new extent group.
+    In-place overwrites are similar to reads in that the choice of target disk
+    is limited by where the relevant data resides. When Stargate enables a
+    common data compression feature such as data deduplication, in-place
+    overwrites are not performed because the metadata for multiple logical ranges
+    of data point to the same physical data. When overwriting deduplicated data
+    and all scenarios where data is being created for the first time, Stargate
+    has the freedom to choose any disk in the cluster.
 
     When a Stargate write operation selects appropriate disks for data
     placement upon entrance into the Extent Store, it is done on a per-tier
@@ -300,7 +297,7 @@ the chance to work on interesting problems.
     \end{table}
 
     Upon calling DetermineNewReplicas, Stargate first attempts to select
-    replicas from the preferred nodes. Since replicas must reside on the same
+    replicas from the preferred nodes. Because replicas must reside on the same
     tier, Stargate must first find the set of disks that belong to each node on
     the specified tier so that it may select a disk from that set. This is
     followed by a pseudorandom reordering of the recently found candidate disk
@@ -329,18 +326,18 @@ the chance to work on interesting problems.
     If a disk does not meet the criteria above, Stargate simply continues searching
     the shuffled set of disks belonging to the specified tier. If a disk is
     found to be suitable, Stargate must add the disk to the replic\_vec and add
-    the node that the disk belongs to in the exclude\_nod\_vec. This prevents
+    the node that the disk belongs to in the exclude\_node\_vec. This prevents
     it from considering other disks on that node to maintain a node fault
     tolerance guaranteed by the cluster's replication factor.
 
   \subsection{Motivation}
 
-  The current replica disk selection logic in Stargate uses does not take into
+  The current replica disk selection logic in Stargate does not take into
   account a number of variables such as disparities in tier size, CPU power,
-  workloads, and disk health among other things. There are several scenarios,
-  both pathological and daily occurences, where a more robust replica placement
-  heuristic is required. The work in this thesis will focus on two orthogonal
-  cases described in the next section.
+  workloads, and disk health among other metrics. There are several scenarios,
+  across both pathological and daily occurrences, where a more robust replica
+  placement heuristic is required. The work in this thesis will focus on two
+  orthogonal cases, which are described in the next section.
 
     \subsubsection{Interfering Workloads}
 
@@ -359,27 +356,27 @@ the chance to work on interesting problems.
     on the remote node with an active workload as they would be to place it on
     the remote node that is idle.  This can impact performance via reduction of
     throughput or increasing latency on both the
-    local and remote workloads as secondary writes will be slower on nodes
-    whose resources are being utilized by their primary workloads. A data replica
+    local and remote workloads because secondary writes will be slower on nodes
+    whose resources are being used by their primary workloads. A data replica
     placement scheme is needed that adapts its behavior based on how idle
-    the target nodes are. This would result in a bias towards nodes that are
+    the target nodes are. This would result in a bias toward nodes that are
     more idle.
 
     \subsubsection{Nodes with Tier Size Disparities}
 
     A cluster containing nodes with a tier size disparity are susceptible to a
     large skew in space utilization on the node, even if the workload on each
-    node is identical. This can be illustrated via Figure
-    \ref{fig:tier_size_disparity} which shows a 3-node heterogeneous cluster
+    node is identical. This is illustrated in Figure
+    \ref{fig:tier_size_disparity}, which shows a 3-node heterogeneous cluster
     with 2 high-capacity nodes and a single low-capacity node.  Suppose these
-    high-capacity nodes have 500GB of SSD tier, 6TB of HDD tier and the single
+    high-capacity nodes have 500GB of SSD tier, 6TB of HDD tier, and the single
     weak node has only 128GB of SSD tier and 1TB of HDD tier. If 3 simultaneous
     workloads were to generate data such that the working sets of these
     workloads are 50\% of the local SSD tier, the weaker node is at a
     significant disadvantage. Given the replica selection algorithm in Nutanix
     cluster versions prior to 5.0, one can expect 500GB of replica traffic to
     flood the weak node and fill up its SSD tier well before the workload is
-    able to write its data to the local disks.  Since this results in an
+    able to write its data to the local disks.  Because this results in an
     inability for the workload on the smaller node to place its primary
     replicas locally and forces the workload to rely on remote CVMs, latency is
     increased due to the network traversal to reach the remote nodes. An
@@ -404,13 +401,13 @@ the chance to work on interesting problems.
 
   Among the contemporary distributed storage systems, Apache's Hadoop
   Distributed File System (HDFS) \cite{hadoop} \cite{hdfs2008} is one of the
-  most well known. HDFS is an open source distributed file system written as a
+  most well-known. HDFS is an open source distributed file system written as a
   userspace library in Java that is used by Hadoop clusters for storing large
   volumes of data. An HDFS cluster is comprised of a single NameNode and
-  multiple DataNodes which respectively manage cluster metadata and store the
+  multiple DataNodes, which respectively manage cluster metadata and store the
   data. HDFS stores files as a sequence of same-size 128MB blocks that are
   replicated across DataNodes to provide fault tolerance in the event of node
-  failures. Decisions regarding the replication and placement of blocks of data
+  failures. Decisions regarding the replication and placement of blocks 
   are made by the NameNode.  Since large HDFS clusters will span multiple
   racks, replica placement within HDFS is made in a rack-aware manner to
   improve data reliability and network utilization.
@@ -418,13 +415,13 @@ the chance to work on interesting problems.
   While HDFS is an open source distributed file system that is part of the
   greater Apache Hadoop ecosystem, the Google File System (GFS) \cite{gfs} is a
   proprietary distributed file system developed by Google that inspired HDFS.
-  Google's goal was to build a very large storage network from inexpensive
+  Google's goal was to build a massive storage network from inexpensive
   commodity hardware \cite{gfs-interview}, so scalability, fault tolerance, and
   error detection were top-of-mind when designing the GFS.
 
   A GFS cluster is comprised of a single Master node and multiple Chunkservers
   that store 64MB "chunks," or blocks, of data. Each file in the GFS is divided
-  into the 64MB chunks and each chunk is replicated by the Chunkservers
+  into the 64MB chunks, and each chunk is replicated by the Chunkservers
   multiple times throughout the GFS cluster. Master nodes store the metadata
   associated with the chunks such as chunk location or which processes are
   operating on a chunk. While the initial decision by the Google GFS team to
@@ -435,9 +432,9 @@ the chance to work on interesting problems.
 
   As Google's data grew to the order of tens of Petabytes, the single master
   node became a bottleneck. The master node task of scanning metadata during
-  chunk recovery scaled linearly with the amount of data and each GFS client
+  chunk recovery scaled linearly with the amount of data, and each GFS client
   spoke to the master when performing a file open operation. Ultimately, Google
-  took a "multi-cell" approach with GFS which allowed for multiple GFS masters
+  took a "multi-cell" approach with GFS, which allowed for multiple GFS masters
   for a pool of chunk servers. Each GFS client application was then able to
   shard data across multiple cells, creating their own master node fault
   domains.
@@ -447,74 +444,76 @@ the chance to work on interesting problems.
   the network partition between file system clients and the servers hosting the
   file system services. The Nutanix storage system differs from the HDFS and
   GFS in that the clients are hosted on the same servers as the file system
-  services and data since the client VMs and CVM always share physical
+  services and data because the client VMs and CVM always share physical
   hardware. For client read requests, this means that there is no network
   traversal necessary to access data.
 
   \subsection{Data Placement Schemes in Clustered Storage Systems}
   \label{sec:priorwork}
 
-  Xie et. al. \cite{xie2010} showed that data placement schemes based on the
+  Xie et al. \cite{xie2010} showed that data placement schemes based on the
   computing capacities of nodes in the HDFS significantly improved workload
   performance. These computing capacities are determined for each node in the
   cluster by profiling a target application leveraging the HDFS. Their
   MapReduced \texttt{wordcount} and \texttt{grep} results showed up to a 33.1\%
-  reduction in response time. Similarly, Perez et. al. \cite{perez2003} used
-  adaptive data placement featurers that make use of data regarding the
-  available free space in their Expand parallel file system design.  Though
-  effective in their given contexts, the main drawback to this approach is that
-  it assumes the specific application is working without interference and does
-  not account for other workloads on the system.
+  reduction in response time. Similarly, Perez, Garcia, Carretero, Calderon,
+  and Sanchez \cite{perez2003} used adaptive data placement features that make
+  use of data regarding the available free space in their Expand parallel file
+  system design.  Though effective in their given contexts, the main drawback
+  to this approach is that it assumes the specific application is working
+  without interference and does not account for other workloads on the system.
 
   One adaptive data placement approach that can account for other workloads on
-  the system was introduced by Jin et. al. \cite{adapt2012} in their work on
+  the system was introduced by Jin et al. \cite{adapt2012} in their work on
   ADAPT. The study predicts how failure-prone a node in a MapReduce cluster is
-  and advises their availability-aware data placement algorithm to avoid
-  scheduling work for those nodes. This proves useful for performance by
-  avoiding faulty nodes that could fail mid-task and cause data transfers and
-  re-calculation of data. Zaharia et. al. \cite{zaharia2008} perform similar
-  predictive scheduling in their LATE scheduler for Hadoop, except they
-  estimate the finish time of tasks and schedule the work that is expected to
-  take the longest to complete first in the pool of available nodes.
+  and uses the information to guide their availability-aware data placement
+  algorithm to avoid scheduling work for those nodes. This proves useful for
+  performance by avoiding faulty nodes that could fail mid-task and cause data
+  transfers and re-calculation of data. Zaharia et al. \cite{zaharia2008}
+  perform similar predictive scheduling in their LATE scheduler for Hadoop,
+  except that they estimate the finish time of tasks and schedule work that
+  is expected to take longest to complete first in the pool of available
+  nodes.
 
-  Work by Suresh et. al. \cite{suresh2015} approaches adaptive replica
-  selection in much the same way as this thesis, though their work was
-  mainly focused on decreasing tail latencies for Apache Cassandra
+  Work by Suresh, Canini, Schmid, and Feldmann \cite{suresh2015} approaches
+  adaptive replica selection in much the same way as this thesis, though their
+  work was mainly focused on decreasing tail latencies for Apache Cassandra
   \cite{cassandra} reads. Their load balancing algorithm, C3, incorporates the
   concept of a value calculated from request feedback from their servers. The
   value then guides decisions made regarding which servers to select for future
   requests.  In addition to the ranking function in C3, they implemented a
   distributed rate control mechanism to prevent scenarios where many individual
-  clients can bombard a single highly desirable server with requests. Many of
+  clients can bombard a single, highly-desirable server with requests. Many of
   the same problems that the work in this thesis seeks to remedy are addressed
   by the C3 algorithm, such as the reduction of I/O latency. However, the C3
   algorithm is not a feasible solution when it comes to reducing each Nutanix
   node's disk utilzation skew relative to the other nodes in the cluster.
 
-  The C3 algorithm takes into account the request queue length of certain
-  servers similar to the way I will use disk queue lengths. In addition Suresh
-  et. al. factor in the service latencies of each server so that they may
-  consider a different ideal queue length for each server. With this approach,
-  longer service times will warrant a lower queue length and vice versa. This
-  is beneficial for scenarios where there are multiple underlying storage
-  technologies such as NVMe drives, SSDs, and HDDs under consideration, but the
-  Nutanix file system's architecture does not allow for multiple replicas to
-  span storage tiers. This forces the ideal queue lengths for each selection
-  pool to be the same. Therefore, this thesis does not incorporate service
-  latencies in the fitness value calculations discussed in section
-  \ref{section-fitness}.
+  The C3 algorithm considers the request queue length of certain
+  servers similar to the way I will use disk queue lengths. In addition,
+  service latencies of each server are factored in to the decision making
+  process so that different ideal queue lengths are considered for each server.
+  With this approach, longer service times will warrant a lower queue length
+  and vice versa. This is beneficial for scenarios where multiple
+  underlying storage technologies such as NVMe drives, SSDs, and HDDs are under
+  consideration, but the Nutanix file system's architecture does not allow for
+  multiple replicas to span storage tiers. This forces the ideal queue lengths
+  for each selection pool to be the same. Therefore, this thesis does not
+  incorporate service latencies in the fitness value calculations discussed in
+  section \ref{section-fitness}.
 
   Herding of requests to a single highly suitable server is a problem that
-  arises in any replica ranking algorithm. C3 mitigates this issue by rate
-  limiting client requests to each server via a decentralized calculation using
-  a configured time interval and local sending rate information. I've opted to
-  use a simpler probabilistic spreading of client requests via selecting remote
-  nodes using weighted random selection based on the calculated fitness values.
-  This fitness value approach was inspired by Cisco's Enhanced Interior Gateway
-  Routing Protocol (EIGRP) \cite{eigrp} and its composite routing metric
-  calculations discussed further in section \ref{eigrp-motivation}.
+  arises in any replica ranking algorithm. C3 mitigates this issue by
+  rate-limiting client requests to each server by a decentralized calculation
+  by using a configured time interval and local sending rate information. I've
+  opted to use a simpler probabilistic spreading of client requests via
+  selecting remote nodes using weighted random selection based on the
+  calculated fitness values.  This fitness value approach was inspired by
+  Cisco's Enhanced Interior Gateway Routing Protocol (EIGRP) \cite{eigrp} and
+  its composite routing metric calculations, which is discussed further in
+  section \ref{eigrp-motivation}.
 
-  \subsection{Non-clustered Data Replication via RAID}
+  \subsection{Non-Clustered Data Replication via RAID}
 
   So far, I have only discussed distributed file systems and data replica
   placement schemes in a clustered/distributed context. It is worth noting
@@ -551,7 +550,7 @@ the chance to work on interesting problems.
   EIGRP \cite{eigrp} is Cisco's proprietary distance vector
   \cite{distance-vector-1} routing protocol and enhancement to their Interior
   Gateway Routing Protocol (IGRP) \cite{igrp}. In EIGRP, each router keeps
-  information about its adjacent neighbors containing the address and interface
+  information about its adjacent neighbors, containing the address and interface
   of the connected neighbor. This information is needed because of the Topology
   Table (also referred to as the Distance Table) which contains the distance,
   bundled with an associated metric, to all destinations advertised by the
@@ -569,7 +568,7 @@ the chance to work on interesting problems.
 
   Equation \ref{eigrp-metric-eq} shows the formula used by Cisco routers to
   calculate the distance metric. Note that as bandwidth increases, the metric
-  is increased; however, as load increases on the links the metric decreases.
+  is increased; however, as load increases on the links, the metric decreases.
   There are constant values, also known as K-values, that allow network
   engineers to modify the behavior of the network based on their preferences.
   This idea of taking desirable traits and using them to calculate a metric, or
@@ -591,10 +590,10 @@ the chance to work on interesting problems.
   performance and returns a positive number henceforth referred to as a fitness
   value.
   
-  A low fitness value indicates a poor placement candidacy for a disk and a
+  A low fitness value indicates a poor placement candidacy for a disk, and a
   high fitness value will indicate a highly desirable disk for replica
   placement. In this work, I evaluate one fitness function of a disk's average
-  queue length over some stretch of time, $t_{q}$, and one fitness function of
+  queue length, $t_{q}$, and one fitness function of
   a disk's percentage utilization, $t_{u}$.
 
   \begin{equation}
@@ -602,7 +601,7 @@ the chance to work on interesting problems.
   \end{equation}
 
   The variable $q_{ceiling}$ holds the maximum observed queue length.
-  Increasing $t_{q}$ from 0 towards $q_{ceiling}$ decreases the fitness value,
+  Increasing $t_{q}$ from 0 toward $q_{ceiling}$ decreases the fitness value,
   but increasing $t_{q}$ beyond $q_{ceiling}$ does not continue to modify the
   fitness value to drop below 0. This ensures that as the queue length grows,
   $t_{q}$ approaches zero. 
@@ -617,7 +616,7 @@ the chance to work on interesting problems.
   aggressive decay results in more preference given to less utilized disks when
   compared with disks that are slightly more utilized.
 
-  These terms are used in two different fitness functions evaluated in this
+  These terms are applied in two different fitness functions evaluated in this
   document:
 
   \begin{equation} \label{eqn:additive-fitness}
@@ -631,10 +630,10 @@ the chance to work on interesting problems.
 
   \subsection{Collection of Stargate Disk Statistics }
 
-  Prior to this work, Stargate's periodic disk statistics collection was limited to
-  caching solely disk usage statistics for all disks in the cluster. This has been
-  expanded to now include disk performance statistics for use in disk fitness
-  values.
+  Prior to this work, Stargate's periodic disk statistics collection was
+  limited to solely caching disk usage statistics for all disks in the cluster.
+  This has been expanded to now include disk performance statistics for use in
+  disk fitness values.
 
   Stargate maintains a mapping, the $disk\_map\_$,
   from cluster disk ID to a disk state structure. The $disk\_map\_$'s state
@@ -650,15 +649,15 @@ the chance to work on interesting problems.
   perform a weighted random selection on the set of potential candidate disks.
   To determine the best method of weighted random selection for Stargate's
   \texttt{WeightedVector} class, an exploration of various weighted random
-  selection algorithms was necessary.  Since the file system only supports
+  selection algorithms was necessary.  Because the file system only supports
   replication factors of 2 or 3, the investigation was limited to algorithms
   that allow for a weighted $\binom{N}{K}$, where $K$ is the data replication
   factor.
 
     \subsubsection{Scalability Simulation Methodology}
-     To test the scalability of the weighted random selection algorithms
-     evaluated in the next section, a single-threaded Python \cite{python}
-     script was written to to evaluate the change in run time as sample sets
+     To test the scalability of the weighted random selection algorithms that
+     are evaluated in the next section, a single-threaded Python \cite{python}
+     script was written to evaluate the change in run time as sample sets
      increase. Each algorithm's mean running time is calculated for multiple
      sample sets. Code for the simulations is as follows:
 
@@ -692,8 +691,8 @@ the chance to work on interesting problems.
     Object weights are constant throughout the simulation, so selection schemes
     that require some amount of preprocessing (such as the top T\% calculation
     for truncation selection) perform their preprocessing steps for each
-    weighted random selection. This gives information about the worst-case
-    run time behavior for each algorithm in comparison with the worst case
+    weighted random selection. This provides information about the worst-case
+    run time behavior for each algorithm in comparison with the worst-case
     runtime of the others.
 
     \subsubsection{Herding Behavior Evaluation Methodology}
@@ -715,23 +714,23 @@ the chance to work on interesting problems.
     skew in weights and makes the high-weight object a target for herding
     behavior. Given this sampling set, weighted random selections were
     performed and a histogram was kept that tracked the number of selections
-    for each object. $10^3$, $10^4$, and $10^5$ iterations were performed to
+    for each object. Iterations of $10^3$, $10^4$, and $10^5$ were performed to
     observe any changes in herding behavior at larger time scales. In addition
     to the high-skew sampling sets, low-skew sets of 100 objects were also
     simulated.  These low-skew sets were generated such that the array
     index of the first 10 objects was assigned as the object weight.
 
     \subsubsection{Stochastic Universal Sampling (SUS) Simulations}
-    SUS is another sampling technique first introduced by Baker in 1987
+    SUS is another sampling technique first introduced by James Baker in 1987
     \cite{baker1987}. The algorithm can be understood as follows: On a
-    standard roulette wheel there's a single pointer that indicates the winner.
-    The roulette wheel's "bins" can all be the same size which would indicate a
-    uniform probability of selecting any bin and could also be unevenly sized
-    which would indicate a weighted probability. SUS uses this same concept
-    except allows for N evenly spaced pointers corresponding to the selection
-    of N items. Key things to note are that the set, or "bins" in my roulette
-    analogy, must be shuffled prior to selection. Also, there is a minimum
-    spacing allowed for the pointers to prevent selection of the same bin.
+    standard roulette wheel, there's a single pointer that indicates the winner.
+    The roulette wheel's "bins" can all be the same size, which would indicate a
+    uniform probability of selecting any bin, and they could also be unevenly
+    sized, which would indicate a weighted probability. SUS uses this same
+    concept, except it allows for N evenly-spaced pointers that correspond to the
+    selection of N items. Key factors to note are that the set, or "bins" in my
+    roulette analogy, must be shuffled prior to selection. Also, a minimum
+    spacing is allowed for the pointers to prevent selection of the same bin.
 
     \begin{figure}[htbp]
       \centering
@@ -753,21 +752,15 @@ the chance to work on interesting problems.
     distribution of selection frequencies for SUS as the number of samples
     increases. It is evident that the selection frequency is proportional to the
     object weight. This can prove problematic for outlier objects with weights
-    that are much larger than the other objects in the set as shown in Figure
+    that are much larger than the other objects in the set, as shown in Figure
     \ref{fig:pathological_roullette}. The high weight object's selection
-    frequency eclipses all other objects in the selection pool which can lead
+    frequency eclipses all other objects in the selection pool, which can lead
     to extreme herding behaviors.
 
     \subsubsection{Truncation Selection Simulations}
     Truncation selection \cite{truncation1973}, typically used in evolutionary
     computing algorithms, does not consider any objects for selection below
-    some threshold, $T$. In Figure \ref{fig:herding_truncation}, only the top
-    10\% of objects ranked by weight are considered for selection. Within this
-    subset, weight has no meaning so there is a uniform distribution of
-    selections. However, this may not be suitable for use cases where all
-    objects must be candidates for selection.  Depending on the threshold
-    chosen, this algorithm can be resistant to herding behavior as shown in
-    Figure \ref{fig:pathological_truncation}. 
+    some threshold, $T$. 
 
     \begin{figure}[htbp]
       \centering
@@ -776,6 +769,15 @@ the chance to work on interesting problems.
                to illustrate selection distributions.}
       \label{fig:herding_truncation}
     \end{figure}
+    \FloatBarrier
+
+    In Figure \ref{fig:herding_truncation}, only the top 10\% of objects ranked
+    by weight are considered for selection. Within this subset, weight has no
+    meaning so there is a uniform distribution of selections. However, this
+    might not be suitable for use cases where all objects must be candidates
+    for selection.  Depending on the threshold chosen, this algorithm can be
+    resistant to herding behavior, as shown in Figure
+    \ref{fig:pathological_truncation}. 
 
     \begin{figure}[htbp]
       \centering
@@ -784,17 +786,18 @@ the chance to work on interesting problems.
                to illustrate herding behavior.}
       \label{fig:pathological_truncation}
     \end{figure}
+    \FloatBarrier
 
-    \subsubsection{Two-choice Sampling Simulations}
+    \subsubsection{Two-Choice Sampling Simulations}
     Two-choice sampling \cite{azar1994} \cite{2choice} performs a uniform
     random selection twice and returns the object with higher weight. This
-    algorithm has shown to be extremely resilient to herding behavior as shown
-    in Figure \ref{fig:pathological_two_choice} and selection frequencies for
+    algorithm has proven to be extremely resilient to herding behavior, as shown
+    in Figure \ref{fig:pathological_two_choice}, and selection frequencies for
     all objects are influenced by object weights in a way similar to SUS. While
-    an object with a higher weight is more likely to be selected, it is not
+    it is more likely an object with a higher weight will be selected, it is not
     selected with a probability proportional to its fitness value. This makes
-    the algorithm resistant to any herding behaviors, but will not be a good
-    candidate if it's desired for the \texttt{WeightedVector} to select objects
+    the algorithm resistant to any herding behaviors, but it will not be a good
+    candidate if the desire is for the \texttt{WeightedVector} to select objects
     with probability proportional to its weight.
 
     \begin{figure}[htbp]
@@ -818,8 +821,8 @@ the chance to work on interesting problems.
     \subsubsection{Uniform Random Selection Simulations}
     Uniform random selection is completely indifferent to object weights.
     Therefore, it exhibits no herding behavior and no usefulness for the
-    \texttt{WeightedVector}'s sampling, but it is important to include its analysis for
-    comparison with other selection algorithms.
+    \texttt{WeightedVector}'s sampling, but including its analysis for
+    comparison with other selection algorithms is important.
 
     \begin{figure}[htbp]
       \centering
@@ -838,22 +841,22 @@ the chance to work on interesting problems.
     \end{figure}
 
     Figure \ref{fig:pathological_truncation} shows that uniform selection
-    probabilities can be expected and Figure \ref{fig:pathological_random}
+    probabilities can be expected, whereas Figure \ref{fig:pathological_random}
     confirms there is no herding behavior with a uniform random selection
     scheme.
 
     \subsubsection{Weighted Random Algorithm Scalability Analysis}
     Even though both SUS and truncation selection have $O(N * D)$ time
-    complexity, where $D$ is the number of objects in the set and $N$ is the number of
+    complexity, where $D$ is the number of objects in the set, and $N$ is the number of
     selections required in one iteration, truncation selection is slower than
-    SUS by an order of magnitude. This is mainly due to the need for the
+    SUS by an order of magnitude. This is mainly caused by the need for the
     truncation selection algorithm to calculate the top T\% of the set for
     every selection performed in the simulations, an $O(Dlog(D))$ operation. As
     expected, two-choice and random selections are observed to be constant-time
     algorithms due to its simplicity of two uniform random selections.
-    Two-choice is slightly slower than random selection due to the second
+    Two-choice is slightly slower than random selection because of the second
     uniform random selection and comparison operation that must occur before
-    returning an object.
+    selecting an object.
 
     \begin{figure}[htbp]
       \centering
@@ -867,9 +870,9 @@ the chance to work on interesting problems.
     Figure \ref{fig:random_scalability} shows the running times on an
     exponential scale for each of the weighted random selection algorithms
     discussed. It becomes clear that weighted random selections for large sets
-    of objects is most efficient using a two-choice sampling technique.
+    of objects is most efficient when using a two-choice sampling technique.
 
-  \subsection{WeightedVector Class}
+  \subsection{Weighted Vector Class}
 
   It is cleaner to implement repeated weighted sampling of disk IDs in such a
   way that we call a single function to return a set of unique disk IDs from a
@@ -991,7 +994,7 @@ the chance to work on interesting problems.
 
     Suppose that a call to Sample() on the \texttt{WeightedVector} returns $D$. The
     probability of this event is 0.5, so to maintain sampling state within the
-    WeightedVector, the weight associated with object $D$ is set to zero in
+    \texttt{WeightedVector}, the weight associated with object $D$ is set to zero in
     Table \ref{tbl:inner-vec-2}.
 
     \begin{table}[htbp]
