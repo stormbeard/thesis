@@ -1,8 +1,8 @@
 \documentclass[12pt]{article}
 \usepackage[pdftex]{graphicx}
-\usepackage{apacite}
 \usepackage{amsmath}
 \usepackage{setspace,caption,url,tcolorbox,float,placeins,appendix}
+\usepackage{apacite}
 \doublespacing
 
 % Default margins are too wide all the way around. I reset them here
@@ -49,7 +49,7 @@
 
 With the advent of cloud computing, datacenters are using distributed
 applications more than ever. MapReduce is used to generate over 20 petabytes of
-data per day by using prodigious numbers of commodity servers \cite{mapreduce}.
+data per day by using prodigious numbers of commodity servers \protect\cite{mapreduce}.
 Many companies use large scale clusters to perform various computational tasks
 via the open-source MapReduce implementation, Hadoop \cite{hadoop}, or they can
 possess a virtualized datacenter, allowing them to migrate virtual machines
@@ -161,8 +161,7 @@ the chance to work on thought-provoking problems.
     \begin{figure}[htbp]
       \centering
       \includegraphics[scale=1.0]{images/converged_platform.png} 
-      \caption{Nutanix node architecture diagram from the Nutanix
-               Bible \cite{bible}.}
+      \caption{Nutanix node architecture diagram from the Nutanix Bible.}
       \label{fig:adsf-architecture}
     \end{figure}
 
