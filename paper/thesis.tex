@@ -1524,7 +1524,7 @@ A file abstraction in the Nutanix distributed file system. \\
   \subsection{Herding Behavior Due to Implementation Bug}
 
   During the 128 outstanding op experiments, herding behavior
-  was observed unexpectedly after implementing fitness based replica placement
+  was observed unexpectedly after implementing fitness-based replica placement,
   as shown in Figure \ref{fig:herding_bug}. By default, disk usage and
   performance statistics are supposed to be refreshed every 10 seconds. This is
   frequent enough to avoid herding behavior, but the 128 outstanding op
@@ -1555,7 +1555,7 @@ A file abstraction in the Nutanix distributed file system. \\
   Every 10 seconds, an alarm handler will execute and iterate through each
   active disk in the cluster and asynchronously query disk statistics and bind a
   callback to each query to be executed when a response is received. Disk usage
-  and performance lookups each have their own callback functions:
+  and performance lookups each have their own callback functions.
 
   \begin{table}[htbp]
     \caption{Disk usage and performance lookup callback functions.}
@@ -1570,7 +1570,7 @@ A file abstraction in the Nutanix distributed file system. \\
                                        performance statistics untouched.
                                        \\ \hline
 
-      \verb|PerformanceStatLookupCallback| & Decrement outstandingstatistics 
+      \verb|PerformanceStatLookupCallback| & Decrement outstanding statistics 
                                              lookup counter, lock and
                                              populate performance statistics in
                                              \texttt{disk\_map\_}, and leave
@@ -1581,13 +1581,13 @@ A file abstraction in the Nutanix distributed file system. \\
     \end{center}
   \end{table}
 
-  The two callbacks introduce a race condition regarding \texttt{disk\_map\_}
+  The two callbacks introduce a race condition regarding \texttt{disk\_map\_},
   even though the structure is locked. Any time PerformanceStatLookupCallback
-  returns before the callback for usage statistics , all performance statistics
+  returns before the callback for usage statistics, all performance statistics
   will be cleared and cause the fitness function to assume worst-case values
   for the queue length term.
 
-  This problem was fixed by simply serializing our usage and performance
+  This problem was fixed by simply serializing the usage and performance
   statistics lookups by triggering the performance statistics lookup from
   inside UsageStatLookupCallback.
 
