@@ -195,12 +195,16 @@ the chance to work on thought-provoking problems.
 
     The Cassandra process stores and manages all cluster metadata in a
     distributed manner. It is also the distributed database used by Arithmos to
-    store cluster statistics. The version of Cassandra that is running in NDFS
-    is a heavily modified Apache Cassandra \cite{cassandra}. One of the main
-    differences between Nutanix Cassandra and Apache Cassandra is that Nutanix
-    has implemented strict consistency via the Paxos \cite{paxos2005} family of
+    store cluster statistics. Metadata in the Nutanix distributed file system
+    requires strong consistency, since there exists a potential for data
+    corruption in user applications running on the file system without it.  The
+    version of Cassandra that is running in NDFS is a heavily modified Apache
+    Cassandra \cite{cassandra}. One of the main differences between Nutanix
+    Cassandra and Apache Cassandra (before version 2.0) is that Nutanix has
+    implemented strict consistency via the Paxos \cite{paxos2005} family of
     protocols, which provide consensus in an unreliable network of compute
-    nodes.
+    nodes. Apache Cassandra supports consensus via the Paxos protocol since
+    version 2.0. 
 
     \subsubsection{The Extent Store}
 
@@ -571,6 +575,10 @@ the chance to work on thought-provoking problems.
   desirability value, can be applied to the problem of choosing the best disk
   for data replica placement. This concept will be explored further in the
   following sections within the context of the Nutanix distributed file system.
+
+  \subsection{Consensus Protocols}
+  \label{sec:consensus}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
