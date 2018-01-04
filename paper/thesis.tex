@@ -42,6 +42,7 @@
 \null
 
 \newpage
+\null
 \thispagestyle{empty}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Abstract}
@@ -63,6 +64,7 @@ systems.
 
 \clearpage
 \newpage
+\null
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Acknowledgements}
@@ -86,6 +88,7 @@ the chance to work on thought-provoking problems.
 
 \clearpage
 \newpage
+\null
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -195,16 +198,22 @@ the chance to work on thought-provoking problems.
 
     The Cassandra process stores and manages all cluster metadata in a
     distributed manner. It is also the distributed database used by Arithmos to
-    store cluster statistics. Metadata in the Nutanix distributed file system
-    requires strong consistency, since there exists a potential for data
-    corruption in user applications running on the file system without it.  The
-    version of Cassandra that is running in NDFS is a heavily modified Apache
-    Cassandra \cite{cassandra}. One of the main differences between Nutanix
-    Cassandra and Apache Cassandra (before version 2.0) is that Nutanix has
-    implemented strict consistency via the Paxos \cite{paxos2005} family of
-    protocols, which provide consensus in an unreliable network of compute
-    nodes. Apache Cassandra supports consensus via the Paxos protocol since
-    version 2.0. 
+    store cluster statistics. Metadata operations in the Nutanix Distributed File System
+    require linearizable consistency, which means that we guarantee multiple
+    serialized threads of operations will get the same results if run
+    concurrently or independently. The NDFS has these consistency
+    requirements because without them, there exists a potential for data corruption in user
+    applications running on the file system. Linearizable consistency is
+    non-trivial for distributed systems that do not route all requests through
+    a single master. Before its version 2.0, Apache Cassandra attempted to
+    address this issue via wrapping sensitive sequences of operations with a
+    lock; however, this resulted in lost updates to the database in certain
+    failure scenarios \cite{ellis2013lightweight}. Since the Paxos protocol
+    allows a distributed system to decide on proposals via quorum, without the
+    need for a master/slave architecture and without the availablility problems
+    caused by the coordinator failure of a two-phased commit approach, both
+    Nutanix and Apache developers implemented it in their respective versions
+    of Cassandra to allow for linearizable consistency in database operations.
 
     \subsubsection{The Extent Store}
 
@@ -387,14 +396,16 @@ the chance to work on thought-provoking problems.
 
     \begin{figure}[htbp]
       \centering
-      \includegraphics[scale=0.45]{images/homogeneous_tier_disparity.pdf} 
+      \includegraphics[scale=0.30]{images/homogeneous_tier_disparity.pdf} 
       \caption{A cluster with nodes of varying resource capacity.}
       \label{fig:tier_size_disparity}
     \end{figure}
-\FloatBarrier
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\FloatBarrier
+
 \section{Prior Work}
 
   \subsection{Clustered Storage Systems}
@@ -558,6 +569,8 @@ the chance to work on thought-provoking problems.
   stored in the distance table and are used to calculate the minimum cost path
   to a particular destination.
 
+\newpage
+
   \begin{equation}
     Term_{1} = K_{1} * \frac{K_{2} * Bandwidth}{Bandwidth + 256 - Load} + K_{3} * Delay
   \end{equation}
@@ -575,10 +588,6 @@ the chance to work on thought-provoking problems.
   desirability value, can be applied to the problem of choosing the best disk
   for data replica placement. This concept will be explored further in the
   following sections within the context of the Nutanix distributed file system.
-
-  \subsection{Consensus Protocols}
-  \label{sec:consensus}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -619,6 +628,8 @@ the chance to work on thought-provoking problems.
   larger $a$ is, the more aggressively $t_{u}$ will decay as $u$ increases. An
   aggressive decay results in more preference given to less utilized disks when
   compared with disks that are slightly more utilized.
+
+  \newpage
 
   These terms are applied in two different fitness functions evaluated in this
   document:
@@ -1070,6 +1081,8 @@ the chance to work on thought-provoking problems.
 
     \FloatBarrier
 
+    \newpage
+
     \subsubsection{Weighted Vector Unit Testing}
 
     The \texttt{WeightedVector} class' unit test has four phases:
@@ -1141,12 +1154,14 @@ together (Equation \ref{eqn:multiplicative-fitness}).
   the new replica disk selection framework, two heterogeneous workload
   scenarios were tested:
  
+  \begin{tcolorbox}
   \begin{enumerate}
     \item Two worker VMs on separate nodes running a workload with low
           outstanding ops.
     \item Two worker VMs on separate nodes with running a
           workload with high outstanding ops.
   \end{enumerate}
+  \end{tcolorbox}
 
   The worker VMs were manually deployed to their respective host hypervisors and
   used to perform the experiments described in sections
@@ -1303,8 +1318,9 @@ together (Equation \ref{eqn:multiplicative-fitness}).
   \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
 \FloatBarrier
+\newpage
+\null
 \section{User Guide}
 
   \subsection{Scraping Data from the Nutanix Cluster}
@@ -1387,6 +1403,7 @@ together (Equation \ref{eqn:multiplicative-fitness}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\null
 \FloatBarrier
 \section{Summary and Conclusions}
 
@@ -1475,6 +1492,7 @@ together (Equation \ref{eqn:multiplicative-fitness}).
 % GLOSSARY
 
 \newpage
+\null
 \section*{Glossary}
 \thispagestyle{empty}
 
@@ -1517,6 +1535,7 @@ A file abstraction in the Nutanix distributed file system. \\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\null
 \FloatBarrier
 
 \bibliographystyle{apacite}
@@ -1524,6 +1543,7 @@ A file abstraction in the Nutanix distributed file system. \\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\null
 \FloatBarrier
 \begin{appendices}
 \appendix
